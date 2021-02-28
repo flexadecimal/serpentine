@@ -7,6 +7,8 @@ from itertools import (
   groupby
 )
 
+from core import *
+
 cars_folder = './cars'
 car_name_regex = rf"{cars_folder}/(?P<car>[\w+-_]+)"
 
