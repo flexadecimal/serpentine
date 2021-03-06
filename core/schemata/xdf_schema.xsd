@@ -5,7 +5,7 @@
   <xs:group name='has_description'>
     <xs:sequence>
       <xs:element name='title' type='xs:string'/>
-      <xs:element name='description' type='xs:string'/>
+      <xs:element name='description' type='xs:string' minOccurs='0'/>
     </xs:sequence>
   </xs:group>
   <!-- ...has parameter meta: uniqueid and flags-->
@@ -20,6 +20,8 @@
   </xs:complexType>
   <!-- ...EMBEDDEDDATA - binary parsing details -->
   <xs:complexType name='embedded_data'>
+    <xs:attribute name='mmedtypeflags' type='xs:string'/>
+    <xs:attribute name='mmedrowcount' type='xs:string'/>
     <xs:attribute name='mmedaddress' type='xs:string'/>
     <xs:attribute name='mmedelementsizebits' type='xs:positiveInteger'/>
     <xs:attribute name='mmedcolcount' type='xs:string'/>
@@ -35,6 +37,7 @@
         </xs:complexType>
       </xs:element>
     </xs:sequence>
+    <xs:attribute name='equation' type='xs:string'/>
   </xs:complexType>
   <!-- ...DATA/UNIT TYPE - some type of indexed enumeration shared between axes and constants -->
   <xs:group name='has_data_unit_types'>
@@ -43,7 +46,15 @@
       <xs:element name='unittype' type='xs:integer'/>
     </xs:sequence>
   </xs:group>
- <!-- ...DALINK - TODO: figure out what this is -->
+  <!-- min/max bounds -->
+  <xs:group name='bounded'>
+    <xs:sequence>
+      <xs:element name='min' type='xs:decimal'/>
+      <xs:element name='max' type='xs:decimal'/>
+      <xs:element name='outputtype' type='xs:positiveInteger'/>
+    </xs:sequence>
+  </xs:group>
+  <!-- ...DALINK - TODO: figure out what this is -->
   <xs:group name='has_da_link'>
     <xs:sequence>
       <xs:element name='DALINK'>
@@ -60,7 +71,7 @@
         <!-- HEADER -->
         <xs:element name='XDFHEADER'>
           <xs:complexType>
-            <xs:all>
+            <xs:sequence>
               <xs:element name='flags' type='xs:string'/>
               <xs:element name='deftitle' type='xs:string'/>
               <xs:element name='description' type='xs:string'/>
@@ -87,66 +98,81 @@
                 </xs:complexType>
               </xs:element>
               <!-- CATEGORIES -->
-              <xs:element name='CATEGORY'>
+              <xs:element name='CATEGORY' maxOccurs='unbounded'>
                 <xs:complexType>
                   <xs:attribute name='index' type='xs:string'/>
                   <xs:attribute name='name' type='xs:string'/>
                 </xs:complexType>
               </xs:element>
-            </xs:all>
-          </xs:complexType>
-        </xs:element>
-        <!-- TABLES -->
-        <xs:element name='XDFTABLE'>
-          <xs:complexType>
-            <xs:sequence>
-              <!-- 'has_parameter_meta' -->
-              <xs:group ref='has_description'/>
-              <xs:element name='CATEGORYMEM' type='category_reference'/>
-              <!-- AXES -->
-              <xs:element name='XDFAXIS' minOccurs='1'>
-                <!-- has_parameter_meta -->
-                <xs:complexType>
-                  <xs:sequence>
-                    <xs:element name='EMBEDDEDDATA' type='embedded_data' maxOccurs='1'/>
-                    <xs:element name='indexcount' type='xs:integer' maxOccurs='1'/>
-                    <xs:element name='embedinfo'>
-                      <xs:complexType>
-                        <xs:attribute name='type' type='xs:integer'/>
-                      </xs:complexType>
-                    </xs:element>
-                    <xs:group ref='has_data_unit_types'/>
-                    <xs:group ref='has_da_link'/>
-                    <xs:element name='units' type='xs:string' maxOccurs='1'/>
-                    <xs:element name='LABEL'>
-                      <xs:complexType>
-                        <xs:attribute name='index' type='xs:integer'/>
-                        <xs:attribute name='value' type='xs:decimal'/>
-                      </xs:complexType>
-                    </xs:element>
-                    <xs:element name='MATH' type='math' maxOccurs='1' />
-                  </xs:sequence>
-                </xs:complexType>
-              </xs:element>
             </xs:sequence>
           </xs:complexType>
         </xs:element>
-        <!-- CONSTANTS -->
-        <xs:element name='XDFCONSTANT'>
-          <xs:complexType>
-            <!-- INTERFACES -->
-            <!-- 'has_parameter_meta' -->
-            <xs:sequence>
-              <xs:group ref='has_description'/>
-              <xs:element name='CATEGORYMEM' type='category_reference'/>
-              <xs:element name='EMBEDDEDDATA' type='embedded_data' maxOccurs='1'/>
-              <xs:group ref='has_data_unit_types'/>
-              <xs:group ref='has_da_link'/>
-              <xs:element name='MATH' type='math' maxOccurs='1'/>
-            </xs:sequence>
-          </xs:complexType>
-        </xs:element>
+        <xs:choice maxOccurs='unbounded'>
+          <!-- TABLES -->
+          <xs:element name='XDFTABLE' maxOccurs='unbounded'>
+            <xs:complexType>
+              <xs:sequence>
+                <xs:group ref='has_description'/>
+                <!-- bounded by count of CATEGORY[ies] in header -->
+                <xs:element name='CATEGORYMEM' type='category_reference' minOccurs='0' maxOccurs='unbounded'/>
+                <!--
+                AXES
+                ...maybe should be unbounded? have not yet seen a 4-dimensional parameter
+                -->              
+                <xs:element name='XDFAXIS' minOccurs='1' maxOccurs='3'>
+                  <xs:complexType>
+                    <xs:sequence>
+                      <xs:element name='EMBEDDEDDATA' type='embedded_data'/>
+                      <xs:element name='units' minOccurs='0' type='xs:string'/>
+                      <xs:element name='indexcount' minOccurs='0' type='xs:integer'/>
+                      <xs:element name='decimalpl' minOccurs='0' type='xs:integer'/>
+                      <xs:group ref='bounded' minOccurs='0'/>
+                      <xs:element name='embedinfo' minOccurs='0'>
+                        <xs:complexType>
+                          <xs:attribute name='type' type='xs:integer'/>
+                        </xs:complexType>
+                      </xs:element>
+                      <xs:group ref='has_data_unit_types' minOccurs='0'/>
+                      <xs:group ref='has_da_link' minOccurs='0'/>
+                      <!-- bounded by indexcount -->
+                      <xs:element name='LABEL' minOccurs='0' maxOccurs='unbounded'>
+                        <xs:complexType>
+                          <xs:attribute name='index' type='xs:integer'/>
+                          <xs:attribute name='value' type='xs:decimal'/>
+                        </xs:complexType>
+                      </xs:element>
+                      <xs:element name='MATH' type='math'/>
+                    </xs:sequence>
+                    <xs:attributeGroup ref='has_parameter_meta'/>
+                    <xs:attribute name='id' type='xs:string'/>
+                  </xs:complexType>
+                </xs:element>
+              </xs:sequence>
+              <xs:attributeGroup ref='has_parameter_meta'/>
+            </xs:complexType>
+          </xs:element>
+          <!-- CONSTANTS -->
+          <xs:element name='XDFCONSTANT' maxOccurs='unbounded'>
+            <xs:complexType>
+              <xs:sequence>
+                <xs:group ref='has_description'/>
+                <xs:element name='CATEGORYMEM' type='category_reference' minOccurs='0' maxOccurs='unbounded'/>
+                <xs:element name='EMBEDDEDDATA' type='embedded_data'/>
+                <xs:element name='outputtype' type='xs:positiveInteger' minOccurs='0'/>
+                <xs:element name='decimalpl' minOccurs='0' type='xs:integer'/>
+                <xs:element name='rangehigh' minOccurs='0'/>
+                <xs:group ref='has_data_unit_types'/>
+                <xs:group ref='has_da_link'/>
+                <xs:element name='MATH' type='math'/>
+              </xs:sequence>
+              <xs:attributeGroup ref='has_parameter_meta'/>
+            </xs:complexType>
+          </xs:element>
+          <!-- EXTENSIONS - authors must provide their own schema to still fully validate -->
+          <xs:any minOccurs='0' maxOccurs='unbounded' processContents='lax'/>
+        </xs:choice>
       </xs:sequence>
+      <xs:attribute name='version' type='xs:decimal'/>
     <!-- end.. -->
     </xs:complexType>
   </xs:element>
