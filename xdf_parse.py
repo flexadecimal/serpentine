@@ -1,4 +1,3 @@
-import xml.etree.ElementTree as xml
 import os
 import pdb
 import re
@@ -25,11 +24,11 @@ if __name__ == '__main__':
     # TODO: actually parse adx
     files_by_type = {ext[1:]: list(files) for ext, files in groupby(files, lambda file: os.path.splitext(file)[1])}
     # apply xdf parsing to bin file to render scalars and tables
-    for xdf, bin in zip(files_by_type['xdf'], files_by_type['bin']):
-      xdf_tree = xml.parse(os.path.join(root, xdf))
-      # split out tables, constants, and signals
-      tables = xdf_tree.findall('XDFTABLE')
-      constants = xdf_tree.findall('XDFCONSTANT')
-      
+    for xdf_path, bin_path, adx_path in zip(files_by_type['xdf'], files_by_type['bin'], files_by_type['adx']):
+      parser = entity['BinParser'](
+        xdf = os.path.join(root, xdf_path),
+        adx = os.path.join(root, adx_path),
+        bin = os.path.join(root, bin_path)
+      )
       pdb.set_trace()
   

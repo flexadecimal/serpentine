@@ -1,0 +1,153 @@
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <!-- COMMON TYPES -->
+  <!-- ...has description -->
+  <xs:group name='has_description'>
+    <xs:sequence>
+      <xs:element name='title' type='xs:string'/>
+      <xs:element name='description' type='xs:string'/>
+    </xs:sequence>
+  </xs:group>
+  <!-- ...has parameter meta: uniqueid and flags-->
+  <xs:attributeGroup name='has_parameter_meta'>
+    <xs:attribute name='uniqueid' type='xs:string'/>
+    <xs:attribute name='flags' type='xs:string'/>
+  </xs:attributeGroup>
+  <!-- ...has CATEGORYMEM reference to header CATEGORY -->
+  <xs:complexType name='category_reference'>
+    <xs:attribute name='category' type='xs:positiveInteger'/>
+    <xs:attribute name='index' type='xs:integer'/>
+  </xs:complexType>
+  <!-- ...EMBEDDEDDATA - binary parsing details -->
+  <xs:complexType name='embedded_data'>
+    <xs:attribute name='mmedaddress' type='xs:string'/>
+    <xs:attribute name='mmedelementsizebits' type='xs:positiveInteger'/>
+    <xs:attribute name='mmedcolcount' type='xs:string'/>
+    <xs:attribute name='mmedmajorstridebits' type='xs:integer'/>
+    <xs:attribute name='mmedminorstridebits' type='xs:integer'/>
+  </xs:complexType>
+  <!-- ...MATH type - EQUATION with VARs -->
+  <xs:complexType name='math'>
+    <xs:sequence>
+      <xs:element name='VAR'>
+        <xs:complexType>
+          <xs:attribute name='id' type='xs:string'/>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <!-- ...DATA/UNIT TYPE - some type of indexed enumeration shared between axes and constants -->
+  <xs:group name='has_data_unit_types'>
+    <xs:sequence>
+      <xs:element name='datatype' type='xs:integer'/>
+      <xs:element name='unittype' type='xs:integer'/>
+    </xs:sequence>
+  </xs:group>
+ <!-- ...DALINK - TODO: figure out what this is -->
+  <xs:group name='has_da_link'>
+    <xs:sequence>
+      <xs:element name='DALINK'>
+        <xs:complexType>
+          <xs:attribute name='index' type='xs:integer'/>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:group>
+  
+  <xs:element name='XDFFORMAT'>
+    <xs:complexType>
+      <xs:sequence>
+        <!-- HEADER -->
+        <xs:element name='XDFHEADER'>
+          <xs:complexType>
+            <xs:all>
+              <xs:element name='flags' type='xs:string'/>
+              <xs:element name='deftitle' type='xs:string'/>
+              <xs:element name='description' type='xs:string'/>
+              <xs:element name='author' type='xs:string'/>
+              <xs:element name='baseoffset' type='xs:integer'/>
+              <xs:element name='DEFAULTS'>
+                <xs:complexType>
+                  <xs:attribute name='datasizeinbits' type='xs:positiveInteger'/>
+                  <xs:attribute name='sigdigits' type='xs:positiveInteger'/>
+                  <xs:attribute name='outputtype' type='xs:positiveInteger'/>
+                  <xs:attribute name='signed' type='xs:integer'/>
+                  <xs:attribute name='lsbfirst' type='xs:integer'/>
+                  <xs:attribute name='float' type='xs:integer'/>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name='REGION'>
+                <xs:complexType>
+                  <xs:attribute name='type' type='xs:string'/>
+                  <xs:attribute name='startaddress' type='xs:string'/>
+                  <xs:attribute name='size' type='xs:string'/>
+                  <xs:attribute name='regionflags' type='xs:string'/>
+                  <xs:attribute name='name' type='xs:string'/>
+                  <xs:attribute name='desc' type='xs:string'/>
+                </xs:complexType>
+              </xs:element>
+              <!-- CATEGORIES -->
+              <xs:element name='CATEGORY'>
+                <xs:complexType>
+                  <xs:attribute name='index' type='xs:string'/>
+                  <xs:attribute name='name' type='xs:string'/>
+                </xs:complexType>
+              </xs:element>
+            </xs:all>
+          </xs:complexType>
+        </xs:element>
+        <!-- TABLES -->
+        <xs:element name='XDFTABLE'>
+          <xs:complexType>
+            <xs:sequence>
+              <!-- 'has_parameter_meta' -->
+              <xs:group ref='has_description'/>
+              <xs:element name='CATEGORYMEM' type='category_reference'/>
+              <!-- AXES -->
+              <xs:element name='XDFAXIS' minOccurs='1'>
+                <!-- has_parameter_meta -->
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name='EMBEDDEDDATA' type='embedded_data' maxOccurs='1'/>
+                    <xs:element name='indexcount' type='xs:integer' maxOccurs='1'/>
+                    <xs:element name='embedinfo'>
+                      <xs:complexType>
+                        <xs:attribute name='type' type='xs:integer'/>
+                      </xs:complexType>
+                    </xs:element>
+                    <xs:group ref='has_data_unit_types'/>
+                    <xs:group ref='has_da_link'/>
+                    <xs:element name='units' type='xs:string' maxOccurs='1'/>
+                    <xs:element name='LABEL'>
+                      <xs:complexType>
+                        <xs:attribute name='index' type='xs:integer'/>
+                        <xs:attribute name='value' type='xs:decimal'/>
+                      </xs:complexType>
+                    </xs:element>
+                    <xs:element name='MATH' type='math' maxOccurs='1' />
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <!-- CONSTANTS -->
+        <xs:element name='XDFCONSTANT'>
+          <xs:complexType>
+            <!-- INTERFACES -->
+            <!-- 'has_parameter_meta' -->
+            <xs:sequence>
+              <xs:group ref='has_description'/>
+              <xs:element name='CATEGORYMEM' type='category_reference'/>
+              <xs:element name='EMBEDDEDDATA' type='embedded_data' maxOccurs='1'/>
+              <xs:group ref='has_data_unit_types'/>
+              <xs:group ref='has_da_link'/>
+              <xs:element name='MATH' type='math' maxOccurs='1'/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    <!-- end.. -->
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
