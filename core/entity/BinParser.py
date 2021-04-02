@@ -12,6 +12,8 @@ core_path = Path(__file__).parent.parent
 schemata_path = os.path.join(core_path, 'schemata')
 xdf_schema_path = 'xdf_schema.xsd'
 
+from .Table import Table
+
 class BinParser(object):
   '''
   Parses maps/signals (univariate signals like velocities, 3d surfaces like
@@ -36,11 +38,22 @@ class BinParser(object):
       print(f"<{type(self).__name__}>: XDF '{kwargs['xdf']}' not validated against schema '{xdf_schema_path}'.")
       print(xdf_schema.error_log)
       sys.exit()
-    # ...get tables and constants
-    tables = xdf_tree.xpath('/XDFFORMAT/XDFTABLE')
+    # ...objectify
+    parser = objectify.makeparser(schema = xdf_schema)
+    xdf_object_tree = objectify.fromstring(xml.tostring(xdf_tree), parser)
+    # map XDFTABLE object to our internal representation
+    tables = list(map(
+      lambda el: Table(
+        header = xdf_object_tree.XDFHEADER,
+        table = el,
+        bin_file = kwargs['bin']
+      ),
+      list(xdf_object_tree.XDFTABLE)
+    ))
+    pdb.set_trace()
+    
     constants = xdf_tree.xpath('/XDFFORMAT/XDFCONSTANT')
     # ...parse binary
-    pdb.set_trace()
     
     # xslt functional transformation
     

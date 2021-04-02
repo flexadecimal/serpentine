@@ -1,54 +1,16 @@
-from .common import *
-from sqlalchemy.orm import declared_attr
+#from .common import *
 
-max_equation_length = 1024
-
-class XdfEmbeddedData(Base):
-  '''
-  Conversion factors for parsing signals from bins are stored here.
-  Referenced by composite key (XDF id, feature UniqueId)
-  - <XDFTABLE> -> <XDFAXIS UniqueId>
-  - <XDFTABLE> -> <XDFCONSTANT UniqueId>
-  '''
-
+# see https://stackoverflow.com/questions/6098970/are-mixin-class-init-functions-not-automatically-called
+# for a brief on this 'cooperative mixin' pattern
 class EmbeddedMathMixin(object):
   '''
   Encapsulates the functionality in common between Constant and Axis - the
   parsing of math parameters from ECU .BIN files.
+  
+  The equation is parsed using a TunerPro-compatible namespace - in the
+  definition, this is implicitly from BIN to logical format - this mixin saves the inverse, logical to BIN, so that higher-level logic is not bound to binary 
+  details.
   '''
-  # BIN PARSING PARAMETERS
-  @declared_attr
-  def mem_address(cls):
-    return Column(Integer)
-  
-  @declared_attr
-  def mem_bit_length(cls):
-    return Column(Integer)
-  
-  @declared_attr
-  def mem_major_stride_bits(cls):
-    return Column(Integer)
-  
-  @declared_attr
-  def mem_minor_stride_bits(cls):
-    return Column(Integer)
-    
-  # TODO - figure out what DALINK does
-  @declared_attr
-  def da_index(cls):
-    return Column(Integer)
-  
-  # PARSED MATH
-  # in XML, var is a nested tag - flatten this here
-  # TODO - maybe move this out to Math relation or special Math class?
-  def equation(cls):
-    return Column(String(max_equation_length))
-    
-  def decimal_places(cls):
-    return Column(Integer)
-  
-  # Constant seems to always have this, Axis may not?
-  def data_type(cls):
-    return Column(Integer)
-  def unit_type(cls):
-    return Column(Integer)
+  def __init__(self, 
+  def binary_to_logical(equation):
+    pass

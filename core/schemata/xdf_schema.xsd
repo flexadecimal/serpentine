@@ -24,7 +24,7 @@
     <xs:attribute name='mmedrowcount' type='xs:string'/>
     <xs:attribute name='mmedaddress' type='xs:string'/>
     <xs:attribute name='mmedelementsizebits' type='xs:positiveInteger'/>
-    <xs:attribute name='mmedcolcount' type='xs:string'/>
+    <xs:attribute name='mmedcolcount' type='xs:integer'/>
     <xs:attribute name='mmedmajorstridebits' type='xs:integer'/>
     <xs:attribute name='mmedminorstridebits' type='xs:integer'/>
   </xs:complexType>

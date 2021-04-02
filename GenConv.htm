@@ -1,0 +1,553 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><!-- InstanceBegin template="/Templates/Globals.dwt" codeOutsideHTMLIsLocked="false" -->
+<head>
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>XDF Item - General Conversion</title>
+<!-- InstanceEndEditable -->
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<!-- InstanceBeginEditable name="head" -->
+<!-- InstanceEndEditable -->
+<link href="styles.css" rel="stylesheet" type="text/css">
+<style type="text/css">
+<!--
+body {
+	background-color: #FFFFFF;
+}
+-->
+</style></head>
+
+<body>
+<table width="100%" border="3" cellpadding="1" cellspacing="0" bordercolor="#CCCCCC">
+    <tr>
+      <td><div align="center" class="DocTitle"><!-- InstanceBeginEditable name="Title" -->XDF Item Conversion Editor<!-- InstanceEndEditable --></div></td>
+    </tr>
+</table>
+
+<!-- InstanceBeginEditable name="Main" --> 
+
+<p align="left"><font size="2">Some XDF  item editors contain a 
+  &quot;Conversion&quot; tab. One of the most powerful (and complex, 
+    quite frankly) features of the TunerPro XDF file format is its ability to 
+    perform complex math on binary data. This tab contains information on the math 
+    that gets done in order to convert the raw information in the bin to a useable, 
+    real-world engineering value. This topic is not simple, but is worth taking 
+    the time to completely understand. Please read carefully and, most importantly, 
+experiment!</font></p>
+<p align="center"><font size="2"><img src="Images/GenConv.gif" width="475" height="452"></font></p>
+<p align="left"><strong><font size="2">Expression:</font></strong></p>
+<p align="left"><font size="2">The expression field represents the math that is to be done. This field contains the constants, operators, 
+    variables, and functions for the math that should be performed. To edit 
+    the equation format, click the &quot;Edit...&quot; button next to the field. 
+    In order to best understand how the equation format field works, lets look 
+  at a color-coded example:</font></p>
+<p align="left"><font size="4"><em><strong>(<font color="#000099">0.351567</font> <font color="#006600">*</font> <font color="#FF0000">X</font>) <font color="#006600">+</font> <font color="#0000FF">SIN</font>(<font color="#000099">3.000)</font></strong></em></font></p>
+<p align="left"><font size="2">0.351567 and 3.000 are <strong><em><font color="#000099">constants</font></em></strong>. 
+    Constants can be added/subtracted to, or multiplied/divided by other constants, 
+  or by reference values (explained below). Constants can be specified as integers (e.g. &quot;1&quot;; &quot;-1&quot;; etc), floating point numbers (e.g. &quot;1.023&quot;; &quot;-42.2&quot;; etc), or as hexadecimal number (e.g. &quot;0xFFA1&quot;).</font></p>
+<p align="left"><font size="2">* and + are <em><strong><font color="#006600">operators</font></strong></em>. <a href="#operators">Operators</a> perform mathematical operations on constants, variables, or on the results of functions.</font></p>
+<p><font size="2">X is a<em><strong> <font color="#FF0000">variable</font></strong></em><strong>.</strong> 
+    Variables are part of the power behind the expression. Variables</font><font size="2"> are placeholders (or a &quot;reference&quot;) to specific types of data that can vary. This is explained in more detail later in this article. </font><font size="2">You can specify almost any name you like 
+    for identifying a variable except for the <a href="#keywords">keywords</a>.  Note that you can use a variable name more than once in an expression (for instance, &quot;X * X&quot;) and the both instances of the variable will resolve to the same value.</font></p>
+<p><font size="2">SIN is a <strong><em><font color="#0000FF">function</font></em></strong>. <a href="#Functions">Functions</a> perform special funtionality. They may or may not take input called &quot;parameters.&quot; In our example above, 3.000 is not only a constant, but it is also a parameter for the SIN function. Functions always return a value. Note that parameters are delimited with a semicolon ';' character.</font></p>
+<p><strong><font size="2">Variables and what they represent</font></strong></p>
+  <p><font size="2">To Specify what an argument represents, click on the argument 
+    in the argument list. The argument in question will highlighted in the equation 
+    format. Use the &quot;Argument Type&quot; drop list to specify which of the 
+    3 types the argument represents. As explained above, arguments can represent 
+    3 things:</font></p>
+<blockquote> 
+    <p><font size="2"><strong>This Item's Raw Data</strong> - Each XDF item generally 
+      represents raw data in the bin, as defined by the address and size field 
+      in the item's &quot;general&quot; tab. To use this raw data in the expression, select the variable in the variable list that should represent this 
+      data, and select &quot;This Object's Raw Data&quot; in the drop list. This 
+      variable type takes no parameters.</font></p>
+    <p><strong><font size="2">Other XDF Item Output - </font></strong><font size="2">You 
+      can use this argument type to use the output of another XDF Item (another 
+      constant or a cell in a different table). This is useful if, for instance, 
+      your ECM uses a table bias. You can define a constant in the XDF to represent 
+      the table bias. You can then set your table up to add/subtract the bias 
+      constant from the table cell's calculated value. If you reference a table 
+      item, you must specify the row and column of the cell which you'd like to 
+      reference. You cannot reference flags/bits. Press &quot;Choose Reference 
+      Object&quot; to select the object to be referenced.</font></p>
+    <p><strong><font size="2">Raw Value at Address - </font></strong><font size="2">You 
+      can use this argument type to reference a raw value at an address within 
+      the bin. You must specify the address, size (in bits), and endianness (1 
+      for least-significant byte first, 0 for most-significant byte first).</font></p>
+</blockquote>
+  <p><strong><font size="2">Precedence</font></strong></p>
+  <p><font size="2">In addition to the standard mathematical rules of 
+    precedence, parenthesis can be used in the equation format field. As an example, 
+  you could use the following equation format: ( 3 + Y ) / 14</font></p>
+  <p><font size="2">In this example, &quot;3 + Y&quot; is first evaluated. The result is then divided by 14. If Y was 25, then the result would be (3 + 25) / 14, or 28 / 14, which is 2. In this case, the parenthesis force the expression parser to evaluate the sub-expression within the parenthesis first, before continuing to the next operation in order of precedence..</font></p>
+<p><font size="2"><a name="operators"></a><strong>Supported Operators</strong></font></p>
+<table width="90%" border="2" cellpadding="3" cellspacing="0" bordercolor="#CCCCCC">
+  <tr>
+    <td width="17%" bgcolor="#FFFF00"><div align="center"><font size="2"><strong>Operator</strong></font></div></td>
+    <td width="83%" bgcolor="#FFFF00"><div align="center"><font size="2"><strong>Description</strong></font></div></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">+</font></div></td>
+    <td><font size="2">Addition operator. Adds two numbers together.</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">-</font></div></td>
+    <td><font size="2">Subtraction operator. Subtracts the second number from the first.</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">*</font></div></td>
+    <td><font size="2">Multiplication operator. Multiplies two numbers together.</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">/ </font></div></td>
+    <td><font size="2">Division operator. Divides the first number by the second.</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">%</font></div></td>
+    <td><font size="2">Modulo operator. Calculates the remainder of division of one number by another. For example, &quot;7 % 3&quot; evaluates to 1 because after dividing 7 by 3, the subtraction of 6 from 7 leaves 1. &quot;4 % 2&quot; evaluates to 0 because 4 is evently divided by 2.</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">==</font></div></td>
+    <td><font size="2">Equality operator. Compares two numbers. If they are equal, it evaluates to TRUE (1). If they are not equal, it evaluates to FALSE (0).</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">&gt;</font></div></td>
+    <td><font size="2">Greater than operator. Compares two numbers. If the first is greater than the second, it evaluates to TRUE (1). If the first is equal to or less than the second, it evaluates to FALSE (0).</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">&lt;</font></div></td>
+    <td><font size="2">Less than operator. Compares two numbers. If the first is less than the second, it evaluates to TRUE (1). If the first is equal to or greater than the second, it evaluates to FALSE (0).</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">&gt;=</font></div></td>
+    <td><font size="2">Greater than or equal to operator. Compares two numbers. If the first is greater than or equal to the second, it evaluates to TRUE (1). If the first is less than the second, it evaluates to FALSE (0).</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">&lt;=</font></div></td>
+    <td><font size="2">Less than or equal to operator. Compares two numbers. If the first is less than or equal to the second, it evaluates to TRUE (1). If the first is greater than the second, it evaluates to FALSE (0).</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">!=</font></div></td>
+    <td><font size="2">Not equal operator. Compares two numbers. If the two numbers are not equal to each other, it evaluates to TRUE (1). Otherwise it evaluates to FALSE (0).</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">||</font></div></td>
+    <td><font size="2">Logical-OR operator. Evaluates to FALSE (0) if both numbers are FALSE (0). If either number is TRUE (1), it evaluates to TRUE (1).</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">&amp;&amp;</font></div></td>
+    <td><font size="2">Logical-AND operator. Evaluates to TRUE (1) if both numbers are TRUE (1). Evaluates to FALSE (0) if either number is FALSE (0).</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">&lt;&lt;</font></div></td>
+    <td><font size="2">Bitwise</font><font size="2"> left-shift operator. Shifts all bits of the first number to the left by the number of places specified in the second number. For example (binary) 001 &lt;&lt; 1 evaluates to 010. (Binary) 00011 &lt;&lt; 3 evaluates to 11000.  It is possible to shift bits away. For example, if the source data size is 8 bits, shifting left 8 bits would clear all bits.</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">&gt;&gt;</font></div></td>
+    <td><font size="2">Bitwise</font><font size="2"> right-shift operator. Shifts all bits of the first number to the right by the number of places specified in the second number. For example, (binary) 100 &gt;&gt; 1 evaluates to 010. (Binary) 01100 &gt;&gt; 2 evaluates to 00011. It is possible to shift bits away. For example, if the source data size is 8 bits, shifting right 8 bits would clear all bits.</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">|</font></div></td>
+    <td><font size="2">Bitwise-OR operator. Compares each bit of the first number to the corresponding bit of the second number. If either bit is 1, the corresponding result bit is set to 1. Otherwise, the result corresponding result bit is set to 0. </font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">&amp;</font></div></td>
+    <td><font size="2">Bitwise-AND operator. Compares each bit of the first number to the corresponding bit fo the second number. If both bits are 1, the corresponding result bit is set to 1. Otherwise, the corresponding result bit is set to 0.</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">^</font></div></td>
+    <td><font size="2">Bitwise exclusive OR operator (also called XOR). Compares each bit of the first number to the corresponding bit of the second number. If a bit in the second number is 1, the corresponding result bit is set to the opposite of the corresponding bit in the first number. Otherwise, the corresponding result bit is set to 0. Example (in binary): 1100 ^ 0011 evaluates to 1111. 1010 ^ 1111 evaluates to 0101.</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">!|</font></div></td>
+    <td><font size="2">Bitwise-NOR operator. Compares each bit of the first number to the corresponding bit of the second number. If both bits are 0, the corresponding result bit is 1. Otherwise, the corresponding result bit is 0.</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">!&amp;</font></div></td>
+    <td><font size="2">Bitwise-NAND operator. Compares each bit of the first number to the corresponding bit of the second number. If both bits are 1, the corresponding result bit is 0. Otherwise, the corresponding result bit is 1.</font></td>
+  </tr>
+</table>
+<p><font size="2"><a name="Functions"></a><strong>Supported Functions</strong></font></p>
+<p><font color="#000099" size="2">General (available to all XDF objects)</font></p>
+<table width="90%" border="2" cellpadding="3" cellspacing="0" bordercolor="#CCCCCC">
+  <tr bgcolor="#FFFF00">
+    <td width="21%"><div align="center"><strong><font size="2">Function</font></strong></div></td>
+    <td width="43%"><div align="center"><strong><font size="2">Description</font></strong></div></td>
+    <td width="19%"><div align="center"><strong><font size="2">Example</font></strong></div></td>
+    <td width="8%"><div align="center"><strong><font size="2">Min Param Count</font></strong></div></td>
+    <td width="9%"><div align="center"><strong><font size="2">Max Param Count</font></strong></div></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">ABS(x)</font></div></td>
+    <td><font size="2">Absolute value. Returns the absolute value of <em>x.</em></font></td>
+    <td><font size="2">ABS(-10)</font></td>
+    <td><font size="2">1</font></td>
+    <td><font size="2">1</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">AVG(x; y,...)</font></div></td>
+    <td><font size="2">Average. Returns the average of the specified parameters.</font></td>
+    <td><font size="2">AVG(2; 10)</font></td>
+    <td><font size="2">1</font></td>
+    <td><font size="2">100</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">EXP(x)</font></div></td>
+    <td><font size="2">Exponent. Returns e to the power of <em>x</em>.</font></td>
+    <td><font size="2">EXP(2)</font></td>
+    <td><font size="2">2</font></td>
+    <td><font size="2">2</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">LOG(x)</font></div></td>
+    <td><font size="2">Natural logarithm. Returns the natural log of <em>x.</em></font></td>
+    <td><font size="2">LOG(9000)</font></td>
+    <td><font size="2">1</font></td>
+    <td><font size="2">1</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">POW(x; exp)</font></div></td>
+    <td><font size="2">Power. Returns <em>x</em> to the power of<em> exp</em>.</font></td>
+    <td><font size="2">POW(2; 3)</font></td>
+    <td><font size="2">2</font></td>
+    <td><font size="2">2</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">SQR(x)</font></div></td>
+    <td><font size="2">Square root. Returns the square root of <em>x.</em></font></td>
+    <td><font size="2">SQR(9)</font></td>
+    <td><font size="2">1</font></td>
+    <td><font size="2">1</font></td>
+  </tr>
+  <tr>
+    <td><p align="center"><font size="2">SUM(x; y; ...)</font></p>    </td>
+    <td><font size="2">Sum. Returns the sum of the specified parameters.</font></td>
+    <td><font size="2">SUM(1;2;3;4)</font></td>
+    <td><font size="2">1</font></td>
+    <td><font size="2">100</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">LOG10(x)</font></div></td>
+    <td><font size="2">Logarithm base 10. Returns Log-base-10 of <em>x.</em></font></td>
+    <td><font size="2">LOG10(2)</font></td>
+    <td><font size="2">1</font></td>
+    <td><font size="2">1</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">RADIANS(x)</font></div></td>
+    <td><font size="2">Convert degrees to radians. Returns radian equivilent of <em>x </em>where <em>x</em> is in degrees.</font></td>
+    <td><font size="2">RADIANS(180)</font></td>
+    <td><font size="2">1</font></td>
+    <td><font size="2">1</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">DEGREES(x)</font></div></td>
+    <td><font size="2">Convert radians to degrees. Returns degree equivilent of <em>x </em>where <em>x</em> is in radians.</font></td>
+    <td><font size="2">DEGREES(3.1415)</font></td>
+    <td><font size="2">1</font></td>
+    <td><font size="2">1</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">IF(cond; trueval; falseval)</font></div></td>
+    <td><font size="2">Tertiary. If <em>c</em> is TRUE (1), returns <em>t</em>. Otherwise returns <em>f</em>. Care must be taken to avoid circular references when using this function. For instance, avoid using the CELL function as a paramter.</font></td>
+    <td><font size="2">IF(1&gt;2; 100; 200)</font></td>
+    <td><font size="2">3</font></td>
+    <td><font size="2">3</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">ROUND(num;decplaces)</font></div></td>
+    <td><font size="2">Rounds the specified number to the specified decimal places. Example: ROUND(2.142;2) rounds to 2.14.</font></td>
+    <td><font size="2">ROUND(2.142;2)</font></td>
+    <td><font size="2">2</font></td>
+    <td><font size="2">2</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">MROUND(num;mult)</font></div></td>
+    <td><font size="2">Rounds the specified number to the nearest specified multiple. Eaxmple: MROUND(10;3) rounds to 9.</font></td>
+    <td><font size="2">MROUND(10;3)</font></td>
+    <td><font size="2">2</font></td>
+    <td><font size="2">2</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">SIN(x)</font></div></td>
+    <td><font size="2">Sine. Returns the sine of <em>x</em>, where x is in radians.</font></td>
+    <td><font size="2">SIN(1.2)</font></td>
+    <td><font size="2">1</font></td>
+    <td><font size="2">1</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">COS(x)</font></div></td>
+    <td><font size="2">Cosine. Returns the cosine of <em>x</em>, where x is in radians.</font></td>
+    <td><font size="2">COS(1.2)</font></td>
+    <td><font size="2">1</font></td>
+    <td><font size="2">1</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">TAN(x)</font></div></td>
+    <td><font size="2">Tangent. Returns the tangent of <em>x</em>, where x is in radians.</font></td>
+    <td><font size="2">TAN(1.2)</font></td>
+    <td><font size="2">1</font></td>
+    <td><font size="2">1</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">SINH(x)</font></div></td>
+    <td><font size="2">Hyperbolic sine. Returns the hyperbolic since of <em>x</em>, where x is in radians.</font></td>
+    <td><font size="2">SINH(1.2)</font></td>
+    <td><font size="2">1</font></td>
+    <td><font size="2">1</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">COSH(x)</font></div></td>
+    <td><font size="2">Hyperbolic cosine. Returns the hyperbolic cosine of <em>x</em>, where x is in radians.</font></td>
+    <td><font size="2">COSH(1.2)</font></td>
+    <td><font size="2">1</font></td>
+    <td><font size="2">1</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">TANH(x)</font></div></td>
+    <td><font size="2">Hyperbolic tangent. Returns the hyperbolic tangent of <em>x, </em>where <em>x</em> is in radians.</font></td>
+    <td><font size="2">TANH(1.2)</font></td>
+    <td><font size="2">1</font></td>
+    <td><font size="2">1</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">ASINH(x)</font></div></td>
+    <td><font size="2">Inverse hyperbolic sine. Returns the inverse hyperbolic sine of <em>x</em>, where x is in radians.</font></td>
+    <td><font size="2">ASINH(1.2)</font></td>
+    <td><font size="2">1</font></td>
+    <td><font size="2">1</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">ACOSH(x)</font></div></td>
+    <td><font size="2">Inverse hyperbolic cossine. Returns the inverse hyperbolic cosine of <em>x</em>, where x is in radians.</font></td>
+    <td><font size="2">ACOSH(1.2)</font></td>
+    <td><font size="2">1</font></td>
+    <td><font size="2">1</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">ATANH(x)</font></div></td>
+    <td><font size="2">Inverse hyperbolic tangent. Returns the inverse hyperbolic tangent of <em>x</em>, where x is in radians.</font></td>
+    <td><font size="2">ATANH(0.2)</font></td>
+    <td><font size="2">1</font></td>
+    <td><font size="2">1</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">ASIN(x)</font></div></td>
+    <td><font size="2">Inverse sine. Returns the inverse sine of <em>x</em>, where x is in radians.</font></td>
+    <td><font size="2">ASIN(0.2)</font></td>
+    <td><font size="2">1</font></td>
+    <td><font size="2">1</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">ACOS(x)</font></div></td>
+    <td><font size="2">Inverse cosine. Returns the inverse cosine of <em>x</em>, where x is in radians.</font></td>
+    <td><font size="2">ACOS(0.2)</font></td>
+    <td><font size="2">1</font></td>
+    <td><font size="2">1</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">ATAN(x)</font></div></td>
+    <td><font size="2">Inverse tangent. Returns the inverse tangent of <em>x</em>, where x is in radians.</font></td>
+    <td><font size="2">ATAN(0.2)</font></td>
+    <td><font size="2">1</font></td>
+    <td><font size="2">1</font></td>
+  </tr>
+</table>
+<p><font color="#000099" size="2">XDF-specific functions available to all XDF objects</font></p>
+<table width="90%" border="2" cellpadding="3" cellspacing="0" bordercolor="#CCCCCC">
+  <tr bgcolor="#FFFF00">
+    <td width="30%"><div align="center"><strong><font size="2">Function</font></strong></div></td>
+    <td width="31%"><div align="center"><strong><font size="2">Description</font></strong></div></td>
+    <td width="24%"><div align="center"><strong><font size="2">Example</font></strong></div></td>
+    <td width="7%"><div align="center"><strong><font size="2">Min Param Count</font></strong></div></td>
+    <td width="8%"><div align="center"><strong><font size="2">Max Param Count</font></strong></div></td>
+  </tr>
+  <tr>
+    <td><font size="2">ADDRESS(addr;sizebits;lsbfirst;signed)</font></td>
+    <td><font size="2">Returns the raw value at the specified address using the specified properties. <strong>Note</strong>: The address specified will be offset by the base offset defined in the XDF header.</font></td>
+    <td><font size="2">ADDRESS(0x103; 16; FALSE; TRUE)</font></td>
+    <td><font size="2">4</font></td>
+    <td><font size="2">4</font></td>
+  </tr>
+  <tr>
+    <td><font size="2">THIS()</font></td>
+    <td><font size="2">Returns the raw value of the data defined by the current object, at the current cell being calculated if the object is a table/axis.</font></td>
+    <td><font size="2">THIS()</font></td>
+    <td><font size="2">0</font></td>
+    <td><font size="2">0</font></td>
+  </tr>
+  <tr>
+    <td><font size="2">THAT(id; row; col; precalc)</font></td>
+    <td><font size="2">Returns the value of another object. If the object is a table or function, row and col are used. ID specifies the decimal ID of the object to calculate (obtained from that object's editor). If precalc is TRUE, the value returned is the raw values defined by that object, otherwise the value returned is the calculated value.</font></td>
+    <td><font size="2">THAT(1432; 2; 4; FALSE)</font></td>
+    <td><font size="2">4</font></td>
+    <td><font size="2">4</font></td>
+  </tr>
+</table>
+<p><font color="#000099" size="2">XDF Table functions</font></p>
+<table width="90%" border="2" cellpadding="3" cellspacing="0" bordercolor="#CCCCCC">
+  <tr bgcolor="#FFFF00">
+    <td width="11%"><div align="center"><strong><font size="2">Function</font></strong></div></td>
+    <td width="52%"><div align="center"><strong><font size="2">Description</font></strong></div></td>
+    <td width="18%"><div align="center"><strong><font size="2">Example</font></strong></div></td>
+    <td width="9%"><div align="center"><strong><font size="2">Min Param Count</font></strong></div></td>
+    <td width="10%"><div align="center"><strong><font size="2">Max Param Count</font></strong></div></td>
+  </tr>
+  <tr>
+    <td><font size="2">ROW()</font></td>
+    <td><font size="2">Returns the 0-based row number of the cell currently being calculated</font></td>
+    <td><font size="2">ROW()</font></td>
+    <td><font size="2">0</font></td>
+    <td><font size="2">0</font></td>
+  </tr>
+  <tr>
+    <td><font size="2">COL()</font></td>
+    <td><font size="2">Returns the 0-based column number of the cell currently being calculated</font></td>
+    <td><font size="2">COL()</font></td>
+    <td><font size="2">0</font></td>
+    <td><font size="2">0</font></td>
+  </tr>
+  <tr>
+    <td><font size="2">ROWS()</font></td>
+    <td><font size="2">Returns the number of rows defined in the table</font></td>
+    <td><font size="2">ROWS()</font></td>
+    <td><font size="2">0</font></td>
+    <td><font size="2">0</font></td>
+  </tr>
+  <tr>
+    <td><font size="2">COLS()</font></td>
+    <td><font size="2">Returns the number of columns defined in the table</font></td>
+    <td><font size="2">COLS()</font></td>
+    <td><font size="2">0</font></td>
+    <td><font size="2">0</font></td>
+  </tr>
+  <tr>
+    <td><font size="2">CELL(r; c; precalc)</font></td>
+    <td><font size="2">Returns the value of the specified cell within the table. Row and column number are 0-based. If precalc is TRUE, CELL returns the raw value, otherwise it returns the calculated value.</font></td>
+    <td><font size="2">CELL(2; 3; TRUE)</font></td>
+    <td><font size="2">3</font></td>
+    <td><font size="2">3</font></td>
+  </tr>
+</table>
+<p><font color="#000099" size="2">XDF Axis functions</font></p>
+<table width="90%" border="2" cellpadding="3" cellspacing="0" bordercolor="#CCCCCC">
+  <tr bgcolor="#FFFF00">
+    <td width="11%"><div align="center"><strong><font size="2">Function</font></strong></div></td>
+    <td width="52%"><div align="center"><strong><font size="2">Description</font></strong></div></td>
+    <td width="18%"><div align="center"><strong><font size="2">Example</font></strong></div></td>
+    <td width="9%"><div align="center"><strong><font size="2">Min Param Count</font></strong></div></td>
+    <td width="10%"><div align="center"><strong><font size="2">Max Param Count</font></strong></div></td>
+  </tr>
+  <tr>
+    <td><font size="2">INDEX()</font></td>
+    <td><font size="2">Returns the 0-based index number of the cell currently being calculated</font></td>
+    <td><font size="2">INDEX()</font></td>
+    <td><font size="2">0</font></td>
+    <td><font size="2">0</font></td>
+  </tr>
+  <tr>
+    <td><font size="2">INDEXES()</font></td>
+    <td><font size="2">Returns the number of indexes defined in the axis</font></td>
+    <td><font size="2">INDEXES()</font></td>
+    <td><font size="2">0</font></td>
+    <td><font size="2">0</font></td>
+  </tr>
+  <tr>
+    <td><font size="2">CELL(index; precalc)</font></td>
+    <td><font size="2">Returns the value of the specified cell within the axis. Index number is 0-based. If precalc is TRUE, CELL returns the raw value, otherwise it returns the calculated value.</font></td>
+    <td><font size="2">CELL(2; TRUE)</font></td>
+    <td><font size="2">2</font></td>
+    <td><font size="2">2</font></td>
+  </tr>
+</table>
+<p><font color="#000099" size="2">XDF Scalar functions</font></p>
+<table width="90%" border="2" cellpadding="3" cellspacing="0" bordercolor="#CCCCCC">
+  <tr bgcolor="#FFFF00">
+    <td width="11%"><div align="center"><strong><font size="2">Function</font></strong></div></td>
+    <td width="52%"><div align="center"><strong><font size="2">Description</font></strong></div></td>
+    <td width="18%"><div align="center"><strong><font size="2">Example</font></strong></div></td>
+    <td width="9%"><div align="center"><strong><font size="2">Min Param Count</font></strong></div></td>
+    <td width="10%"><div align="center"><strong><font size="2">Max Param Count</font></strong></div></td>
+  </tr>
+  <tr>
+    <td><font size="2">&lt;none&gt;</font></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+</table>
+<p><font size="2"><a name="Keywords"></a><strong>Keywords (reserved variable names)</strong></font><strong></strong></p>
+<p><font size="2">The following keywords may not be used as variable names.</font></p>
+<table width="90%" border="2" cellpadding="3" cellspacing="0" bordercolor="#CCCCCC">
+  <tr bgcolor="#FFFF00">
+    <td><div align="center"><font size="2"><strong>Keyword</strong></font></div></td>
+    <td><div align="center"><font size="2"><strong>Description</strong></font></div></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">FALSE</font></div></td>
+    <td><font size="2">Resolves to 0. Can be used for logical expressions.</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">TRUE</font></div></td>
+    <td><font size="2">Resolves to 1. Can be used for logical expressions.</font></td>
+  </tr>
+  <tr>
+    <td><div align="center"><font size="2">0x&lt;HEX&gt;</font></div></td>
+    <td><font size="2">Parses a constant as a hexadecimal number. E.g. &quot;0x100&quot; resolves to 256.</font></td>
+  </tr>
+</table>
+<p><font size="2"><strong>Examples:</strong></font></p>
+<p><font size="2">Since data conversion is very important in editing a vehicle's 
+  bin and because TunerPro's conversion engine is so powerful, let's look at 
+  some examples of how to use it. These are examples of some common conversions 
+  GM OBDI cars use.</font></p>
+<blockquote>
+  <p><strong><font size="2">(Factor * variable) - offset: Temperature</font></strong></p>
+  <p><font size="2">Temperature in degrees Fahrenheit is most often a single 
+    byte value within the bin. After defining the address of that byte within 
+    the bin in the General tab for the item, the typical equation for this conversion 
+    is (1.35 * X) - 40. Enter this for the equation format. Once entered, there 
+    will be one argument in the list (for the 'X'). Since X represents the raw 
+    byte within the bin specified in the General tab, this argument type should 
+    be set to &quot;This Item's Raw Data.&quot; That it!</font></p>
+  <p><strong><font size="2">Table Bias: Spark Correction vs. Coolant Temperature</font></strong></p>
+  <p><font size="2">GM has a number of tables that have a bias. That is, the 
+    final value of every cell within the table is reduced with a single value 
+    defined elsewhere in the bin. This is commonly done in order to represent 
+    negative correction values (however, that's unimportant for our example). 
+    Spark Correction vs. Coolant temp is an example of a common table that makes 
+    use of a bias (the screenshot above shows the conversion information for 
+    this table). The final amount of spark to add or reduce to the main spark 
+    table based on the coolant temperature is defined as:</font></p>
+  <p><font size="2">0.351567 * (Raw Cell Value in bin - Raw Bias value in bin)</font></p>
+  <p><font size="2">So, given that information, we know that we have two variables. 
+    Let's enter the following for the equation format:</font></p>
+  <p><font size="2">0.351567 * (X - Y)</font></p>
+  <p><font size="2">Define variable 1 (X) as &quot;This Item's Raw Data&quot;</font><br>
+      <font size="2">Define variable 2 (Y) as &quot;Raw Value at Address&quot;<br>
+        For variable two, set the address to the location in the bin of the bias 
+        value, set the size parameter to the size of the raw bias (usually 8 bits).</font></p>
+  <p><strong><font size="2">Table Bias: Alternate method</font></strong></p>
+  <p><font size="2">Let's say that you actually want to be able to edit the 
+    bias value separately. We can create a separate XDF item for the bias. We 
+    would set the address and size in the General tab to the appropriate address 
+    of the bias in the bin and its correct size (8 bits). We would then set 
+    the conversion information up. The bias would have the same factor as the 
+    spark table itself. So we would use 0.351567 * X, with X defined as &quot;This 
+    Item's Raw Data&quot;. Once that's done, we can modify the Spark Correction 
+    vs Coolant table.</font></p>
+  <p><font size="2">We would change the equation format in our first bias example 
+    to this:</font></p>
+  <p><font size="2">(0.351567 * X) - Y</font></p>
+  <p><font size="2">X should remain defined as &quot;This Item's Raw Data&quot;</font><br>
+      <font size="2">Y should now be defined as &quot;Other XDF Item Output&quot;. 
+        Choose the reference item to be the bias item we just created.</font></p>
+</blockquote>
+<p>&nbsp;</p>
+<!-- InstanceEndEditable --> 
+<p align="center"><font color="#999999" size="1">TunerPro Help V1.2 Compiled 
+  <!-- #BeginDate format:Am2m -->9/16/14  9:49<!-- #EndDate -->
+  </font></p>
+</body>
+<!-- InstanceEnd --></html>

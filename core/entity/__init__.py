@@ -7,6 +7,7 @@ __all__ = [
   #'Constant',
   #'Axis',
   #'Table',
-  # non-SQL class for parsing bin
-  'BinParser'
+  # NON-SQL
+  'BinParser',
+  #'MathParser',
 ]

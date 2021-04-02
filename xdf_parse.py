@@ -30,5 +30,4 @@ if __name__ == '__main__':
         adx = os.path.join(root, adx_path),
         bin = os.path.join(root, bin_path)
       )
-      pdb.set_trace()
   

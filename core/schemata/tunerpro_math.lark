@@ -1,0 +1,50 @@
+// TunerPro XDF/ADX equation grammar
+// adapted from Erez Shinan's python2 grammar, found here https://github.com/lark-parser/lark/blob/master/examples/advanced/python2.lark
+
+// forgive my naivete, but i have no idea why this can't leave - gives parse error
+?file_input: (stmt)*
+
+?stmt: simple_stmt
+?simple_stmt: small_stmt (";" small_stmt)* [";"]
+?small_stmt: expr_stmt
+expr_stmt: test
+dotted_name: NAME ("." NAME)*
+
+?test: comparison
+?comparison: expr (comp_op expr)*
+?expr: xor_expr ("|" xor_expr)*
+
+// binary bitwise expressions cascade here
+?xor_expr: and_expr ("^" and_expr)*
+?and_expr: shift_expr ("&" shift_expr)*
+?shift_expr: arith_expr (shift_op arith_expr)*
+?arith_expr: term (add_op term)*
+?term: factor (mul_op factor)*
+?factor: factor_op factor | molecule
+
+!factor_op: "+"|"-"|"~"
+!add_op: "+"|"-"
+!shift_op: "<<"|">>"
+!mul_op: "*"|"/"|"%"
+!comp_op: "<"|">"|"=="|">="|"<="|"!="|"&&"|"||"
+
+?molecule: molecule "(" [arguments] ")" -> func_call
+    | atom
+?atom: NAME
+    | "(" test ")" 
+    | number
+    | "TRUE" -> const_true
+    | "FALSE" -> const_false
+
+arguments: (argument ";")* (argument [";"])
+?argument: test
+
+number: DEC_NUMBER | HEX_NUMBER | FLOAT 
+
+DEC_NUMBER: /[1-9]\d*l?/i
+HEX_NUMBER: /0x[\da-f]*l?/i
+
+%import common.FLOAT -> FLOAT
+%import common.INT -> _INT
+%import common.CNAME -> NAME
+%ignore /[\t \f]+/  // WS
