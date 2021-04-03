@@ -1,0 +1,39 @@
+// TunerPro XDF/ADX equation grammar
+// 
+// shaved down from Erez Shinan's python2 grammar, found here: 
+// https://github.com/lark-parser/lark/blob/master/examples/advanced/python2.lark
+// where the original grammar made a distinction between shift and arithmetic
+// operators, i chose to follow python3 ast module's 'BinOp' generic style
+// for a cleaner tree
+
+?statement: (expr)*
+?expr: molecule (binary_operator molecule)*
+
+// operators, starting with arithmetic...
+!binary_operator: "+" | "-" | "*" | "/" | "%"
+      // ...comparison
+      | "==" | ">" | "<" | ">=" | "<=" | "!=" | "||" | "&&"
+      // ...bitwise operations: shift, or/and/xor/nor/nand
+      | "<<" | ">>" | "|" | "&" | "^" | "!|" | "!&"
+
+?molecule: molecule "(" [arguments] ")" -> func_call
+    | atom
+?atom: NAME
+    | "(" expr ")" 
+    | number
+    | "TRUE" -> true
+    | "FALSE" -> false
+
+arguments: (argument ";")* (argument [";"])
+?argument: expr
+
+number: DEC_NUMBER | HEX_NUMBER | FLOAT 
+
+DEC_NUMBER: /[1-9]\d*l?/i
+HEX_NUMBER: /0x[\da-f]*l?/i
+
+%import common.FLOAT -> FLOAT
+%import common.INT -> _INT
+%import common.CNAME -> NAME
+%import common.WS_INLINE -> WS_INLINE
+%ignore WS_INLINE

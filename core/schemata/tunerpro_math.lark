@@ -1,40 +1,40 @@
 // TunerPro XDF/ADX equation grammar
 // adapted from Erez Shinan's python2 grammar, found here https://github.com/lark-parser/lark/blob/master/examples/advanced/python2.lark
 
-// forgive my naivete, but i have no idea why this can't leave - gives parse error
-?file_input: (stmt)*
-
-?stmt: simple_stmt
-?simple_stmt: small_stmt (";" small_stmt)* [";"]
-?small_stmt: expr_stmt
-expr_stmt: test
-dotted_name: NAME ("." NAME)*
-
+statement: (test)*
 ?test: comparison
+
+// binary bitwise expressions cascade here to implement c-style precedence
+// see https://en.cppreference.com/w/c/language/operator_precedence
 ?comparison: expr (comp_op expr)*
-?expr: xor_expr ("|" xor_expr)*
-
-// binary bitwise expressions cascade here
-?xor_expr: and_expr ("^" and_expr)*
-?and_expr: shift_expr ("&" shift_expr)*
-?shift_expr: arith_expr (shift_op arith_expr)*
-?arith_expr: term (add_op term)*
+?expr: bitwise_nand
+?bitwise_nand: bitwise_nor ("!&" bitwise_nor)*
+?bitwise_nor: bitwise_or ("!|" bitwise_or)*
+?bitwise_or: bitwise_xor ("|" bitwise_xor)*
+?bitwise_xor: bitwise_and ("^" bitwise_and)*
+?bitwise_and: bitwise_shift ("&" bitwise_shift)*
+?bitwise_shift: arithmetic (shift_op arithmetic)*
+?arithmetic: term (add_op term)*
 ?term: factor (mul_op factor)*
-?factor: factor_op factor | molecule
 
-!factor_op: "+"|"-"|"~"
+?factor: molecule
+// unary operations here, not used in tunerpro
+//?factor: factor_op factor | molecule
+//!factor_op: "+"|"-"|"~"
+
+// operators defined seperately for cascading precedence
 !add_op: "+"|"-"
 !shift_op: "<<"|">>"
 !mul_op: "*"|"/"|"%"
-!comp_op: "<"|">"|"=="|">="|"<="|"!="|"&&"|"||"
+!comp_op: "<"|">"|">="|"<="|"=="|"!="|"&&"|"||"
 
 ?molecule: molecule "(" [arguments] ")" -> func_call
     | atom
 ?atom: NAME
     | "(" test ")" 
     | number
-    | "TRUE" -> const_true
-    | "FALSE" -> const_false
+    | "TRUE" -> true
+    | "FALSE" -> false
 
 arguments: (argument ";")* (argument [";"])
 ?argument: test

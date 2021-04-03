@@ -1,16 +1,10 @@
-import pdb
+import numpy as np
+from ..equation_parser import Equation
 from struct import (
   pack, unpack
 )
-import numpy as np
-from lark import Lark
-from lark.indenter import Indenter
-import os
-from pathlib import Path
+import pdb
 
-schemata_path = os.path.abspath(os.path.join(Path(__file__).parent.parent, 'schemata'))
-
-math_grammar_path = os.path.join(schemata_path, 'tunerpro_math.lark')
 
 # SEEK-BASED READ/WRITE INTERFACE TO BINARY FILE, BOUND WITH embedded_data ARGS
 # essentially a closure, binds the embedded_data offset, stride, etc. to 
@@ -43,16 +37,27 @@ class BinaryBinder:
     # translate raw values to values scaled by equation
     scaled = data.astype(np.int)*30
     # TODO: move this to ScaledData interface
-    equation = self.axis.MATH.attrib['equation']
-    # parse math
-    kwargs = dict(rel_to=__file__, start='file_input')
-    parser = Lark.open(math_grammar_path, parser='lalr', **kwargs).parse
+      
+    #equation_str = self.axis.MATH.attrib['equation']
+    equation_str = 'x+30+SIN(x)+INDEX()+CELL(2; TRUE)'
+    
     # override
-    equation = '(x+30+sin(30)+ROUND(2.0; 3) << 2) + IF(0xfe9 < 2; y; FALSE) + 2 ^ 6'
+    #equation = '(x+30+sin(30)+ROUND(2.0; 3) << 2) + IF(0xfe9 < 2; y; FALSE) + 2 ^ 6'
+    #equation = 'x + 20 - 2 | 2 + (5^6) * 2 & (8*y !| 5) !& 6 + SIN(x) + IF(2 < z; 3; TRUE)'
+    #equation_str = 'x + 30 - SIN(x) + IF(2 < 5; z; TRUE)'
     try:
-      print(f'{equation}')
-      tree = parser(f'{equation}')
-      print(tree.pretty())
+      print(f'{equation_str}')
+      equation = Equation(equation_str)
+      print('call tree:')
+      call_tree = equation.numpified
+      equation.print(call_tree)
+      print('inverted:')
+      inverted = equation.inverted
+      equation.print(inverted)
+      print('raw data:')
+      print(data)
+      print('scaled:')
+      print(scaled)
       pdb.set_trace()
     except Exception as error:
       print(error)

@@ -1,4 +1,4 @@
-<!-- Written 03/21/2021 17:41:37 -->
+<!-- Written 04/03/2021 00:12:12 -->
 <XDFFORMAT version="1.60">
   <XDFHEADER>
     <flags>0x1</flags>
@@ -36,7 +36,7 @@
       <datatype>6</datatype>
       <unittype>4</unittype>
       <DALINK index="0" objidhash="0xA4912B39" />
-      <MATH equation="X*30">
+      <MATH equation="X*30+IF(2&gt;3; TRUE; FALSE)">
         <VAR id="X" />
       </MATH>
     </XDFAXIS>
@@ -59,7 +59,7 @@
       <min>0.000000</min>
       <max>1.000000</max>
       <outputtype>1</outputtype>
-      <MATH equation="X*.75-22.5+Y">
+      <MATH equation="X*.75-22.5+Y+SIN(X+Y)">
         <VAR id="X" />
         <VAR id="Y" type="link" linkid="0x3540" />
       </MATH>
