@@ -48,9 +48,9 @@ class FunctionCallTransformer(Transformer):
     'ATAN': np.arctan,
     # XDF SPECIFIC
     # ...axis
-    'INDEX': lambda: None,
-    'INDEXES': lambda: None,
-    'CELL': lambda idx, precalc: None
+    #'INDEX': lambda: None,
+    #'INDEXES': lambda: None,
+    #'CELL': lambda idx, precalc: None
   }
   
   @staticmethod
@@ -59,8 +59,10 @@ class FunctionCallTransformer(Transformer):
   
   @v_args(inline=True)
   def func_call(self, name_token, args_tree=None):
+    function = self.function_registry[name_token.value] if name_token.value \
+    in self.function_registry else name_token.value
     return self.operation_call_tree(
-      self.function_registry[name_token.value],
+      function,
       args_tree.children if args_tree else []
     )
   
@@ -86,8 +88,19 @@ class FunctionCallTransformer(Transformer):
     return self.operation_call_tree(np.logical_and, args)
   
   def bitwise_shift(self, args):
-    pdb.set_trace()
-    return self.operation_call_tree(np.logical_xor, args)
+    op_to_func = {
+      '<<': np.left_shift,
+      '>>': np.right_shift,
+    }
+    # in parse order, first arg is left side, second is operator, third is right side
+    operator_tree = args[1]
+    operator = operator_tree.children[0].value
+    # idiomatic to use remove here, although not really 'functional'
+    args.remove(operator_tree)
+    return self.operation_call_tree(
+      op_to_func[operator],
+      args
+    )
   
   @v_args(inline=True)
   def comparison(self, left, token_tree, right):
@@ -134,7 +147,6 @@ class FunctionCallTransformer(Transformer):
           )
           numerical_args.append(negate_call)
           continue
-        pass
       else:
         numerical_args.append(arg)
     # sum up the numerical args

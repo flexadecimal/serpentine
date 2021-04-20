@@ -1,25 +1,23 @@
-# FOR ENTITY DEFINITIONS
-from sqlalchemy.ext.declarative import declarative_base
-# basic types
-from sqlalchemy import (
-  Column, Integer, String, DateTime, Numeric, ForeignKey, Table, Float
-)
-# relationship stuff
-from sqlalchemy.orm import (
-  relationship, backref, composite, foreign, remote
+from lxml import (
+  etree as xml,
+  objectify,
 )
 
-# FOR CORE
-# ...session, meta, engine from core
-from .. import session, meta, engine
-# custom base with automatic tablenames, dev friendly repr, and automatic json serialization
-from .Base import (
-  Base as custom_base
-)
-Base = declarative_base(cls = custom_base, metadata = meta)
+import os, sys 
+import numpy as np
+import pdb
+from pathlib import Path
 
-# MIXINS
-# ...shared FK to single XDF
-from .XdfIdMixin import XdfIdMixin
-# ..too specific to include here
-#from .EmbeddedMathMixin import EmbeddedMathMixin
+from .Base import Base
+
+core_path = Path(__file__).parent.parent
+schemata_path = os.path.join(core_path, 'schemata')
+xdf_schema_path = 'xdf_schema.xsd'
+
+def xml_print(tree_list, chunk=2):
+  #strings = list(map(
+  #  lambda xml: objectify.dump(xml),
+  #  filter(lambda xml: xml is not None, tree_list)
+  #))
+  #return '\n'.join(strings)
+  return objectify.dump(tree_list)

@@ -23,7 +23,7 @@ class Equation(object):
   def print(tree):
     printer = transformations['Printer'](visit_tokens = True)
     stringified = printer.transform(tree)
-    print(stringified.pretty())
+    return stringified.pretty()
   
   @property
   def numpified(self):
@@ -37,6 +37,11 @@ class Equation(object):
     return self.apply_pipeline(
       self.tree,
       transformations['FunctionCallTransformer'](visit_tokens = True),
-      #transformations['VarBinder'](visit_tokens = True),
+      # variables must be bound before XDF-specific functions can be evaluated
+      transformations['VarBinder'](),
+      #transformations['XDFAxisFunctor'](),
       #transformations['Inverter']()
     )
+    
+  def __repr__(self):
+    return self.print(self.numpified)

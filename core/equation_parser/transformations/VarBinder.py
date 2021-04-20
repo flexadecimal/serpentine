@@ -9,16 +9,19 @@ from lark.visitors import (
 import numpy as np
 import pdb
 
-from .FunctionCallTransformer import FunctionCallTransformer
+#from .FunctionCallTransformer import FunctionCallTransformer
 
-class VarBinder(FunctionCallTransformer):
+class VarBinder(Transformer):
   '''
   This transformation binds binary variables to other XDF items
   '''
   def __init__(self):
     super().__init__(visit_tokens=True)
     # we have function_registry already from parent
-    
+  
+  def NAME(self, args):
+    pdb.set_trace()
+  
   def __default_token__(self, token):
     pdb.set_trace()
     pass

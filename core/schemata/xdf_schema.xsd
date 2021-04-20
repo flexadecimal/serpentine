@@ -1,6 +1,15 @@
 <?xml version="1.0"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
   <!-- COMMON TYPES -->
+  <!-- ...base offset-->
+  <xs:attributeGroup name='base_offset_attributes'>
+    <xs:attribute name='offset' type='xs:integer'/>
+    <xs:attribute name='subtract' type='xs:integer'/>
+  </xs:attributeGroup>
+  
+  <xs:complexType name='base_offset'>
+    <xs:attributeGroup ref='base_offset_attributes'/>
+  </xs:complexType>
   <!-- ...has description -->
   <xs:group name='has_description'>
     <xs:sequence>
@@ -31,9 +40,11 @@
   <!-- ...MATH type - EQUATION with VARs -->
   <xs:complexType name='math'>
     <xs:sequence>
-      <xs:element name='VAR'>
+      <xs:element name='VAR' maxOccurs='unbounded'>
         <xs:complexType>
           <xs:attribute name='id' type='xs:string'/>
+          <xs:attribute name='type' type='xs:string'/>
+          <xs:attribute name='linkid' type='xs:string'/>
         </xs:complexType>
       </xs:element>
     </xs:sequence>
@@ -59,6 +70,7 @@
     <xs:sequence>
       <xs:element name='DALINK'>
         <xs:complexType>
+          <xs:attribute name='objidhash' type='xs:string'/>
           <xs:attribute name='index' type='xs:integer'/>
         </xs:complexType>
       </xs:element>
@@ -76,7 +88,11 @@
               <xs:element name='deftitle' type='xs:string'/>
               <xs:element name='description' type='xs:string'/>
               <xs:element name='author' type='xs:string'/>
-              <xs:element name='baseoffset' type='xs:integer'/>
+              <!-- use choice for case-insensitivity -->
+              <xs:choice>
+                <xs:element name='baseoffset' type='base_offset'/>
+                <xs:element name='BASEOFFSET' type='base_offset'/>
+              </xs:choice>
               <xs:element name='DEFAULTS'>
                 <xs:complexType>
                   <xs:attribute name='datasizeinbits' type='xs:positiveInteger'/>

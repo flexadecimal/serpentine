@@ -21,8 +21,8 @@ class TypeTransformer(Transformer):
       <function sin>
         x
   
-  Classic Lark Visitor uses string value, so it would attempt to look up via getattr,
-  where TypeVisitor will use the type of the data element.
+  Classic Lark Transformer uses string value, so it would attempt to look up via getattr,
+  where TypeTransformer will use the type of the data element.
   '''
   @staticmethod
   def type_disambiguator(data):

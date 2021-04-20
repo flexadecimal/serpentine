@@ -17,10 +17,10 @@ statement: (test)*
 ?arithmetic: term (add_op term)*
 ?term: factor (mul_op factor)*
 
-?factor: molecule
-// unary operations here, not used in tunerpro
-//?factor: factor_op factor | molecule
-//!factor_op: "+"|"-"|"~"
+// unary operations only used for  special negation case of sum, 
+// e.g. '-x+2' -> sum(negate(x), 2)
+?factor: factor_op factor | molecule
+!factor_op: "-"
 
 // operators defined seperately for cascading precedence
 !add_op: "+"|"-"

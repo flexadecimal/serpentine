@@ -9,5 +9,6 @@ __all__ = [
   #'Table',
   # NON-SQL
   'BinParser',
+  'Xdf',
   #'MathParser',
 ]
