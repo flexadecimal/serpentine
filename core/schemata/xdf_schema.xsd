@@ -1,20 +1,28 @@
 <?xml version="1.0"?>
+<!-- 
+TODO: move this to Schematron to take advantage of co-occurence constraints,
+e.g. XDFTABLE/XDFAXIS/MATH/@maxOccurs = @rows * @cols 
+-->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
   <!-- COMMON TYPES -->
   <!-- ...base offset-->
   <xs:attributeGroup name='base_offset_attributes'>
-    <xs:attribute name='offset' type='xs:integer'/>
+    <xs:attribute name='offset' type='xs:string'/>
     <xs:attribute name='subtract' type='xs:integer'/>
   </xs:attributeGroup>
   
   <xs:complexType name='base_offset'>
-    <xs:attributeGroup ref='base_offset_attributes'/>
+    <xs:simpleContent>
+      <xs:extension base='xs:string'>
+        <xs:attributeGroup ref='base_offset_attributes'/>
+      </xs:extension>
+    </xs:simpleContent>
   </xs:complexType>
   <!-- ...has description -->
   <xs:group name='has_description'>
     <xs:sequence>
-      <xs:element name='title' type='xs:string'/>
-      <xs:element name='description' type='xs:string' minOccurs='0'/>
+      <xs:element name='title' type='xs:string' maxOccurs='1'/>
+      <xs:element name='description' type='xs:string' minOccurs='0' maxOccurs='1'/>
     </xs:sequence>
   </xs:group>
   <!-- ...has parameter meta: uniqueid and flags-->
@@ -42,13 +50,27 @@
     <xs:sequence>
       <xs:element name='VAR' maxOccurs='unbounded'>
         <xs:complexType>
+          <!-- source var - has no attributes -->
+          <!-- link attributes -->
           <xs:attribute name='id' type='xs:string'/>
           <xs:attribute name='type' type='xs:string'/>
           <xs:attribute name='linkid' type='xs:string'/>
+          <!-- raw hex attributes -->
+          <xs:attribute name='address' type='xs:string'/>
+          <xs:attribute name='flags' type='xs:string'/>
         </xs:complexType>
       </xs:element>
     </xs:sequence>
     <xs:attribute name='equation' type='xs:string'/>
+  </xs:complexType>
+  <!-- ...Table/Axis specific extension - MATH with row, col -->
+  <xs:complexType name='math_axis'>
+    <xs:complexContent>
+      <xs:extension base='math'>
+        <xs:attribute name='row' type='xs:positiveInteger'/>
+        <xs:attribute name='col' type='xs:positiveInteger'/>
+      </xs:extension>
+    </xs:complexContent>
   </xs:complexType>
   <!-- ...DATA/UNIT TYPE - some type of indexed enumeration shared between axes and constants -->
   <xs:group name='has_data_unit_types'>
@@ -88,7 +110,7 @@
               <xs:element name='deftitle' type='xs:string'/>
               <xs:element name='description' type='xs:string'/>
               <xs:element name='author' type='xs:string'/>
-              <!-- use choice for case-insensitivity -->
+              <!-- weird TunerPro bug - baseoffset case insensitivity -->
               <xs:choice>
                 <xs:element name='baseoffset' type='base_offset'/>
                 <xs:element name='BASEOFFSET' type='base_offset'/>
@@ -157,7 +179,12 @@
                           <xs:attribute name='value' type='xs:decimal'/>
                         </xs:complexType>
                       </xs:element>
+                      <!-- 
+                      Table/Axis math can have many, up to 1 for each table cell + the original conversion.
+                      Axis MATH past 1st can have row/col, Constant does not.
+                      -->
                       <xs:element name='MATH' type='math'/>
+                      <xs:element name='MATH' type='math_axis' minOccurs='0' maxOccurs='unbounded'/>
                     </xs:sequence>
                     <xs:attributeGroup ref='has_parameter_meta'/>
                     <xs:attribute name='id' type='xs:string'/>

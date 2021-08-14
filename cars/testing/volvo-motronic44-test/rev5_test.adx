@@ -1,5 +1,5 @@
 <ADXFORMAT version="1.01">
-  <!-- Written 02/23/2015 11:08:11 -->
+  <!-- Written 05/09/2021 14:45:38 -->
   <ADXHEADER>
     <guid>4e771665-6c88-425e-96b5-a8cc342a58f1</guid>
     <flags>0x10001</flags>
@@ -29,8 +29,10 @@
     <outputtype>1</outputtype>
     <datatype>6</datatype>
     <unittype>4</unittype>
-    <MATH equation="X*30">
+    <MATH equation="X*30+Y+Z+SIN(Y+X)">
       <VAR varID="X" type="native" />
+      <VAR varID="Y" type="link" linkIDHash="0x597D9DE9" />
+      <VAR varID="Z" type="link" linkIDHash="0x36DDA401" />
     </MATH>
   </ADXVALUE>
 

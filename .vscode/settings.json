@@ -1,0 +1,5 @@
+{
+  "python.linting.mypyEnabled": true,
+  "python.linting.enabled": true,
+  "python.linting.mypyPath": "${workspaceFolder}/venv/bin/mypy"
+}

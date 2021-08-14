@@ -17,7 +17,7 @@ statement: (test)*
 ?arithmetic: term (add_op term)*
 ?term: factor (mul_op factor)*
 
-// unary operations only used for  special negation case of sum, 
+// unary operations only used for special negation case of sum, 
 // e.g. '-x+2' -> sum(negate(x), 2)
 ?factor: factor_op factor | molecule
 !factor_op: "-"
@@ -39,8 +39,7 @@ statement: (test)*
 arguments: (argument ";")* (argument [";"])
 ?argument: test
 
-number: DEC_NUMBER | HEX_NUMBER | FLOAT 
-
+number: DEC_NUMBER | HEX_NUMBER | FLOAT
 DEC_NUMBER: /[1-9]\d*l?/i
 HEX_NUMBER: /0x[\da-f]*l?/i
 

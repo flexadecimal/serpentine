@@ -1,6 +1,8 @@
-lark==0.11.1
+lark==0.11.3
 lxml==4.6.3
-mpmath==1.2.1
-numpy==1.20.2
-SQLAlchemy==1.4.4
-sympy==1.7.1
+numpy==1.21.1
+# the following for mypy, so we can use numpy typing
+mypy==0.910
+mypy-extensions==0.4.3
+toml==0.10.2
+typing-extensions==3.10.0.0

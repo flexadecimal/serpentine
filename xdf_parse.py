@@ -1,5 +1,4 @@
 import os
-import pdb
 import re
 from enum import Enum
 from itertools import (
@@ -7,7 +6,7 @@ from itertools import (
 )
 import sys
 
-from core import *
+from core.entity.Xdf import Xdf
 
 cars_folder = './cars/testing'
 car_name_regex = rf"{cars_folder}/(?P<car>[\w+-_]+)"
@@ -27,9 +26,14 @@ if __name__ == '__main__':
     files_by_type = {ext[1:]: list(files) for ext, files in groupby(files, lambda file: os.path.splitext(file)[1])}
     # apply xdf parsing to bin file to render scalars and tables
     for xdf_path, bin_path, adx_path in zip(files_by_type['xdf'], files_by_type['bin'], files_by_type['adx']):
-      parser = entity['Xdf'](
-        xdf = os.path.join(root, xdf_path),
-        adx = os.path.join(root, adx_path),
-        bin = os.path.join(root, bin_path)
+      xdf = Xdf.from_path(
+        os.path.join(root, xdf_path),
+        os.path.join(root, bin_path)
       )
+      
+      #const = xdf.xpath('./XDFCONSTANT[13]')[0].value
+      constants = {c.title: c.value for c in xdf.Constants}
+      ignition_map = xdf.xpath('./XDFTABLE[1]')[0]
+      tables = {t.title: t.value for t in xdf.Tables}
+      pass
   

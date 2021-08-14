@@ -1,4 +1,4 @@
-<!-- Written 08/14/2021 10:41:03 -->
+<!-- Written 07/25/2021 13:44:56 -->
 <XDFFORMAT version="1.60">
   <XDFHEADER>
     <flags>0x1</flags>
@@ -48,49 +48,23 @@
       <datatype>23</datatype>
       <unittype>85</unittype>
       <DALINK index="0" />
-      <MATH equation="X*.048">
+      <MATH equation="X">
         <VAR id="X" />
       </MATH>
     </XDFAXIS>
     <XDFAXIS id="z">
-      <EMBEDDEDDATA mmedaddress="0x13C37" mmedelementsizebits="8" mmedrowcount="16" mmedcolcount="16" mmedmajorstridebits="0" mmedminorstridebits="0" />
+      <EMBEDDEDDATA mmedtypeflags="0x04" mmedaddress="0x13C37" mmedelementsizebits="8" mmedrowcount="16" mmedcolcount="16" mmedmajorstridebits="0" mmedminorstridebits="0" />
       <units>Degrees</units>
       <decimalpl>2</decimalpl>
-      <min>0.100000</min>
-      <max>10.000000</max>
+      <min>0.000000</min>
+      <max>1.000000</max>
       <outputtype>1</outputtype>
-      <MATH equation="x*2">
-        <VAR id="x" />
-      </MATH>
-      <MATH col="1" equation="x+2+SIN(5)">
-        <VAR id="x" />
-      </MATH>
-      <MATH col="6" equation="x*SIN(2)+TAN(6)">
-        <VAR id="x" />
-      </MATH>
-      <MATH row="1" equation="x-TAN(6)">
-        <VAR id="x" />
-      </MATH>
-      <MATH row="1" col="1" equation="x+1">
-        <VAR id="x" />
-      </MATH>
-      <MATH row="1" col="2" equation="x+2">
-        <VAR id="x" />
-      </MATH>
-      <MATH row="1" col="3" equation="x+3">
-        <VAR id="x" />
-      </MATH>
-      <MATH row="2" col="1" equation="x+20">
-        <VAR id="x" />
-      </MATH>
-      <MATH row="2" col="2" equation="x+21">
-        <VAR id="x" />
-      </MATH>
-      <MATH row="2" col="3" equation="X+22">
+      <MATH equation="X*.75-22.5+Y+H*SIN(X+Y+Z)+L">
         <VAR id="X" />
-      </MATH>
-      <MATH row="7" equation="x-ATAN(2)">
-        <VAR id="x" />
+        <VAR id="Y" type="link" linkid="0x3540" />
+        <VAR id="H" type="link" linkid="0x2F8E" />
+        <VAR id="Z" type="address" address="0x7FE98" flags="0x3" />
+        <VAR id="L" />
       </MATH>
     </XDFAXIS>
   </XDFTABLE>
@@ -168,8 +142,9 @@
       <min>0.000000</min>
       <max>255.000000</max>
       <outputtype>1</outputtype>
-      <MATH equation="X*.048">
+      <MATH equation="X*.048+J">
         <VAR id="X" />
+        <VAR id="J" type="address" />
       </MATH>
     </XDFAXIS>
   </XDFTABLE>
@@ -334,8 +309,9 @@
       <min>0.000000</min>
       <max>255.000000</max>
       <outputtype>1</outputtype>
-      <MATH equation="X*.007813">
+      <MATH equation="X*.007813+Y+IF(2 &lt; 3; TRUE; SIN(2*X))">
         <VAR id="X" />
+        <VAR id="Y" type="link" linkid="0x2F8E" />
       </MATH>
     </XDFAXIS>
   </XDFTABLE>
@@ -432,7 +408,7 @@
       <indexcount>8</indexcount>
       <datatype>6</datatype>
       <unittype>4</unittype>
-      <DALINK index="0" />
+      <DALINK index="0" objidhash="0xA4912B39" />
       <LABEL index="0" value="2190.00" />
       <LABEL index="1" value="2580.00" />
       <LABEL index="2" value="3000.00" />
@@ -451,8 +427,9 @@
       <min>0.000000</min>
       <max>255.000000</max>
       <outputtype>1</outputtype>
-      <MATH equation="X*.048">
+      <MATH equation="X*.048+A">
         <VAR id="X" />
+        <VAR id="A" type="link" linkid="0x3615" />
       </MATH>
     </XDFAXIS>
   </XDFTABLE>
@@ -530,8 +507,9 @@
       <datatype>19</datatype>
       <unittype>15</unittype>
       <DALINK index="0" />
-      <MATH equation="X-80">
+      <MATH equation="X-80+y">
         <VAR id="X" />
+        <VAR id="y" type="link" linkid="0x4636" />
       </MATH>
     </XDFAXIS>
     <XDFAXIS id="z">
@@ -846,8 +824,9 @@
       <min>0.000000</min>
       <max>255.000000</max>
       <outputtype>1</outputtype>
-      <MATH equation="X*.0195">
+      <MATH equation="X*.0195*Z">
         <VAR id="X" />
+        <VAR id="Z" type="link" linkid="0x2FD0" />
       </MATH>
     </XDFAXIS>
   </XDFTABLE>
@@ -1300,6 +1279,12 @@
       <outputtype>1</outputtype>
       <MATH equation="X*.125">
         <VAR id="X" />
+      </MATH>
+      <MATH row="3" col="3" equation="X+1">
+        <VAR id="X" />
+      </MATH>
+      <MATH row="7" col="2" equation="x*2">
+        <VAR id="x" />
       </MATH>
     </XDFAXIS>
   </XDFTABLE>

@@ -1,30 +1,23 @@
-from lark import (
-  Lark,
-  Tree
-)
-from lark.visitors import (
-  v_args
-)
-from .TypeTransformer import TypeTransformer
-import pdb
-
-#from .FunctionCallTransformer import FunctionCallTransformer
+from typing import *
+from lark import Tree
+from lark.visitors import v_args
+from .TypeVisitors import TypeTransformer, func_printer
 
 class Printer(TypeTransformer):
   '''
-  This transformation binds binary variables to other XDF items
+  This transformation is used in printing ASTs internally by converting values of other types to their string representations.
   '''
   #def __init__(self):
   #  super().__init__(visit_tokens=True)
   
   # TODO - fix v_args not working here
   #@v_args(inline=True)
-  def function(self, args):
-    func, func_args = args
-    return Tree(repr(func), func_args)
+  def function(self, args: List):
+    func: Callable = args[0]
+    func_args: List = args[1]
+    return Tree(f"<function '{func_printer(func)}'>", func_args)
   
   #def str(self, tree):
-  #  pdb.set_trace()
   #  pass
   
   def __default__(self, data, children, meta):

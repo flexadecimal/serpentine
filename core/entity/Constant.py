@@ -1,22 +1,17 @@
-from .common import *
+from .Base import Base
+from .Math import Math
+from .EmbeddedData import EmbeddedMathMixin
 from .Parameter import Parameter
-from .EmbeddedMathMixin import EmbeddedMathMixin
+import numpy as np
 
-class Constant(EmbeddedMathMixin, Base):
+class Constant(Parameter, EmbeddedMathMixin):
   '''
-  XDF constants describe the translation of engine tuning parameters from
-  the binary ROMs of various ECUs.
-  Constants and Axes share common interfaces:
-    - EMBEDDEDDATA .bin parsing
-    - MATH equation parsing
+  XDF Constant, a.k.a. Scalar.
   '''
-  #unique_id = 
-  __mapper_args__ = {
-    'polymorphic_identity': 'constant',
-  }
-  
-  # ...math and embedded parsing from EmbeddedMathMixin
-  
-  # constant-specific data
-  data_type = Column(Integer)
-  unit_type = Column(Integer)
+  Math: Math = Base.xpath_synonym('./MATH')
+
+  @property
+  def value(self):
+    return self.Math.conversion_func(
+      self.memory_map.astype(np.float, copy=False)
+    )
