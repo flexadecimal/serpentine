@@ -1,4 +1,4 @@
-from typing import *
+import typing as T
 from lark import Tree
 from lark.visitors import v_args
 from .TypeVisitors import TypeTransformer, func_printer
@@ -12,9 +12,9 @@ class Printer(TypeTransformer):
   
   # TODO - fix v_args not working here
   #@v_args(inline=True)
-  def function(self, args: List):
-    func: Callable = args[0]
-    func_args: List = args[1]
+  def function(self, args: T.List):
+    func: T.Callable = args[0]
+    func_args: T.List = args[1]
     return Tree(f"<function '{func_printer(func)}'>", func_args)
   
   #def str(self, tree):

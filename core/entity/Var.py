@@ -2,11 +2,13 @@ from abc import (
   ABC, abstractmethod
 )
 from .Base import Base, XmlAbstractBaseMeta, XdfRefMixin
+from .Parameter import Parameter
 import numpy as np
+import numpy.typing as npt
 
 class Var(Base):
 
-  id = Base.xpath_synonym('./@id')
+  id: str = Base.xpath_synonym('./@id')
   
   def __repr__(self):
     return f"<{self.__class__.__qualname__} '{self.id}'>"
@@ -26,7 +28,7 @@ class FreeVar(Var, ABC, XdfRefMixin, metaclass=XmlAbstractBaseMeta):
   https://en.wikipedia.org/wiki/Free_variables_and_bound_variables
   '''  
   @abstractmethod
-  def value(self):
+  def value(self) -> npt.NDArray:
     pass
   
 # actual tunerpro-style implementations
@@ -38,10 +40,10 @@ class LinkedVar(FreeVar):
   link_id = Base.xpath_synonym('./@linkid')
 
   @property
-  def value(self):
+  def value(self) -> npt.NDArray:
     # TODO: this does NOT guard against circular references, neither does TunerPro. We need to guard against circular references when saving.
     # only Z-axis of Table used for value
-    linked_param = self.xpath(f"""
+    linked_param: Parameter = self.xpath(f"""
       //XDFTABLE[@uniqueid='{self.link_id}']/XDFAXIS[@id='z'] |
       //XDFCONSTANT[@uniqueid='{self.link_id}']
     """)[0]
@@ -53,15 +55,15 @@ class AddressVar(FreeVar):
   This is similar to BoundVar context, but with global binary file scope and options belonging to the Var instance.
   '''
   @property
-  def address(self):
+  def address(self) -> int:
     return int(self.xpath('./@address')[0], 16)
   
   @property
-  def flags(self):
+  def flags(self) -> int:
     return int(self.xpath('./@flags')[0], 16)
 
   @property
-  def value(self):
+  def value(self) -> npt.NDArray:
     return np.memmap(
       self._xdf._binfile,
       shape = (1, ),

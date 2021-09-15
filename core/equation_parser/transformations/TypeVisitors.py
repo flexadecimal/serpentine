@@ -1,4 +1,4 @@
-from typing import *
+import typing as T
 from lark import (
   Tree
 )
@@ -12,7 +12,7 @@ import functools
 
 # ...because functools.partial object has func as member, need polymorphic
 # logic to print 'f(g(h(x)))'
-def func_printer(func_like: Callable) -> str:
+def func_printer(func_like: T.Callable) -> str:
   if type(func_like) == functools.partial:
     return func_like.func.__name__
   else:
@@ -48,15 +48,15 @@ class TypeTransformer(Transformer):
   def _call_userfunc(self, tree: Tree, new_children = None):
     children = new_children if new_children is not None else tree.children
     try:
-      func: Callable = getattr(
+      func = getattr(
         self,
         type_disambiguator(tree.data),
       )
     except AttributeError:
-      return self.__default__(tree.data, children, tree.meta)
+      return self.__default__(tree.data, children, tree.meta) # type: ignore
     else:
       try:
-        wrapper: Union[Callable, None] = getattr(func, 'visit_wrapper', None)
+        wrapper: T.Optional[T.Callable] = getattr(func, 'visit_wrapper', None)
         if wrapper is not None:
           return func.visit_wrapper(func, tree.data, children, tree.meta)
         else:
@@ -76,7 +76,7 @@ class TypeInterpreter(Interpreter):
   '''
   def visit(self, tree):
     try:
-      func: Callable = getattr(self, type_disambiguator(tree.data))
+      func: T.Callable = getattr(self, type_disambiguator(tree.data))
     except AttributeError:
       return self.__default__(tree)
     else:

@@ -1,4 +1,4 @@
-from typing import *
+import typing as T
 from lxml import (
   etree as xml,
   objectify
@@ -9,7 +9,7 @@ from pathlib import Path
 from .Base import Base
 from . import (
   Parameter, Table, Constant, 
-  EmbeddedData, Math, Var
+  EmbeddedData, Var
 )
 import graphlib
 import functools
@@ -27,18 +27,24 @@ except xml.XMLSchemaParseError as schema_error:
   raise schema_error
   
 class Xdf(Base):
+  # internals
+  _binfile: T.BinaryIO
+  # public
   title: str = Base.xpath_synonym('./XDFHEADER/deftitle/text()')
   description: str = Base.xpath_synonym('./XDFHEADER/description/text()')
   author: str = Base.xpath_synonym('./XDFHEADER/author/text()') 
   Categories = Base.xpath_synonym('./XDFHEADER/CATEGORY', many=True)
-  Tables: List[Table.Table] = Base.xpath_synonym('./XDFTABLE', many=True)
-  Constants: List[Constant.Constant] = Base.xpath_synonym('./XDFCONSTANT', many=True)
+  Tables: T.List[Table.Table] = Base.xpath_synonym('./XDFTABLE', many=True)
+  Constants: T.List[Constant.Constant] = Base.xpath_synonym('./XDFCONSTANT', many=True)
   # Tables and Constants are both Parameters, but Parameters have more general semantics in functions
-  Parameters: List[Parameter.Parameter] = Base.xpath_synonym('./XDFTABLE | ./XDFCONSTANT', many=True)
+  Parameters: T.List[Parameter.Parameter] = Base.xpath_synonym(
+    './XDFTABLE | ./XDFCONSTANT', 
+    many=True
+  )
 
   # internals
   @property
-  def _bin_internals(self):
+  def _bin_internals(self) -> T.Dict[str, T.Any]:
     '''
     Internal binary details - base offset, start address. Parameters use this to convert from binary to numerical data.
     '''
@@ -72,12 +78,12 @@ class Xdf(Base):
     return xdf_object_tree
 
   @property
-  def parameters_by_id(self):
+  def parameters_by_id(self) -> T.Dict[str, Parameter.Parameter]:
     return {param.id: param for param in self.Parameters}
 
   #graphlib topsort
   @functools.cached_property
-  def math_eval_order(self) -> List[Math.Math]:
+  def math_eval_order(self) -> T.Iterable[EmbeddedData.Math]:
     has_link = self.xpath("//MATH[./VAR[@type='link']]")
     graph = {math:  
        #lambda id: self.xpath(f"//MATH[./VAR[@linkid='{id}']]")[0],
@@ -90,7 +96,7 @@ class Xdf(Base):
     }
     try:
       sorter = graphlib.TopologicalSorter(graph)
-      eval_order = list(sorter.static_order())
+      eval_order = sorter.static_order()
     except graphlib.CycleError as error:
       cycle = set(error.args[1])
       root = self.getroottree()
@@ -103,7 +109,7 @@ class Xdf(Base):
 class XdfTyper(xml.PythonElementClassLookup):
   name_to_class = {
     'XDFFORMAT': Xdf,
-    'MATH': Math.Math,
+    'MATH': EmbeddedData.Math,
     'XDFCONSTANT': Constant.Constant,
     'XDFTABLE': Table.Table,
     'EMBEDDEDDATA': EmbeddedData.EmbeddedData
@@ -111,7 +117,7 @@ class XdfTyper(xml.PythonElementClassLookup):
   
   # polymorphic dispatch by element
   @staticmethod
-  def axis_polymorphic_dispatch(**attrib):
+  def axis_polymorphic_dispatch(**attrib) -> T.Type[Table.Axis]:
     if attrib['id'] == 'z':
       # special case for ZAxis - has many <MATH>, etc.
       return Table.ZAxis
@@ -133,11 +139,24 @@ class XdfTyper(xml.PythonElementClassLookup):
       # implicit binary conversion variable, typically 'X'
       klass = Var.BoundVar
     return klass
+
+  @staticmethod
+  def math_polymorphic_dispatch(**attrib) -> T.Type[Table.MaskedMath]:
+    if 'row' in attrib and 'col' in attrib:
+      return Table.CellMath
+    elif 'row' in attrib:
+      return Table.RowMath
+    elif 'col' in attrib:
+      return Table.ColumnMath
+    else:
+      return Table.GlobalMath
+
   
   # dispatch attributes as arguments to functions. __func__ DOES exist on staticmethod, mypy doesn't know about this
   name_to_attrib_func = {
     'VAR': var_polymorphic_dispatch.__func__, #type: ignore
     'XDFAXIS': axis_polymorphic_dispatch.__func__, #type: ignore
+    'MATH': math_polymorphic_dispatch.__func__ # type: ignore
   }
   
   def lookup(self, doc, root):

@@ -1,15 +1,19 @@
-from .Base import Base, XmlAbstractBaseMeta, XdfRefMixin
+from .Base import Base, XmlAbstractBaseMeta, XdfRefMixin, Array
 from abc import ABC, abstractmethod
+import numpy as np
+import numpy.typing as npt
 
 class Parameter(Base, XdfRefMixin, ABC, metaclass=XmlAbstractBaseMeta):
   id: str = Base.xpath_synonym('./@uniqueid')
   title: str = Base.xpath_synonym('./title/text()')
   description: str = Base.xpath_synonym('./description/text()')
+  # TODO: codify using XDF-local enum?
+  # see https://docs.python.org/3/library/enum.html#functional-api
   Category = Base.xpath_synonym('./CATEGORYMEM')
 
   @property
   @abstractmethod
-  def value(self):
+  def value(self) -> Array:
       '''
       XDF parameters, using their `<MATH>` equation data, convert binary data to a numerical value - 
       right now, these are only `XDFCONSTANT` and `XDFTABLE`. `XDFTABLE` parses 3 axes to form a surface,

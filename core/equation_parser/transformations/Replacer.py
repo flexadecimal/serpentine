@@ -1,4 +1,4 @@
-from typing import *
+import typing as T
 from lark import (
   Lark,
   Tree
@@ -15,7 +15,7 @@ class Replacer(TypeTransformer):
   keyword arguments. Each source key will be replaced with the value element.
   Elements not specified will be preserved.
   '''
-  def __init__(self, replacement_spec: Dict[str, any]):
+  def __init__(self, replacement_spec: T.Dict[str, T.Any]):
     super().__init__(visit_tokens = True)
     self.replacement_spec = replacement_spec
   

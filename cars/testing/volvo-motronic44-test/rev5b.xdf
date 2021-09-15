@@ -1,4 +1,4 @@
-<!-- Written 08/14/2021 10:41:03 -->
+<!-- Written 09/06/2021 17:11:12 -->
 <XDFFORMAT version="1.60">
   <XDFHEADER>
     <flags>0x1</flags>
@@ -55,21 +55,22 @@
     <XDFAXIS id="z">
       <EMBEDDEDDATA mmedaddress="0x13C37" mmedelementsizebits="8" mmedrowcount="16" mmedcolcount="16" mmedmajorstridebits="0" mmedminorstridebits="0" />
       <units>Degrees</units>
-      <decimalpl>2</decimalpl>
+      <decimalpl>3</decimalpl>
       <min>0.100000</min>
       <max>10.000000</max>
       <outputtype>1</outputtype>
       <MATH equation="x*2">
         <VAR id="x" />
       </MATH>
-      <MATH col="1" equation="x+2+SIN(5)">
+      <MATH col="4" equation="y+10*sin(a)">
+        <VAR id="y" />
+        <VAR id="a" type="link" linkid="0x38B6" />
+      </MATH>
+      <MATH col="6" equation="x+sin(5)+tan(2)">
         <VAR id="x" />
       </MATH>
-      <MATH col="6" equation="x*SIN(2)+TAN(6)">
-        <VAR id="x" />
-      </MATH>
-      <MATH row="1" equation="x-TAN(6)">
-        <VAR id="x" />
+      <MATH row="1" equation="j+5">
+        <VAR id="j" />
       </MATH>
       <MATH row="1" col="1" equation="x+1">
         <VAR id="x" />
@@ -89,8 +90,13 @@
       <MATH row="2" col="3" equation="X+22">
         <VAR id="X" />
       </MATH>
-      <MATH row="7" equation="x-ATAN(2)">
-        <VAR id="x" />
+      <MATH row="5" equation="k*2/i%2">
+        <VAR id="k" />
+        <VAR id="i" type="link" linkid="0x4978" />
+      </MATH>
+      <MATH row="7" equation="z+TAN(h)">
+        <VAR id="z" />
+        <VAR id="h" type="link" linkid="0x5C4D" />
       </MATH>
     </XDFAXIS>
   </XDFTABLE>

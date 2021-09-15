@@ -1,5 +1,16 @@
 {
-  "python.linting.mypyEnabled": true,
-  "python.linting.enabled": true,
-  "python.linting.mypyPath": "${workspaceFolder}/venv/bin/mypy"
+  "python.linting.mypyPath": "${workspaceFolder}/venv/bin/mypy",
+  "python.linting.mypyArgs": [
+    "--follow-imports=silent",
+    "--ignore-missing-imports",
+    "--show-column-numbers",
+    "--config-file=${workspaceFolder}/mypy.ini"
+  ],
+  "python.analysis.diagnosticMode": "workspace",
+  "mypy.dmypyExecutable": "${workspaceFolder}/venv/bin/mypy",
+  "mypy.configFile": "mypy.ini",
+  "mypy.targets": [
+    "core"
+  ],
+  "mypy.runUsingActiveInterpreter": true
 }

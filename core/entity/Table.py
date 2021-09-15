@@ -1,11 +1,22 @@
-from typing import *
-from .Base import Base, XdfRefMixin
-from .EmbeddedData import EmbeddedMathMixin
+import typing as T
+from abc import ABC, abstractmethod
+from numpy.core.arrayprint import array2string
+from numpy.ma.core import MaskedArray
+from .Base import Base, XmlAbstractBaseMeta, Array
+from .EmbeddedData import (
+  EmbeddedData, 
+  EmbeddedMathMixin, 
+  Math,
+  ConversionFuncType
+)
 from .Parameter import Parameter
-from .Math import Math, ConversionFuncType
 import numpy as np
 import numpy.typing as npt
 import functools
+from itertools import (
+  chain
+)
+import operator as op
 
 class Axis(Base, EmbeddedMathMixin):
   Labels = Base.xpath_synonym('./LABEL', many=True)
@@ -13,79 +24,208 @@ class Axis(Base, EmbeddedMathMixin):
   
   # each axis is a memory-mapped array
   @property
-  def value(self) -> npt.NDArray:
+  def value(self) -> Array:
     return self.Math.conversion_func(
       self.memory_map.astype(
         np.float64, 
         copy=False
         # use the underlying embedded row/col major ordering, shape, etc.
-      )
-    )
+    ))
+
+# custom math subclasses for ZAxis with row/col
+class Mask(Array[np.ma.MaskType]):
+  def __repr__(self):
+    # interpret masks as binary for space-saving printing
+    return Array.__repr__(self.astype(np.int))
+
+class MaskedMath(Math, ABC, metaclass=XmlAbstractBaseMeta):
+  '''
+  Specifically for `Table.ZAxis`, `<MATH>` elements with varying attributes must provide a Numpy mask to use in binary conversion.
+
+  See the [Numpy documention on masked arrays](https://numpy.org/doc/stable/reference/maskedarray.html) for more details.
+
+  TunerPro-style table equation matrix has the following `Math` elements in order of lowest to highest precedence. Calculation does not overlap - masks are excluded against others.
+
+  - global table equation has no additional attributes,
+  - row `Math` has row attribute,
+  - col `Math` has column attirbute,
+  - cell `Math` has both row and column.
+  '''
+  @property
+  def shape(self):
+    embedded_data: EmbeddedData = self.xpath('./preceding-sibling::EMBEDDEDDATA')[0]
+    return embedded_data.shape
+  
+  @property
+  @abstractmethod
+  def mask(self) -> Mask:
+    '''
+    Numpy boolean mask array, following convention of `False` meaning valid data, and `True` meaning invalid data..
+    '''
+    pass
+
+class GlobalMath(MaskedMath):
+  @property
+  def mask(self) -> Mask:
+    return Mask(np.zeros(self.shape).astype(np.ma.MaskType))
+
+class RowMath(MaskedMath):
+  @property
+  def row(self):
+    return int(self.attrib['row']) - 1
+
+  @property
+  def mask(self) -> Mask:
+    out = np.zeros(self.shape)
+    out[self.row] = np.ones(self.shape[0])
+    return Mask(np.logical_not(out))
+
+class ColumnMath(MaskedMath):
+  @property
+  def column(self):
+    return int(self.attrib['col']) - 1
+
+  @property
+  def mask(self) -> Mask:
+    out = np.zeros(self.shape)
+    out[ :, self.column] = np.ones(self.shape[1])
+    return Mask(np.logical_not(out))
+
+class CellMath(MaskedMath):
+  @property
+  def row(self):
+    return int(self.attrib['row']) - 1
+  
+  @property
+  def column(self):
+    return int(self.attrib['col']) - 1
+
+  @property
+  def mask(self) -> Mask:
+    out = np.zeros(self.shape)
+    out[self.row][self.column] = 1
+    return Mask(np.logical_not(out))
 
 class ZAxis(Axis):
   '''
   Special-case axis, generally referred to interchangeably with as a "Table", although the Table really contains the Axes and their related information.
-
-  Table Z axes may have multiple `<MATH>` conversion equations:
-  - one global,
-  - for each row,
-  - for each column,
-  - for each cell (row and column)
-
-  ...in order from lowest to highest priority.
   '''
-  global_Math: Math = Base.xpath_synonym('./MATH[not(@row) and not(@col)]')
-  column_Math: Math = Base.xpath_synonym('./MATH[@col and not(@row)]', many=True)
-  row_Math: Math = Base.xpath_synonym('./MATH[@row and not(@col)]', many=True)
-  cell_Math: List[Math] = Base.xpath_synonym('./MATH[@row and @col]', many=True)
+  global_Math: GlobalMath = Base.xpath_synonym('./MATH[not(@row) and not(@col)]')
+  column_Math: T.List[ColumnMath] = Base.xpath_synonym('./MATH[@col and not(@row)]', many=True)
+  row_Math: T.List[RowMath] = Base.xpath_synonym('./MATH[@row and not(@col)]', many=True)
+  cell_Math: T.List[CellMath] = Base.xpath_synonym('./MATH[@row and @col]', many=True)
 
-  @property
-  def _equation_grid(self) -> List[List[ConversionFuncType]]:
+  @staticmethod
+  def _combine_masks(*masks: Mask, initial: T.Optional[Mask] = None) -> Mask:
+    # un-invert combined mask...
+    reducer = lambda a, b: np.logical_not(
+      # ... after inverting masks so that OR works
+      np.ma.mask_or(np.logical_not(a), np.logical_not(b), shrink=False)
+    )
+    if initial is not None:
+      return functools.reduce(reducer, masks, initial) # type: ignore
+    else:
+      return functools.reduce(reducer, masks) # type: ignore
+
+  def _mask_reduction(
+    self,
+    accumulator: np.ma.MaskedArray,
+    type_math: T.Tuple[T.Type[MaskedMath], MaskedMath],
+    group_masks: T.Dict[T.Type[MaskedMath], Mask]
+  ):
     '''
-    This is used internally for conversion - equations are replaced by priority.
+    Used internally in `Table.ZAxis`'s binary conversion, where each `math: MaskedMath` takes a masked view of an original array and converts parts incrementally.
+    '''
+    type, math = type_math
+    # do exclusion of current mask with group masks...
+    other_group_masks = {
+      klass: mask for klass, mask in group_masks.items()
+      if klass is not type
+    }
+    # construct final mask - CellMath needs no exclusion, its just one cell
+    if type is not CellMath:
+      # other masks may be empty, in the case of only global equation
+      combined_exclusion: npt.ArrayLike = np.logical_not(
+        self._combine_masks(*other_group_masks.values())
+      ) if other_group_masks else np.ma.nomask
+      # ...combine other groups' exclusion with our own mask
+      final_mask = np.ma.mask_or(combined_exclusion, math.mask, shrink=False)
+    else:
+      final_mask = math.mask
+    # ...evaluate
+    # for debug
     
-    For example, with a global equation, row equation, and cell equation, the table is filled with the global, row, then cell equation so that the correct equation can then be looked up by row/column index.
+    linked_values = math.conversion_func.keywords # type: ignore
+    converted = math.conversion_func(accumulator)
+    # putmask uses opposite of convention, so True = valid
+    print(repr(final_mask))
+    np.putmask(accumulator, np.logical_not(final_mask), converted)
+    return accumulator
 
-    TunerPro represents an equation grid in the UI - this is related, but not that.
-    '''
-    # create initial table with global func. linter ignore because shape should be size 2, but can be Tuple[int] (size 1) when constant
-    rows, cols = self.EmbeddedData.shape # type: ignore
-    out = [
-      [self.global_Math.conversion_func for row in range(rows)]
-      for col in range(cols)
-    ]    
-    # ...overwrite row...
-    for math in self.column_Math:
-      for n in range(rows):
-        out[n][int(math.attrib['col']) - 1] = math.conversion_func
-    # ...then column...
-    for math in self.row_Math:
-      for n in range(cols):
-        out[int(math.attrib['row']) - 1][n] = math.conversion_func
-    # ...then cell funcs
-    for math in self.cell_Math:
-      row, col = int(math.attrib['row']) - 1, int(math.attrib['col']) - 1
-      out[row][col] = math.conversion_func
-    return out
-
-  # TODO - refactor this in non-iterative way? this is expensive
-  #@property
   @functools.cached_property
   def value(self) -> npt.NDArray:
-    #for row in eq_grid:
-    #  for f in row:
-    #    print(f.__doc__, end='  ')
-    #  print()
-    eq_grid = self._equation_grid
-    # apply matching functions over copy
-    copy = np.empty(self.memory_map.shape)
-    for x ,y in np.ndindex(copy.shape): # type: ignore
-      copy[x][y] = eq_grid[x][y](self.memory_map[x][y])
-    return copy
+    '''
+    Equations are replaced by the following in order from lowest to highest priority:
+    1. Global table equation
+    2. Row equations
+    3. Column equations
+    4. Cell equations
 
+    TunerPro represents an equation grid in the UI.
+    '''
+    # see https://github.com/python/mypy/issues/1178 - linter can't discern the explicit length check here. "Table" could be 1D - remember numpy shape convention
+    rows = self.EmbeddedData.shape[0]
+    if len(self.EmbeddedData.shape) == 2:
+      cols = self.EmbeddedData.shape[1] # type: ignore
+    elif len(self.EmbeddedData.shape) == 1:
+      cols = 1
+    else:
+      raise ValueError(f"Incorrect shape {self.EmbeddedData.shape} for Table.ZAxis when constructing equation grid.")
+
+    # TABLE MATH CONVERSION
+    # ...in order of lowest to highest precedence
+    math_groups: T.Dict[T.Type[MaskedMath], T.List[MaskedMath]] = {
+      GlobalMath: [self.global_Math],
+      ColumnMath: self.column_Math,
+      RowMath: self.row_Math,
+      CellMath: self.cell_Math,
+    }
+    # ...only eval non-empty
+    math_groups_nonempty = {
+      klass: maths for klass, maths in math_groups.items()
+      if maths
+    }
+    # ...masks must be subtracted - combine masks amongst groups
+    combined_masks: T.Dict[T.Type[MaskedMath], npt.NDArray] = {
+      klass: self._combine_masks(
+        *map(lambda math: math.mask, maths)
+      )
+      for klass, maths in math_groups_nonempty.items()
+      # global math doesn't belong here
+      if klass is not GlobalMath
+    }
+    # ...provide copy for evaluation
+    initial = self.memory_map.copy().astype(np.float_)
+    # ...flatten out into tuple of (Type, MaskedMath instance)
+    flattened = (
+      ((type, math) for math in maths)
+      for type, maths in math_groups_nonempty.items()
+    )
+    # reduce, providing combined group masks
+    out = functools.reduce(
+      functools.partial(
+        self._mask_reduction,
+        group_masks = combined_masks
+      ),
+      chain.from_iterable(flattened),
+      initial
+    )
+    return out
 
 class Table(Parameter):
-
+  '''
+  Table, a.k.a array/list of values. Usually this is a 2D table like a fuel or ignition map, or occasionally, a 1D list like an axis, e.g. Major RPM.
+  '''
   @property
   def Axes(self) -> dict[str, Axis]:
     '''
@@ -112,7 +252,7 @@ class Table(Parameter):
         # preceding y val
         fmt.format(self.Axes['y'].value[index]),
         # divider
-        '|',
+       '|',
         # z vals
         *map(lambda z: fmt.format(z), row)
       ]) for index, row in enumerate(self.Axes['z'].value)

@@ -1,27 +1,27 @@
 from __future__ import annotations
+import typing as t
 from lxml import (
   etree as xml,
   objectify,
 )
 import itertools as it
+import numpy as np
+import numpy.typing as npt
 from abc import ABC
 import functools
-from typing import *
 
 # to avoid circular import for XDF self-reference. __future__ import above for Xdf typehint
-if TYPE_CHECKING:
+if t.TYPE_CHECKING:
   from .Xdf import Xdf
 
-# need to do Union here for linter to be happy
-xml_base = Union[xml.ElementBase]
-#xml_base = objectify.ObjectifiedDataElement
+XmlBase = xml.ElementBase
+#XmlBase = objectify.ObjectifiedDataElement
 
 class XmlClassMeta(type):
-  
   @staticmethod
   def property_funcs(dikt, bases):
     base_descendant = it.takewhile(
-      lambda base: base != xml_base,
+      lambda base: base != XmlBase,
       bases
     )
     # child dict union with inherited bases' dicts
@@ -44,10 +44,10 @@ class XmlClassMeta(type):
     klass = super().__new__(cls, name, bases, dikt | new_dict)
     return klass
 
-class Base(xml_base, metaclass=XmlClassMeta):
+class Base(XmlBase, metaclass=XmlClassMeta): # type: ignore
   '''
   LXML ElementBase custom base class entities.
-  TODO:
+  tODO:
   - json serialization for API
   - read/write binding to XML structure
   '''
@@ -64,7 +64,7 @@ class Base(xml_base, metaclass=XmlClassMeta):
   @classmethod
   def xpath_synonym(cls, xpath_expression, many = False, collection_class=dict):
     '''
-    Type-generic binding to lxml element, e.g. Axes -> XDFAXIS
+    type-generic binding to lxml element, e.g. Axes -> XDFAXIS
     '''
     return property(
       # getter
@@ -109,5 +109,26 @@ class XdfRefMixin:
   Utility Mixin class that provides the `_xdf` reference to the containing document.
   '''
   @property
-  def _xdf(self: Any) -> Xdf:
+  def _xdf(self: t.Any) -> Xdf:
     return self.xpath("/XDFFORMAT")[0]
+
+# stolen from numpy.typing
+ScalarType = t.TypeVar("ScalarType", bound=np.generic, covariant=True)
+npt.DTypeLike
+class Array(np.ndarray, t.Generic[ScalarType]):
+  '''
+  Custom `numpy.ndarray` subclass with debug friendly stuff.
+  See https://numpy.org/doc/stable/user/basics.subclassing.html?highlight=arange#simple-example-adding-an-extra-attribute-to-ndarray.
+  '''
+  def __new__(cls, arr):
+    obj = np.asarray(arr).view(cls)
+    # set additional stuff here....
+    return obj
+
+  def __array_finalize__(self, obj):
+    # see InfoArray.__array_finalize__ for comments
+    if obj is None: return
+    #self.info = getattr(obj, 'info', None)
+
+  def __repr__(self):
+    return np.array2string(self, max_line_width=np.inf)

@@ -1,7 +1,9 @@
+from __future__ import annotations
 # tunerpro math equation parser, used for converting to and from binary representations
+from typing import *
 import os
 from pathlib import Path
-from lark import Lark
+from lark import Lark, Tree, Transformer
 # for printing
 from .transformations.Printer import Printer
 from functools import reduce
@@ -16,13 +18,24 @@ grammar_path = os.path.join(schemata_path, grammar_name)
 kwargs = dict(rel_to=__file__, start='statement')
 parser = Lark.open(grammar_path, parser='lalr', **kwargs).parse
 
-def ast_print(tree):
+# shadow __repr__ so i can debug this thing
+def ast_print(tree: Tree) -> str:
   printer = Printer(visit_tokens = True)
   stringified = printer.transform(tree)
   return stringified.pretty()
+
+class SyntaxTree(Tree):
+  def __init__(self):
+    Tree.__init__(self)
   
-def apply_pipeline(source, *transformation_instances):
+  def __repr__(self):
+    return ast_print(self)
+
+# TODO: typehint generic tree for lark?
+def apply_pipeline(source: Tree, *transformation_instances: Transformer):
   # chaining transformations, see:
   # https://lark-parser.readthedocs.io/en/latest/visitors.html#visitor
-  combined = reduce(mul, transformation_instances)
-  return combined.transform(source)
+  combined: Transformer = reduce(mul, transformation_instances)
+  out: SyntaxTree = combined.transform(source)
+  out.__class__ = SyntaxTree
+  return out

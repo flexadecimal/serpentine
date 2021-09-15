@@ -32,8 +32,13 @@ if __name__ == '__main__':
       )
       
       #const = xdf.xpath('./XDFCONSTANT[13]')[0].value
-      constants = {c.title: c.value for c in xdf.Constants}
+      #constants = {c.title: c.value for c in xdf.Constants}
+      
       ignition_map = xdf.xpath('./XDFTABLE[1]')[0]
-      tables = {t.title: t.value for t in xdf.Tables}
+      val = ignition_map.value
+      
+      #major_rpm = xdf.xpath('./XDFTABLE[5]')[0]
+      #val = major_rpm.Axes['x'].value
+      #tables = {t.title: t.value for t in xdf.Tables}
       pass
   

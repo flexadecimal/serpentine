@@ -1,30 +1,34 @@
-from typing import *
+import enum
+import typing as T
 from lark import Tree, Token
 from lark.visitors import (
   Transformer,
   v_args
 )
 import numpy as np
+import numpy.typing as npt
+import functools
+from collections import deque
 
 class FunctionCallTransformer(Transformer):
   '''
   Transforms an equation AST (abstract syntax tree) to one with vectorized numpy functions. This is an intermediate syntactical form - the arguments must still processed as functions by calling along the tree.
   '''
   @staticmethod
-  def if_func(condition: bool, true_val: Any, false_val: Any) -> Any:
+  def if_func(condition: bool, true_val: T.Any, false_val: T.Any) -> T.Any:
     return true_val if condition else false_val
 
   # so we dont have to do fancy type dispatch on args, a version of sum that
   # takes variable arguments
   @staticmethod
-  def sum_args(*args) -> Union[np.number, np.ndarray] :
-    return np.sum(args)
+  def sum_args(*args) -> npt.ArrayLike:
+    return functools.reduce(np.add, args)
 
   # DISPATCH TABLE
   # python weirdness - staticmethod callables are in __func__
   # TODO: functions return number or Union[number, ref], where refs are
   # the XDF functions?
-  function_registry: Dict[str, Callable[..., Any]] = {
+  function_registry: T.Dict[str, T.Callable[..., npt.ArrayLike]] = {
     # MATH FUNCTIONS
     'ABS': np.abs,
     'AVG': np.average,
@@ -32,11 +36,11 @@ class FunctionCallTransformer(Transformer):
     'LOG': np.log,
     'POW': np.float_power,
     'SQR': np.sqrt,
-    'SUM': sum_args.__func__,
+    'SUM': sum_args.__func__, # type: ignore
     'LOG10': np.log10,
     'RADIANS': np.radians,
     'DEGREES': np.degrees,
-    'IF': if_func.__func__,
+    'IF': if_func.__func__, # type: ignore
     'ROUND': round,
     'MROUND': np.floor_divide,
     'SIN': np.sin,
@@ -58,42 +62,45 @@ class FunctionCallTransformer(Transformer):
     #'CELL': lambda idx, precalc: None
   }
   
+  # TODO - get signature from core/Math.ConversionFuncType?
   @staticmethod
-  def operation_call_tree(func: Callable[[List], Any], args: List):
-    return Tree(func, args)
+  def operation_call_tree(func: T.Callable, args: T.List) -> Tree:
+    # this is to be ignored - we put typed things, but Lark only wants strings
+    return Tree(func, args) # type: ignore
   
   @v_args(inline=True)
   def func_call(self, name: Token, args_tree: Tree = None):
-    function = self.function_registry[name.value] if name.value \
-    in self.function_registry else name.value
+    function = self.function_registry[name.value.upper()] if name.value.upper() \
+    in self.function_registry else name.value.upper()
     return self.operation_call_tree(
       function,
       args_tree.children if args_tree else []
     )
   
-  def bitwise_nand(self, args: List):
+  def bitwise_nand(self, args: T.List):
+    # lambda late bound, linter can't check
     return self.operation_call_tree(
-      lambda x: np.logical_not(np.logical_and(x)),
+      lambda x: np.logical_not(np.logical_and(x)), # type: ignore
       args
     )
   
-  def bitwise_nor(self, args: List):
+  def bitwise_nor(self, args: T.List):
     return self.operation_call_tree(
-      lambda x: np.logical_not(np.logical_or(x)),
+      lambda x: np.logical_not(np.logical_or(x)), # type: ignore
       args
     )
     
-  def bitwise_or(self, args: List):
+  def bitwise_or(self, args: T.List):
     return self.operation_call_tree(np.logical_or, args)
   
-  def bitwise_xor(self, args: List):
+  def bitwise_xor(self, args: T.List):
     return self.operation_call_tree(np.logical_xor, args)
     
-  def bitwise_and(self, args: List):
+  def bitwise_and(self, args: T.List):
     return self.operation_call_tree(np.logical_and, args)
   
-  def bitwise_shift(self, args: List):
-    op_to_func = {
+  def bitwise_shift(self, args: T.List):
+    op_to_func: T.Dict[str, T.Callable] = {
       '<<': np.left_shift,
       '>>': np.right_shift,
     }
@@ -109,7 +116,7 @@ class FunctionCallTransformer(Transformer):
   
   @v_args(inline=True)
   def comparison(self, left, token_tree: Tree, right):
-    op_to_func = {
+    op_to_func: T.Dict[str, T.Callable] = {
       '<': np.less,
       '>': np.greater,
       '>=': np.greater_equal,
@@ -123,18 +130,32 @@ class FunctionCallTransformer(Transformer):
       op_to_func[token_tree.children[0].value],
       [left, right]
     )  
-  
-  @v_args(inline=True)
-  def term(self, left, op_token: Tree, right):
-    op_to_func = {
+
+  def term(self, args):
+    op_to_func: T.Dict[str, T.Callable] = {
       '*': np.multiply,
       '/': np.divide,
-      '^': np.mod
+      '%': np.mod
     }
-    return self.operation_call_tree(
-      op_to_func[op_token.children[0].value],
-      [left, right]
-    )
+    # construct tree left-to-right
+    func_tree_args = deque()
+    func_tree = Tree(None, [])
+    for index, arg in enumerate(args):
+      if type(arg) == Tree and arg.data == 'mul_op':
+        token = arg.children[0]
+        next = args.pop(index + 1)
+        func_tree_args.append(next)
+        func_tree = self.operation_call_tree(
+          op_to_func[token],
+          list(func_tree_args)
+        )
+        # reset args - intermediate tree is now an arg
+        func_tree_args.clear()
+        func_tree_args.append(func_tree)
+      else:
+        func_tree_args.append(arg)
+
+    return func_tree
   
   def arithmetic(self, args):
     # converts sum elements, which may be themselves typed, to list
@@ -170,6 +191,7 @@ class FunctionCallTransformer(Transformer):
       op_to_func[token.children[0].value],
       [right]
     )
+  
   # LITERALS
   # boolean literals TRUE/FALSE and numbers are literals with distinct parsing
   # logic, but will be classified more abstractly as Literal
@@ -179,7 +201,7 @@ class FunctionCallTransformer(Transformer):
   def false(self, args):
     return False
   
-  def number(self, args: List[Token]):
+  def number(self, args: T.List[Token]):
     type, value = args[0].type, args[0].value
     if type == 'DEC_NUMBER':
       return int(value)
