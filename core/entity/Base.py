@@ -93,13 +93,16 @@ class Base(XmlBase, metaclass=XmlClassMeta): # type: ignore
 class XmlAbstractBaseMeta(type(Base), type(ABC)): #type: ignore
   '''
   For Python class weirdness - see [this StackOverFlow answer](https://stackoverflow.com/a/61350480).
+
   Children of `Base` that are abstract must use this metaclass rather than `ABCMeta` directly, e.g.:
   ```
   Var(Base):
     @abstractmethod
     def foo()
+      ...
 
-  LinkedVar(Var, ABC, metaclass=XmlAbstractBaseMeta)
+  LinkedVar(Var, ABC, metaclass=XmlAbstractBaseMeta):
+    ...
   ```
   '''
   pass
@@ -114,7 +117,6 @@ class XdfRefMixin:
 
 # stolen from numpy.typing
 ScalarType = t.TypeVar("ScalarType", bound=np.generic, covariant=True)
-npt.DTypeLike
 class Array(np.ndarray, t.Generic[ScalarType]):
   '''
   Custom `numpy.ndarray` subclass with debug friendly stuff.

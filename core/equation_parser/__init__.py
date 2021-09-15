@@ -24,18 +24,20 @@ def ast_print(tree: Tree) -> str:
   stringified = printer.transform(tree)
   return stringified.pretty()
 
-class SyntaxTree(Tree):
-  def __init__(self):
-    Tree.__init__(self)
-  
+class SyntaxTree(Tree):  
+  @classmethod
+  def from_tree(cls, Tree):
+    out = cls.__new__(cls)
+    out.__init__(Tree.data, Tree.children, Tree.meta)
+    return out
+
   def __repr__(self):
     return ast_print(self)
 
 # TODO: typehint generic tree for lark?
-def apply_pipeline(source: Tree, *transformation_instances: Transformer):
+def apply_pipeline(source: Tree, *transformation_instances: Transformer) -> SyntaxTree:
   # chaining transformations, see:
   # https://lark-parser.readthedocs.io/en/latest/visitors.html#visitor
   combined: Transformer = reduce(mul, transformation_instances)
-  out: SyntaxTree = combined.transform(source)
-  out.__class__ = SyntaxTree
-  return out
+  out = combined.transform(source)
+  return SyntaxTree.from_tree(out)

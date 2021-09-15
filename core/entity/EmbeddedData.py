@@ -23,7 +23,7 @@ class ConversionFuncType(T.Protocol):
   Type signature for binary conversion functions, e.g.:
   
   ```
-  converter(x: npt.ArrayLike, **kwargs: Dict[str, npt.ArrayLike]) -> npt.NDArray
+  converter(x: npt.ArrayLike, **kwargs: Dict[str, npt.ArrayLike]) -> Array
   ```
 
   See [this StackOverflow answer](https://stackoverflow.com/a/64106593) for details on using `typing.Protocol`.

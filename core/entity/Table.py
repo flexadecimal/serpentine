@@ -153,12 +153,8 @@ class ZAxis(Axis):
     else:
       final_mask = math.mask
     # ...evaluate
-    # for debug
-    
-    linked_values = math.conversion_func.keywords # type: ignore
     converted = math.conversion_func(accumulator)
     # putmask uses opposite of convention, so True = valid
-    print(repr(final_mask))
     np.putmask(accumulator, np.logical_not(final_mask), converted)
     return accumulator
 

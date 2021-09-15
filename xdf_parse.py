@@ -31,14 +31,12 @@ if __name__ == '__main__':
         os.path.join(root, bin_path)
       )
       
-      #const = xdf.xpath('./XDFCONSTANT[13]')[0].value
-      #constants = {c.title: c.value for c in xdf.Constants}
-      
-      ignition_map = xdf.xpath('./XDFTABLE[1]')[0]
-      val = ignition_map.value
-      
+      constants = {c.title: c.value for c in xdf.Constants}
+      tables = {t.title: t.value for t in xdf.Tables}
+
+      #ignition_map = xdf.xpath('./XDFTABLE[1]')[0]
+      #val = ignition_map.value
       #major_rpm = xdf.xpath('./XDFTABLE[5]')[0]
       #val = major_rpm.Axes['x'].value
-      #tables = {t.title: t.value for t in xdf.Tables}
       pass
   
