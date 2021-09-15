@@ -127,7 +127,8 @@ class FunctionCallTransformer(Transformer):
       '||': np.logical_or,
     }
     return self.operation_call_tree(
-      op_to_func[token_tree.children[0].value],
+      # we have to ignore here because children is only list of token, but not typed that way
+      op_to_func[token_tree.children[0]], # type: ignore
       [left, right]
     )  
 
@@ -188,7 +189,7 @@ class FunctionCallTransformer(Transformer):
       '-': np.negative
     }
     return self.operation_call_tree(
-      op_to_func[token.children[0].value],
+      op_to_func[token.children[0]], # type: ignore
       [right]
     )
   

@@ -163,7 +163,7 @@ class ZAxis(Axis):
     return accumulator
 
   @functools.cached_property
-  def value(self) -> npt.NDArray:
+  def value(self) -> Array:
     '''
     Equations are replaced by the following in order from lowest to highest priority:
     1. Global table equation

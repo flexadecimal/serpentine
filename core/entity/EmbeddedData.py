@@ -28,7 +28,7 @@ class ConversionFuncType(T.Protocol):
 
   See [this StackOverflow answer](https://stackoverflow.com/a/64106593) for details on using `typing.Protocol`.
   '''
-  def __call__(self, x: npt.ArrayLike, **kwargs: T.Dict[str, npt.ArrayLike]) -> npt.NDArray:
+  def __call__(self, x: npt.ArrayLike, **kwargs: T.Dict[str, npt.ArrayLike]) -> Array:
     ...
 
 class TypeFlags(Flag):
@@ -153,7 +153,7 @@ class Math(Base):
     kwargs_signature_str = ', '.join(
       f"{var.id}: {var.__class__.__qualname__}" for var in free
     )
-    def converter(x: npt.ArrayLike, **kwargs) -> npt.NDArray:
+    def converter(x: npt.ArrayLike, **kwargs) -> Array:
       # assert arguments provided by keyword - 
       # TODO: set named args in typed function signature at runtime?
       if not set(var.id for var in free) == set(kwargs.keys()):
