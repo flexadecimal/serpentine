@@ -1,8 +1,0 @@
-lark==0.11.3
-lxml==4.6.3
-numpy==1.21.1
-# the following for mypy, so we can use numpy typing
-mypy==0.910
-mypy-extensions==0.4.3
-toml==0.10.2
-typing-extensions==3.10.0.0
