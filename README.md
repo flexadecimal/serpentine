@@ -22,3 +22,9 @@ Bosch Motronic 4.4 fuel injection - many thanks to the [M44 Wiki](https://m44.fa
 
 ## Supported Features
 - XDF parameter editing
+
+## Getting started
+
+    pipenv install
+    pipenv shell
+    python3 <todo.py> <somearg1> <somearg2>
