@@ -26,7 +26,7 @@ Bosch Motronic 4.4 fuel injection - many thanks to the [M44 Wiki](https://m44.fa
 ## Getting started
     pipenv install
     pipenv shell
-    python3 <todo.py> <somearg1> <somearg2>
+    python3 xdf_parse.py
 
 ## Unit tests
     python3 -m unittest test.simpleTest
