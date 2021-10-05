@@ -1,18 +1,18 @@
-from abc import (
-  ABC, abstractmethod
-)
-from .Base import Base, XmlAbstractBaseMeta, XdfRefMixin
-from .Parameter import Parameter
+from __future__ import annotations
+import typing as t
+from abc import ABC, abstractmethod
+from .Base import Base, XmlAbstractBaseMeta, XdfRefMixin, Array
 import numpy as np
 import numpy.typing as npt
 
-class Var(Base):
+if t.TYPE_CHECKING:
+  from .Xdf import Mathable
 
+class Var(Base):
   id: str = Base.xpath_synonym('./@id')
   
   def __repr__(self):
     return f"<{self.__class__.__qualname__} '{self.id}'>"
-  
 
 # this gets binary processing context, typically referred to as 'X' - a real class
 class BoundVar(Var):
@@ -39,15 +39,19 @@ class LinkedVar(FreeVar):
   '''
   link_id = Base.xpath_synonym('./@linkid')
 
+  # TODO: this should typehint T.Union[Table.ZAxis, Constant.Constant], but circular import :(
   @property
-  def value(self) -> npt.NDArray:
-    # TODO: this does NOT guard against circular references, neither does TunerPro. We need to guard against circular references when saving.
-    # only Z-axis of Table used for value
-    linked_param: Parameter = self.xpath(f"""
+  def linked(self) -> Mathable:
+      return self.xpath(f"""
       //XDFTABLE[@uniqueid='{self.link_id}']/XDFAXIS[@id='z'] |
       //XDFCONSTANT[@uniqueid='{self.link_id}']
     """)[0]
-    return linked_param.value
+
+  @property
+  def value(self) -> Array:
+    # TODO: this does NOT guard against circular references, neither does TunerPro. We need to guard against circular references when saving.
+    # only Z-axis of Table used for value
+    return self.linked.value
   
 class AddressVar(FreeVar):
   '''
@@ -55,8 +59,9 @@ class AddressVar(FreeVar):
   This is similar to BoundVar context, but with global binary file scope and options belonging to the Var instance.
   '''
   @property
-  def address(self) -> int:
-    return int(self.xpath('./@address')[0], 16)
+  def address(self) -> t.Optional[int]:
+    address = self.xpath('./@address')
+    return int(address[0], 16) if address else None
   
   @property
   def flags(self) -> int:

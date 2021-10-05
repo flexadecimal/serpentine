@@ -1,5 +1,6 @@
 from .Base import Base
-from .EmbeddedData import EmbeddedMathMixin, Math
+from .EmbeddedData import EmbeddedMathMixin
+from .Math import Math
 from .Parameter import Parameter
 import numpy as np
 

@@ -1,14 +1,11 @@
 import typing as T
 from abc import ABC, abstractmethod
-from numpy.core.arrayprint import array2string
-from numpy.ma.core import MaskedArray
 from .Base import Base, XmlAbstractBaseMeta, Array
 from .EmbeddedData import (
   EmbeddedData, 
   EmbeddedMathMixin, 
-  Math,
-  ConversionFuncType
 )
+from .Math import Math
 from .Parameter import Parameter
 import numpy as np
 import numpy.typing as npt
@@ -16,7 +13,6 @@ import functools
 from itertools import (
   chain
 )
-import operator as op
 
 class Axis(Base, EmbeddedMathMixin):
   Labels = Base.xpath_synonym('./LABEL', many=True)

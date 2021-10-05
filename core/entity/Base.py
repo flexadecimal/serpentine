@@ -10,7 +10,7 @@ import numpy.typing as npt
 from abc import ABC
 import functools
 
-# to avoid circular import for XDF self-reference. __future__ import above for Xdf typehint
+# to avoid circular import for XDF self-reference
 if t.TYPE_CHECKING:
   from .Xdf import Xdf
 
