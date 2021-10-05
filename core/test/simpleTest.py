@@ -2,4 +2,4 @@ import unittest
 
 class FooTest(unittest.TestCase):
     def test_big(self):
-        assert(1==1)
+        self.assertAlmostEqual(1.01, 1.02)
