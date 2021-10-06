@@ -24,6 +24,7 @@ class FunctionCallTransformer(Transformer):
   def sum_args(*args) -> npt.ArrayLike:
     return functools.reduce(np.add, args)
 
+
   # DISPATCH TABLE
   # python weirdness - staticmethod callables are in __func__
   # TODO: functions return number or Union[number, ref], where refs are

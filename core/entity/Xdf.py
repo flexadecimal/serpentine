@@ -1,18 +1,16 @@
 import typing as T
-from lxml import (
-  etree as xml,
-  objectify
-)
+from lxml import etree as xml, objectify
 import os
 from pathlib import Path
 # import parameter classes
 from .Base import Base
 from . import (
-  Parameter, Table, Constant, 
-  EmbeddedData, Var
+  Parameter, Table, Constant, EmbeddedData, Var, Math
 )
 import graphlib
 import functools
+
+Mathable = T.Union[Table.ZAxis, Constant.Constant]
 
 # this is import-time
 core_path = Path(__file__).parent.parent
@@ -25,9 +23,10 @@ try:
 except xml.XMLSchemaParseError as schema_error:
   print(f"XDF: Invalid schema '{xdf_schema_path}'.")
   raise schema_error
-  
+
 class Xdf(Base):
   # internals
+  _path: Path
   _binfile: T.BinaryIO
   # public
   title: str = Base.xpath_synonym('./XDFHEADER/deftitle/text()')
@@ -72,44 +71,82 @@ class Xdf(Base):
     # ...objectify - bind classes
     parser = objectify.makeparser(schema = xdf_schema)
     parser.set_element_class_lookup(XdfTyper())
-    xdf_object_tree: Xdf = objectify.fromstring(xml.tostring(xdf_tree), parser)    
+    xdf: Xdf = objectify.fromstring(xml.tostring(xdf_tree), parser)    
     # ...set python special vars
-    xdf_object_tree._binfile = open(binpath, 'r+b')
-    return xdf_object_tree
+    xdf._path = Path(path)
+    xdf._binfile = open(binpath, 'r+b')
+    # SANITY CHECK - interdependent conversion equations
+    try:
+      # this must be fully evaluated to see if it is cyclical
+      order = list(xdf._math_eval_order)
+    except graphlib.CycleError as error:
+      cycle: T.Set[Math.Math] = set(error.args[1])
+      # TODO: trying to construct kwargs of `Math.conversion_func` fails if they are dependent - YOU WILL OVERFLOW STACK. mark them dirty
+      raise MathInterdependence(xdf, *cycle) from error
+    # invalid state taken care of, we can still open
+    return xdf
 
   @property
   def parameters_by_id(self) -> T.Dict[str, Parameter.Parameter]:
     return {param.id: param for param in self.Parameters}
 
-  #graphlib topsort
+
   @functools.cached_property
-  def math_eval_order(self) -> T.Iterable[EmbeddedData.Math]:
-    has_link = self.xpath("//MATH[./VAR[@type='link']]")
-    graph = {math:  
-       #lambda id: self.xpath(f"//MATH[./VAR[@linkid='{id}']]")[0],
-      list(map(lambda id: self.xpath(f"""
-        //XDFTABLE[@uniqueid='{id}']/XDFAXIS[@id='z']/MATH | 
-        //XDFCONSTANT[@uniqueid='{id}']/MATH
-        """)[0],
-        math.linked_ids.values()
-      )) for math in has_link
+  def _math_dependency_graph(self) -> T.Dict[Math.Math, T.List[Math.Math]]:
+    has_link: T.Iterable[Math.Math] = self.xpath("//MATH[./VAR[@type='link']]")
+    # see `Var.LinkedVar`
+    #graph = {math:  
+    #  list(map(lambda id: self.xpath(f"""
+    #    //XDFTABLE[@uniqueid='{id}']/XDFAXIS[@id='z']/MATH | 
+    #    //XDFCONSTANT[@uniqueid='{id}']/MATH
+    #    """)[0],
+    #    math.linked_ids.values()
+    #  )) for math in has_link
+    #}
+    graph = {
+      math: [var.linked.Math for var in math.LinkedVars]
+      for math in has_link
     }
-    try:
-      sorter = graphlib.TopologicalSorter(graph)
-      eval_order = sorter.static_order()
-    except graphlib.CycleError as error:
-      cycle = set(error.args[1])
-      root = self.getroottree()
-      paths = ', '.join(map(lambda p: f'{root.getpath(p)}', cycle))
-      print(f"XDF cannot be evaluated - conversion equations {paths} are mutually interpendent.")
-    return eval_order
+    return graph
+
+  #graphlib topsort
+  @property
+  def _math_eval_order(self) -> T.Iterable[Math.Math]:
+    sorter = graphlib.TopologicalSorter(self._math_dependency_graph)
+    return sorter.static_order()
     
+class MathInterdependence(Exception):
+  def __init__(self, root: Xdf, *interdependent_maths: Math.Math):
+    self.cycle = interdependent_maths
+    # fancy printing
+    root_tree: xml.ElementTree = root.getroottree()
+    printouts: T.List[str] = []
+    for math in interdependent_maths:
+      linked_Maths = set(var.linked.Math for var in math.LinkedVars)
+      dependent = next(iter(linked_Maths.intersection(interdependent_maths)))
+      dependent_Var = next(filter(
+        lambda var: var.linked.Math == dependent, math.LinkedVars
+      ))
+      # set printout
+      printout = "  "
+      printout += f"{root_tree.getpath(math.getparent())}: {math.attrib['equation']}"
+      printout += f"\n    {dependent_Var.id}: {root_tree.getpath(dependent)}"
+      printouts.append(printout)
+      seperator = ',\n'
+    message = f"""Parameter conversion equations in file `{root._path}`
+    
+{seperator.join(printouts)}
+
+are mutually interdependent.
+    """
+    Exception.__init__(self, message)
+ 
 # custom lookup for XDF XML types
 # see https://lxml.de/element_classes.html#setting-up-a-class-lookup-scheme
 class XdfTyper(xml.PythonElementClassLookup):
   name_to_class = {
     'XDFFORMAT': Xdf,
-    'MATH': EmbeddedData.Math,
+    'MATH': Math.Math,
     'XDFCONSTANT': Constant.Constant,
     'XDFTABLE': Table.Table,
     'EMBEDDEDDATA': EmbeddedData.EmbeddedData

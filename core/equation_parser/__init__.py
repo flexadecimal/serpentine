@@ -1,4 +1,3 @@
-from __future__ import annotations
 # tunerpro math equation parser, used for converting to and from binary representations
 from typing import *
 import os

@@ -31,6 +31,8 @@ if __name__ == '__main__':
         os.path.join(root, bin_path)
       )
       
+      print(os.path.join(root, xdf_path))
+
       constants = {c.title: c.value for c in xdf.Constants}
       tables = {t.title: t.value for t in xdf.Tables}
 
@@ -39,4 +41,3 @@ if __name__ == '__main__':
       #major_rpm = xdf.xpath('./XDFTABLE[5]')[0]
       #val = major_rpm.Axes['x'].value
       pass
-  
