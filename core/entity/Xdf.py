@@ -9,6 +9,7 @@ from . import (
 )
 import graphlib
 import functools
+from itertools import chain
 
 Mathable = T.Union[Table.ZAxis, Constant.Constant]
 
@@ -92,7 +93,7 @@ class Xdf(Base):
 
 
   @functools.cached_property
-  def _math_dependency_graph(self) -> T.Dict[Math.Math, T.List[Math.Math]]:
+  def _math_dependency_graph(self) -> T.Mapping[Math.Math, T.Iterable[Math.Math]]:
     has_link: T.Iterable[Math.Math] = self.xpath("//MATH[./VAR[@type='link']]")
     # see `Var.LinkedVar`
     #graph = {math:  
@@ -104,7 +105,8 @@ class Xdf(Base):
     #  )) for math in has_link
     #}
     graph = {
-      math: [var.linked.Math for var in math.LinkedVars]
+      # TODO: flatten math 
+      math: list(chain.from_iterable(var.linked.Math for var in math.LinkedVars))
       for math in has_link
     }
     return graph
@@ -112,7 +114,8 @@ class Xdf(Base):
   #graphlib topsort
   @property
   def _math_eval_order(self) -> T.Iterable[Math.Math]:
-    sorter = graphlib.TopologicalSorter(self._math_dependency_graph)
+    graph = self._math_dependency_graph
+    sorter = graphlib.TopologicalSorter(graph)
     return sorter.static_order()
     
 class MathInterdependence(Exception):
