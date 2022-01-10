@@ -1,0 +1,919 @@
+<?xml version="1.0"?>
+<!-- 
+TunerPro XDF/ADX units and data types
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="tunerpro" xmlns:t="tunerpro">
+    <!-- COMMON TYPES -->
+    <xs:simpleType name="uuid">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}" />
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="hex_string">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="0x[\da-fA-F]+" />
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="hex_word">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[\da-fA-F]+" />
+        </xs:restriction>
+    </xs:simpleType>
+    <!-- DATA TYPES -->
+    <!-- tunerpro dropdown nullable, used in data/unit dropwdowns -->
+    <xs:simpleType name="null_option">
+        <xs:restriction base="xs:integer">
+            <!-- TODO: find out what this does -->
+            <xs:enumeration value="1">
+                <xs:annotation>
+                    <xs:appinfo>Externally Defined</xs:appinfo>
+                </xs:annotation>
+            </xs:enumeration>
+            <!-- these all go to Python None -->
+            <xs:enumeration value="0">
+                <xs:annotation>
+                    <xs:appinfo>None</xs:appinfo>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="2">
+                <xs:annotation>
+                    <xs:appinfo>Undefined</xs:appinfo>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="3">
+                <xs:annotation>
+                    <xs:appinfo>Unknown</xs:appinfo>
+                </xs:annotation>
+            </xs:enumeration>
+        </xs:restriction>
+    </xs:simpleType>
+    <!-- DATA TYPES -->
+    <xs:simpleType name="data">
+        <xs:union memberTypes="t:null_option">
+            <xs:simpleType>
+                <xs:restriction base="xs:integer">
+                    <!-- normal types -->
+                    <xs:enumeration value="12">
+                        <xs:annotation>
+                            <xs:appinfo>Acceleration</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="30">
+                        <xs:annotation>
+                            <xs:appinfo>Actual Air Fuel Ratio</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="33">
+                        <xs:annotation>
+                            <xs:appinfo>Actual Lambda</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="28">
+                        <xs:annotation>
+                            <xs:appinfo>Air Fuel Ratio</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="25">
+                        <xs:annotation>
+                            <xs:appinfo>Airflow</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="55">
+                        <xs:annotation>
+                            <xs:appinfo>Average Fuel Economy</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="27">
+                        <xs:annotation>
+                            <xs:appinfo>Barometric Pressure</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="66">
+                        <xs:annotation>
+                            <xs:appinfo>Battery Voltage</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="71">
+                        <xs:annotation>
+                            <xs:appinfo>Boost</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="66">
+                        <xs:annotation>
+                            <xs:appinfo>Battery Voltage</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="4">
+                        <xs:annotation>
+                            <xs:appinfo>Calibration Version</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="13">
+                        <xs:annotation>
+                            <xs:appinfo>Coolant Temperature</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="6">
+                        <xs:annotation>
+                            <xs:appinfo>Engine Speed</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="15">
+                        <xs:annotation>
+                            <xs:appinfo>Exhaust Temperature</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="66">
+                        <xs:annotation>
+                            <xs:appinfo>Battery Voltage</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="16">
+                        <xs:annotation>
+                            <xs:appinfo>Exhaust Temperature, Left</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="17">
+                        <xs:annotation>
+                            <xs:appinfo>Exhaust Temperature, Right</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="54">
+                        <xs:annotation>
+                            <xs:appinfo>Fuel Economy</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="68">
+                        <xs:annotation>
+                            <xs:appinfo>Fuel Pressure</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="67">
+                        <xs:annotation>
+                            <xs:appinfo>Fuel Pump Voltage</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="46">
+                        <xs:annotation>
+                            <xs:appinfo>Fuel Trim</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="47">
+                        <xs:annotation>
+                            <xs:appinfo>Fuel Trim, Coarse</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="48">
+                        <xs:annotation>
+                            <xs:appinfo>Fuel Trim, Fine</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="49">
+                        <xs:annotation>
+                            <xs:appinfo>Fuel Trim, Long</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="50">
+                        <xs:annotation>
+                            <xs:appinfo>Fuel Trim, Short</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="36">
+                        <xs:annotation>
+                            <xs:appinfo>Idle Air Control Position</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="37">
+                        <xs:annotation>
+                            <xs:appinfo>Idle Speed</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="52">
+                        <xs:annotation>
+                            <xs:appinfo>Injector Base Pulse Width</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="53">
+                        <xs:annotation>
+                            <xs:appinfo>Injector Final Pulse Width</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="51">
+                        <xs:annotation>
+                            <xs:appinfo>Injector Pulse Width</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="56">
+                        <xs:annotation>
+                            <xs:appinfo>Instant Fuel Economy</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="19">
+                        <xs:annotation>
+                            <xs:appinfo>Intake Air Temp</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="34">
+                        <xs:annotation>
+                            <xs:appinfo>Knock Count</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="35">
+                        <xs:annotation>
+                            <xs:appinfo>Knock Retard</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="31">
+                        <xs:annotation>
+                            <xs:appinfo>Lambda</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="23">
+                        <xs:annotation>
+                            <xs:appinfo>Load</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="24">
+                        <xs:annotation>
+                            <xs:appinfo>Manifold Air Pressure</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="18">
+                        <xs:annotation>
+                            <xs:appinfo>Manifold Air Temp</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="26">
+                        <xs:annotation>
+                            <xs:appinfo>Mass Air Flow</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="73">
+                        <xs:annotation>
+                            <xs:appinfo>Multiplier</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="65">
+                        <xs:annotation>
+                            <xs:appinfo>NV Ratio</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="69">
+                        <xs:annotation>
+                            <xs:appinfo>Oil Pressure</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="21">
+                        <xs:annotation>
+                            <xs:appinfo>Oil Temperature</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="58">
+                        <xs:annotation>
+                            <xs:appinfo>Oxygen Sensor</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="59">
+                        <xs:annotation>
+                            <xs:appinfo>Oxygen Sensor, Left</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="60">
+                        <xs:annotation>
+                            <xs:appinfo>Oxygen Sensor, Right</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="61">
+                        <xs:annotation>
+                            <xs:appinfo>Oxygen Sensor (4)</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="62">
+                        <xs:annotation>
+                            <xs:appinfo>Oxygen Sensor (5)</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="63">
+                        <xs:annotation>
+                            <xs:appinfo>Oxygen Sensor (6)</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="70">
+                        <xs:annotation>
+                            <xs:appinfo>Power Steering Pressure</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="22">
+                        <xs:annotation>
+                            <xs:appinfo>Power Steering Temperature</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="38">
+                        <xs:annotation>
+                            <xs:appinfo>Spark Angle</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="40">
+                        <xs:annotation>
+                            <xs:appinfo>Spark Angle, Referenced</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="39">
+                        <xs:annotation>
+                            <xs:appinfo>Spark Angle, TDC</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="41">
+                        <xs:annotation>
+                            <xs:appinfo>Spark Trim</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="42">
+                        <xs:annotation>
+                            <xs:appinfo>Spark Trim, Coarse</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="43">
+                        <xs:annotation>
+                            <xs:appinfo>Spark Trim, Fine</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="44">
+                        <xs:annotation>
+                            <xs:appinfo>Spark Trim, Long</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="45">
+                        <xs:annotation>
+                            <xs:appinfo>Spark Trim, Short</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="14">
+                        <xs:annotation>
+                            <xs:appinfo>Startup Coolant Temperature</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="29">
+                        <xs:annotation>
+                            <xs:appinfo>Target Air/Fuel Ratio</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="32">
+                        <xs:annotation>
+                            <xs:appinfo>Target LambdaTarget</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="57">
+                        <xs:annotation>
+                            <xs:appinfo>Throttle Position</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="64">
+                        <xs:annotation>
+                            <xs:appinfo>Transmission Gear</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="20">
+                        <xs:annotation>
+                            <xs:appinfo>Transmission Temperature</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="72">
+                        <xs:annotation>
+                            <xs:appinfo>Vacuum</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="5">
+                        <xs:annotation>
+                            <xs:appinfo>Vehicle Speed</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="7">
+                        <xs:annotation>
+                            <xs:appinfo>Wheel Speed</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="8">
+                        <xs:annotation>
+                            <xs:appinfo>Wheel Speed, Front Left</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="9">
+                        <xs:annotation>
+                            <xs:appinfo>Wheel Speed, Front Right</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="10">
+                        <xs:annotation>
+                            <xs:appinfo>Wheel Speed, Rear Left</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="11">
+                        <xs:annotation>
+                            <xs:appinfo>Wheel Speed, Rear Right</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                </xs:restriction>
+            </xs:simpleType>
+        </xs:union>
+    </xs:simpleType>
+    <!-- UNIT TYPES -->
+    <xs:simpleType name="unit">
+        <xs:union memberTypes="t:null_option">
+            <xs:simpleType>
+                <xs:restriction base='xs:integer'>
+                    <xs:enumeration value="21">
+                        <xs:annotation>
+                            <xs:appinfo>Air Fuel Ratio</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="40">
+                        <xs:annotation>
+                            <xs:appinfo>Amps</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="19">
+                        <xs:annotation>
+                            <xs:appinfo>Bar</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="46">
+                        <xs:annotation>
+                            <xs:appinfo>Centimeters</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="95">
+                        <xs:annotation>
+                            <xs:appinfo>Centipose</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="26">
+                        <xs:annotation>
+                            <xs:appinfo>Count</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="60">
+                        <xs:annotation>
+                            <xs:appinfo>Cubic Centimeters</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="57">
+                        <xs:annotation>
+                            <xs:appinfo>Cubic Feet</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="58">
+                        <xs:annotation>
+                            <xs:appinfo>Cubic Inches</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="59">
+                        <xs:annotation>
+                            <xs:appinfo>Cubic Meters</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="61">
+                        <xs:annotation>
+                            <xs:appinfo>Cubic Millimeters</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="56">
+                        <xs:annotation>
+                            <xs:appinfo>Cubic Yards</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="81">
+                        <xs:annotation>
+                            <xs:appinfo>Days</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="31">
+                        <xs:annotation>
+                            <xs:appinfo>Decibels</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="15">
+                        <xs:annotation>
+                            <xs:appinfo>Degrees Celsius</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="14">
+                        <xs:annotation>
+                            <xs:appinfo>Degrees Fahrenheit</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="16">
+                        <xs:annotation>
+                            <xs:appinfo>Degrees Kelvin</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="68">
+                        <xs:annotation>
+                            <xs:appinfo>Duty Cycle</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="8">
+                        <xs:annotation>
+                            <xs:appinfo>Feet Per Second</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="66">
+                        <xs:annotation>
+                            <xs:appinfo>Fluid Ounces</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="75">
+                        <xs:annotation>
+                            <xs:appinfo>Foot-Pounds</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="65">
+                        <xs:annotation>
+                            <xs:appinfo>Gallons</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="91">
+                        <xs:annotation>
+                            <xs:appinfo>Grams</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="11">
+                        <xs:annotation>
+                            <xs:appinfo>Grams Per Second</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="28">
+                        <xs:annotation>
+                            <xs:appinfo>Hertz</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="70">
+                        <xs:annotation>
+                            <xs:appinfo>Horsepower</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="82">
+                        <xs:annotation>
+                            <xs:appinfo>Hours</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="99">
+                        <xs:annotation>
+                            <xs:appinfo>Inches of Mercury</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="101">
+                        <xs:annotation>
+                            <xs:appinfo>Inches of Water</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="76">
+                        <xs:annotation>
+                            <xs:appinfo>Inch-Pounds</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="72">
+                        <xs:annotation>
+                            <xs:appinfo>Joules</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="92">
+                        <xs:annotation>
+                            <xs:appinfo>Kilograms</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="13">
+                        <xs:annotation>
+                            <xs:appinfo>Kilograms Per Hour</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="29">
+                        <xs:annotation>
+                            <xs:appinfo>Kilohertz</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="42">
+                        <xs:annotation>
+                            <xs:appinfo>Kilometers</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="6">
+                        <xs:annotation>
+                            <xs:appinfo>Kilometers Per Hour</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="79">
+                        <xs:annotation>
+                            <xs:appinfo>Kilometers Per Liter</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="17">
+                        <xs:annotation>
+                            <xs:appinfo>Kilopascal</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="35">
+                        <xs:annotation>
+                            <xs:appinfo>Kilowatts</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="7">
+                        <xs:annotation>
+                            <xs:appinfo>Knots</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="22">
+                        <xs:annotation>
+                            <xs:appinfo>Lambda</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="62">
+                        <xs:annotation>
+                            <xs:appinfo>Liters</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="78">
+                        <xs:annotation>
+                            <xs:appinfo>Liters Per 100km</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="25">
+                        <xs:annotation>
+                            <xs:appinfo>Load Value (LV16)</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="24">
+                        <xs:annotation>
+                            <xs:appinfo>Load Value (LV8)</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="30">
+                        <xs:annotation>
+                            <xs:appinfo>Megahertz</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="36">
+                        <xs:annotation>
+                            <xs:appinfo>Megawatts</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="45">
+                        <xs:annotation>
+                            <xs:appinfo>Meters</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="9">
+                        <xs:annotation>
+                            <xs:appinfo>Meters Per Second</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="10">
+                        <xs:annotation>
+                            <xs:appinfo>Meters Per Second Squared</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="86">
+                        <xs:annotation>
+                            <xs:appinfo>Microseconds</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="43">
+                        <xs:annotation>
+                            <xs:appinfo>Miles</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="77">
+                        <xs:annotation>
+                            <xs:appinfo>Miles Per Gallon</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="5">
+                        <xs:annotation>
+                            <xs:appinfo>Miles Per Hour</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="41">
+                        <xs:annotation>
+                            <xs:appinfo>Milliamps</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="20">
+                        <xs:annotation>
+                            <xs:appinfo>Millibar</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="90">
+                        <xs:annotation>
+                            <xs:appinfo>Milligrams</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="47">
+                        <xs:annotation>
+                            <xs:appinfo>Millimeters</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="39">
+                        <xs:annotation>
+                            <xs:appinfo>Milliohms</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="85">
+                        <xs:annotation>
+                            <xs:appinfo>Milliseconds</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="33">
+                        <xs:annotation>
+                            <xs:appinfo>Millivolts</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="37">
+                        <xs:annotation>
+                            <xs:appinfo>Milliwatts</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="83">
+                        <xs:annotation>
+                            <xs:appinfo>Minutes</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="98">
+                        <xs:annotation>
+                            <xs:appinfo>mm of Mercury</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="100">
+                        <xs:annotation>
+                            <xs:appinfo>mm of Water</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="97">
+                        <xs:annotation>
+                            <xs:appinfo>Multiplier</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="44">
+                        <xs:annotation>
+                            <xs:appinfo>Nautical Mile</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="74">
+                        <xs:annotation>
+                            <xs:appinfo>Newton-Centimeter</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="73">
+                        <xs:annotation>
+                            <xs:appinfo>Newton-Meters</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="71">
+                        <xs:annotation>
+                            <xs:appinfo>Newtons</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="38">
+                        <xs:annotation>
+                            <xs:appinfo>Ohms</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="89">
+                        <xs:annotation>
+                            <xs:appinfo>Ounces</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="96">
+                        <xs:annotation>
+                            <xs:appinfo>Pascal-Second</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="67">
+                        <xs:annotation>
+                            <xs:appinfo>Percent</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="64">
+                        <xs:annotation>
+                            <xs:appinfo>Pints</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="94">
+                        <xs:annotation>
+                            <xs:appinfo>Poise</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="88">
+                        <xs:annotation>
+                            <xs:appinfo>Pounds</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="12">
+                        <xs:annotation>
+                            <xs:appinfo>Pounds Per Hour</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="18">
+                        <xs:annotation>
+                            <xs:appinfo>Pounds Per Square Inch</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="69">
+                        <xs:annotation>
+                            <xs:appinfo>Pulse Width</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="63">
+                        <xs:annotation>
+                            <xs:appinfo>Quarts</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="4">
+                        <xs:annotation>
+                            <xs:appinfo>Revolutions Per Minute</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="23">
+                        <xs:annotation>
+                            <xs:appinfo>Rotational Degrees</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="84">
+                        <xs:annotation>
+                            <xs:appinfo>Seconds</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="54">
+                        <xs:annotation>
+                            <xs:appinfo>Square Centimeters</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="50">
+                        <xs:annotation>
+                            <xs:appinfo>Square Feet</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="51">
+                        <xs:annotation>
+                            <xs:appinfo>Square Inches</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="52">
+                        <xs:annotation>
+                            <xs:appinfo>Square Kilometers</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="53">
+                        <xs:annotation>
+                            <xs:appinfo>Square Meters</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="48">
+                        <xs:annotation>
+                            <xs:appinfo>Square Miles</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="55">
+                        <xs:annotation>
+                            <xs:appinfo>Square Millimeters</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="49">
+                        <xs:annotation>
+                            <xs:appinfo>Square Yards</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="27">
+                        <xs:annotation>
+                            <xs:appinfo>Steps</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="93">
+                        <xs:annotation>
+                            <xs:appinfo>Tonne</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="87">
+                        <xs:annotation>
+                            <xs:appinfo>Tons</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="32">
+                        <xs:annotation>
+                            <xs:appinfo>Volts</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="34">
+                        <xs:annotation>
+                            <xs:appinfo>Watts</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="80">
+                        <xs:annotation>
+                            <xs:appinfo>Years</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                </xs:restriction>
+            </xs:simpleType>
+        </xs:union>
+    </xs:simpleType>
+</xs:schema>

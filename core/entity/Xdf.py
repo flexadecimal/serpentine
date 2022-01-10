@@ -11,7 +11,7 @@ import graphlib
 import functools
 from itertools import chain
 
-Mathable = T.Union[Table.ZAxis, Constant.Constant]
+Mathable = T.Union[Table.XYAxis, Table.ZAxis, Constant.Constant]
 
 # this is import-time
 core_path = Path(__file__).parent.parent
@@ -125,10 +125,13 @@ class MathInterdependence(Exception):
     root_tree: xml.ElementTree = root.getroottree()
     printouts: T.List[str] = []
     for math in interdependent_maths:
-      linked_Maths = set(var.linked.Math for var in math.LinkedVars)
+      # var.linked.Math may be a list in case of `Table.ZAxis`, when you have many conversion equation masks
+      linked_Maths = set(
+        chain.from_iterable(var.linked.Math for var in math.LinkedVars)
+      )
       dependent = next(iter(linked_Maths.intersection(interdependent_maths)))
       dependent_Var = next(filter(
-        lambda var: var.linked.Math == dependent, math.LinkedVars
+        lambda var: dependent in var.linked.Math, math.LinkedVars
       ))
       # set printout
       printout = "  "
@@ -158,9 +161,12 @@ class XdfTyper(xml.PythonElementClassLookup):
   # polymorphic dispatch by element
   @staticmethod
   def axis_polymorphic_dispatch(**attrib) -> T.Type[Table.Axis]:
-    if attrib['id'] == 'z':
+    id = attrib['id']
+    if id == 'z':
       # special case for ZAxis - has many <MATH>, etc.
       return Table.ZAxis
+    elif id == 'x' or id == 'y':
+      return Table.XYAxis
     else:
       return Table.Axis
 

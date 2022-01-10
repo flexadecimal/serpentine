@@ -1,10 +1,10 @@
-from .Base import Base
+from .Base import Base, MeasurementMixin
 from .EmbeddedData import EmbeddedMathMixin
 from .Math import Math
 from .Parameter import Parameter
 import numpy as np
 
-class Constant(Parameter, EmbeddedMathMixin):
+class Constant(Parameter, EmbeddedMathMixin, MeasurementMixin):
   '''
   XDF Constant, a.k.a. Scalar.
   '''

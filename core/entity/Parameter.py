@@ -2,11 +2,12 @@ from .Base import Base, XmlAbstractBaseMeta, XdfRefMixin, Array
 from abc import ABC, abstractmethod
 import numpy as np
 import numpy.typing as npt
+import typing as T
 
 class Parameter(Base, XdfRefMixin, ABC, metaclass=XmlAbstractBaseMeta):
   id: str = Base.xpath_synonym('./@uniqueid')
   title: str = Base.xpath_synonym('./title/text()')
-  description: str = Base.xpath_synonym('./description/text()')
+  description: T.Optional[str] = Base.xpath_synonym('./description/text()')
   # TODO: codify using XDF-local enum?
   # see https://docs.python.org/3/library/enum.html#functional-api
   Category = Base.xpath_synonym('./CATEGORYMEM')

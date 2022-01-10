@@ -9,6 +9,9 @@ import numpy as np
 import numpy.typing as npt
 from abc import ABC
 import functools
+from enum import Enum
+from pathlib import Path
+import os
 
 # to avoid circular import for XDF self-reference
 if t.TYPE_CHECKING:
@@ -134,3 +137,65 @@ class Array(np.ndarray, t.Generic[ScalarType]):
 
   def __repr__(self):
     return np.array2string(self, max_line_width=np.inf)
+
+# measurements/units singleton instantiated at import-time
+core_path = Path(__file__).parent.parent
+schemata_path = os.path.join(core_path, 'schemata')
+type_schema_path = 'tunerpro_types.xsd'
+type_schema = xml.parse(os.path.join(schemata_path, type_schema_path))
+namespaces = type_schema.getroot().nsmap
+
+def xml_type_enum(xml_type: str, enum_name: str, func: t.Callable[[int], t.Any] = lambda x: x, extends: t.Optional[Enum] = None) -> Enum:
+  elements = type_schema.xpath(
+    f"//xs:simpleType[@name='{xml_type}']//xs:enumeration", 
+    namespaces=namespaces
+  )
+  # see: https://docs.python.org/3/library/enum.html#iteration
+  base = {name: e.value for name, e in extends._member_map_.items()} if extends else {}
+  return Enum( # type: ignore
+    enum_name,
+    { \
+      el.xpath("./xs:annotation/xs:appinfo/text()", namespaces=namespaces)[0]: func(int(el.attrib['value']))
+      for el in elements
+    } | base
+  )
+
+# for tunerpro Unknown/Undefined/External/None to Python None - cast all to None, for Enum alias
+NullOptionsEnum = xml_type_enum(
+  'null_option',
+  'NullOptionsEnum',
+  lambda x: None
+)
+# TODO: 
+# - integration with scimath.units? see https://scimath.readthedocs.io/en/latest/units/unit_numpy.html
+# - documentation? e.g. "Unit of length - see wiki article."
+MeasurementEnum = xml_type_enum(
+  'data',
+  'MeasurementEnum',
+  extends = NullOptionsEnum
+)
+UnitEnum = xml_type_enum(
+  'unit',
+  'UnitEnum',
+  extends = NullOptionsEnum
+)
+
+class MeasurementMixin:
+  '''
+  Provides `data_type` and `unit_type` properties, e.g. vehicle speed in kilometers per second.
+  '''
+  @property
+  def data_type(self):
+    '''
+    E.g. Engine Speed, Exhaust Temp, Fuel Trim.
+    '''
+    index = int(self.xpath('./datatype/text()')[0])
+    return MeasurementEnum(index)
+
+  @property
+  def unit_type(self):
+    '''
+    E.g. RPM, Quarts, Seconds, Percent, etc.
+    '''
+    index = int(self.xpath('./unittype/text()')[0])
+    return UnitEnum(index)

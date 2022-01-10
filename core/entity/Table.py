@@ -1,6 +1,6 @@
 import typing as T
 from abc import ABC, abstractmethod
-from .Base import Base, XmlAbstractBaseMeta, Array
+from .Base import Base, XmlAbstractBaseMeta, Array, UnitEnum, MeasurementEnum, MeasurementMixin
 from .EmbeddedData import (
   EmbeddedData, 
   EmbeddedMathMixin, 
@@ -14,10 +14,21 @@ from itertools import (
   chain
 )
 
+# need this in `Axis` because python thinks we're referring to the property `Axis.Math`
+_math = Math
+
 class Axis(Base, EmbeddedMathMixin):
   Labels = Base.xpath_synonym('./LABEL', many=True)
-  Math: Math = Base.xpath_synonym('./MATH')
+  Math: _math = Base.xpath_synonym('./MATH')
   
+  @property
+  def units(self):
+    '''
+    Unit text to display, e.g. "RPM". 
+    For display only - data/units are properly typed in `XYAxis`, `ZAxis`.
+    '''
+    return self.xpath('./units/text()')[0]
+
   # each axis is a memory-mapped array
   @property
   def value(self) -> Array:
@@ -102,10 +113,24 @@ class CellMath(MaskedMath):
     out[self.row][self.column] = 1
     return Mask(np.logical_not(out))
 
+# TODO: X/Y Axes can have stock units and data types, but Z axis does not? weird
+class XYAxis(Axis, MeasurementMixin):
+  '''
+  Table X/Y Axis with Labels from (following TunerPro parlance):
+    - "Internal, Pure": binary memory map
+    - "External (Manual)": <LABEL> elements
+    - "Linked, Normalized": Parameter value, either Constant or Table
+    - "Linked, Scale": TODO: figure out
+  '''
+  @property
+  def length(self):
+    return int(self.xpath('./indexcount/text()'))
+
 class ZAxis(Axis):
   '''
   Special-case axis, generally referred to interchangeably with as a "Table", although the Table really contains the Axes and their related information.
   '''
+  Math: T.List[_math] = Base.xpath_synonym('./MATH', many=True) # type: ignore
   global_Math: GlobalMath = Base.xpath_synonym('./MATH[not(@row) and not(@col)]')
   column_Math: T.List[ColumnMath] = Base.xpath_synonym('./MATH[@col and not(@row)]', many=True)
   row_Math: T.List[RowMath] = Base.xpath_synonym('./MATH[@row and not(@col)]', many=True)
