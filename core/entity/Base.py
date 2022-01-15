@@ -14,6 +14,7 @@ from collections import ChainMap
 from pathlib import Path
 import os
 import re
+from enum import Enum
 
 # to avoid circular import for XDF self-reference
 if t.TYPE_CHECKING:
@@ -250,7 +251,7 @@ Units: ChainMap[int, UnitDef] = xml_type_map(
 Quantity = pint.Quantity
 ArrayLike = t.Union[Quantity, Array]
 
-class MeasurementMixin(Base):
+class QuantityMixin(Base):
   '''
   Provides `data_type` and `unit_type` properties, e.g. vehicle speed in kilometers per second.
   '''
@@ -273,3 +274,47 @@ class MeasurementMixin(Base):
       return Units[index].unit # type: ignore
     else:
       return None
+
+
+FormatOutput: ChainMap[int, str] = xml_type_map(
+  'formatting_output'
+)
+
+class FormattingMixin(Base):
+  '''
+  Provides:
+    - `units` string
+      * different from typed enumeration of units/measurements in `QuantityMixin`.
+        For example, `Table.ZAxis` has `units` string, but not typed `QuantityMixin.data_type` or `QuantityMixin.unit_type`.
+    - `output_type`
+      * float, int, hex, or ASCII string.
+  '''
+  @property
+  def units(self) -> t.Optional[str]:
+    out = self.xpath('./units/text()')
+    return out if out else None
+
+  # TODO - use some sort of numpy memmap type?
+  @property
+  def output_type(self) -> str:
+    out = self.xpath('./outputtype/text()')
+    # if no XML element exists, default to float. `Table.XAxis`, `Table.YAxis`, `Constant` all do this.
+    return FormatOutput[(int(out))] if out else FormatOutput[1]
+
+  DEFAULT_DIGITS = 2
+
+  @property
+  def digits(self) -> int:
+    '''
+    When output type is floating point, this is the number of significant digits. 
+    When integer, this is number of digits to truncate by.
+
+    If no XML element, there is a default:
+      - `Table.XYAxis` - 2
+      - 'Table.ZAxis` - XML element always present, but default is 2
+      - `Constant` - 2
+      - `Function` - 2
+    '''
+    out = self.xpath('./decimalpl/text()')
+    return int(out) if out else self.DEFAULT_DIGITS
+

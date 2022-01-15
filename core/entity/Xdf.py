@@ -5,13 +5,13 @@ from pathlib import Path
 # import parameter classes
 from .Base import Base
 from . import (
-  Parameter, Table, Constant, EmbeddedData, Var, Math
+  Parameter, Table, Constant, EmbeddedData, Var, Math, Axis
 )
 import graphlib
 import functools
 from itertools import chain
 
-Mathable = T.Union[Table.XYAxis, Table.ZAxis, Constant.Constant]
+Mathable = T.Union[Axis.XYAxis, Table.ZAxis, Constant.Constant]
 
 # this is import-time
 core_path = Path(__file__).parent.parent
@@ -160,15 +160,15 @@ class XdfTyper(xml.PythonElementClassLookup):
   
   # polymorphic dispatch by element
   @staticmethod
-  def axis_polymorphic_dispatch(**attrib) -> T.Type[Table.Axis]:
+  def axis_polymorphic_dispatch(**attrib) -> T.Type[Axis.Axis]:
     id = attrib['id']
     if id == 'z':
       # special case for ZAxis - has many <MATH>, etc.
       return Table.ZAxis
     elif id == 'x' or id == 'y':
-      return Table.XYAxis
+      return Axis.XYAxis
     else:
-      return Table.Axis
+      return Axis.Axis
 
   @staticmethod
   def var_polymorphic_dispatch(**attrib):

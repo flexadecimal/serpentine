@@ -1,45 +1,18 @@
 import typing as T
 from abc import ABC, abstractmethod
-from .Base import Base, XmlAbstractBaseMeta, Array, MeasurementMixin, Quantity, ArrayLike
-from .EmbeddedData import (
-  EmbeddedData, 
-  EmbeddedMathMixin, 
-)
+from .Base import Base, Quantity, ArrayLike, XmlAbstractBaseMeta, Array
 from .Math import Math
-from .Parameter import Parameter
+from .EmbeddedData import EmbeddedData
+from .Axis import Axis
+from .Parameter import Parameter, ClampedMixin
 import numpy as np
 import numpy.typing as npt
 import functools
 from itertools import (
   chain
 )
-import pint
 
-# need this in `Axis` because python thinks we're referring to the property `Axis.Math`
 _math = Math
-
-class Axis(Base, EmbeddedMathMixin):
-  Labels = Base.xpath_synonym('./LABEL', many=True)
-  Math: _math = Base.xpath_synonym('./MATH')
-  
-  @property
-  def units(self):
-    '''
-    Unit text to display, e.g. "RPM". 
-    For display only - data/units are properly typed in `XYAxis`, `ZAxis`.
-    '''
-    return self.xpath('./units/text()')[0]
-
-  # each axis is a memory-mapped array
-  @property
-  def value(self) -> ArrayLike:
-    out = self.Math.conversion_func(
-      self.memory_map.astype(
-        np.float64, 
-        copy=False
-        # use the underlying embedded row/col major ordering, shape, etc.
-    ))
-    return out
 
 # custom math subclasses for ZAxis with row/col
 class Mask(Array[np.ma.MaskType]):
@@ -115,25 +88,7 @@ class CellMath(MaskedMath):
     out[self.row][self.column] = 1
     return Mask(np.logical_not(out))
 
-# TODO: X/Y Axes can have stock units and data types, but Z axis does not? weird
-class XYAxis(Axis, MeasurementMixin):
-  '''
-  Table X/Y Axis with Labels from (following TunerPro parlance):
-    - "Internal, Pure": binary memory map
-    - "External (Manual)": <LABEL> elements
-    - "Linked, Normalized": Parameter value, either Constant or Table
-    - "Linked, Scale": TODO: figure out
-  '''
-  @property
-  def length(self):
-    return int(self.xpath('./indexcount/text()'))
-
-  @property
-  def value(self) -> Quantity:
-    original = Axis.value.fget(self) # type: ignore
-    return pint.Quantity(original, self.unit)
-
-class ZAxis(Axis):
+class ZAxis(Axis, ClampedMixin):
   '''
   Special-case axis, generally referred to interchangeably with as a "Table", although the Table really contains the Axes and their related information.
   '''
@@ -190,7 +145,7 @@ class ZAxis(Axis):
     return accumulator
 
   @functools.cached_property
-  def value(self) -> Array:
+  def value(self) -> ArrayLike:
     '''
     Equations are replaced by the following in order from lowest to highest priority:
     1. Global table equation
@@ -247,7 +202,8 @@ class ZAxis(Axis):
       chain.from_iterable(flattened),
       initial
     )
-    return out
+    # optionally clamp
+    return self.clamped(out)
 
 class Table(Parameter):
   '''

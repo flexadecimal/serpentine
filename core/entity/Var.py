@@ -1,7 +1,7 @@
 from __future__ import annotations
 import typing as t
 from abc import ABC, abstractmethod
-from .Base import Base, XmlAbstractBaseMeta, XdfRefMixin, Array, ArrayLike
+from .Base import Base, XmlAbstractBaseMeta, XdfRefMixin, ArrayLike
 import numpy as np
 import numpy.typing as npt
 

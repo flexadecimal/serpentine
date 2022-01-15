@@ -73,22 +73,44 @@ e.g. XDFTABLE/XDFAXIS/MATH/@maxOccurs = @rows * @cols
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
+  <!-- formatting - unit string, output format, decimal places -->
+  <xs:group name='has_formatting_axis'>
+    <xs:sequence>
+      <xs:element name='units' type='xs:string' minOccurs="0"/>
+      <!-- only X/Y table axis will have this index count... -->
+      <xs:element name='indexcount' type='xs:integer' minOccurs="0"/>
+      <xs:element name='decimalpl' type='xs:integer' minOccurs="0"/>
+      <!-- XY/axis might put this in the middle... thanks mark -->
+      <xs:group ref='bounded' minOccurs="0"/>
+      <xs:element name='outputtype' type='t:formatting_output' minOccurs="0"/>
+    </xs:sequence>
+  </xs:group>
+  <xs:group name='has_formatting'>
+    <xs:sequence>
+      <xs:element name='units' type='xs:string' minOccurs="0"/>
+      <xs:element name='outputtype' type='t:formatting_output' minOccurs="0"/>
+      <xs:element name='decimalpl' type='xs:integer' minOccurs="0"/>
+    </xs:sequence>
+  </xs:group>
   <!-- AXIS type - for Table and Function -->
   <xs:complexType name='axis'>
     <xs:sequence>
       <xs:element name='EMBEDDEDDATA' type='embedded_data' />
-      <xs:element name='units' minOccurs='0' type='xs:string' />
-      <xs:element name='indexcount' minOccurs='0' type='xs:integer' />
-      <xs:element name='decimalpl' minOccurs='0' type='xs:integer' />
-      <xs:group ref='bounded' minOccurs='0' />
-      <xs:element name='embedinfo' minOccurs='0'>
-        <xs:complexType>
-          <xs:attribute name='type' type='xs:integer' />
-        </xs:complexType>
-      </xs:element>
+      <xs:group ref='has_formatting_axis' minOccurs="0"/>
+      <!-- axis label reference -->
+        <xs:element name='embedinfo' minOccurs="0">
+          <xs:complexType>
+            <xs:attribute name='type' type='t:embed_type'></xs:attribute>
+            <xs:attribute name='linkobjid' type='t:hex_string' use="optional"></xs:attribute>
+            <!-- 
+              linkid only required when type is 3 or 4, the linked types
+              TODO: assert this https://stackoverflow.com/a/37080573
+            -->
+          </xs:complexType>
+        </xs:element>
       <xs:group ref='has_data_unit_types' minOccurs='0' />
       <xs:group ref='has_da_link' minOccurs='0' />
-      <!-- bounded by indexcount -->
+      <!-- TODO: assert bounded by indexcount -->
       <xs:element name='LABEL' minOccurs='0' maxOccurs='unbounded'>
         <xs:complexType>
           <xs:attribute name='index' type='xs:integer' />
@@ -115,9 +137,16 @@ e.g. XDFTABLE/XDFAXIS/MATH/@maxOccurs = @rows * @cols
   <!-- min/max bounds -->
   <xs:group name='bounded'>
     <xs:sequence>
-      <xs:element name='min' type='xs:decimal' />
-      <xs:element name='max' type='xs:decimal' />
-      <xs:element name='outputtype' type='xs:positiveInteger' />
+      <!-- either can be specified -->
+      <xs:element name='min' type='xs:decimal' minOccurs="0"/>
+      <xs:element name='max' type='xs:decimal' minOccurs="0"/>
+    </xs:sequence>
+  </xs:group>
+  <!-- constants use special rangehigh/rangelow.... weird -->
+  <xs:group name='bounded_constant'>
+    <xs:sequence>
+      <xs:element name='rangehigh' type='xs:decimal' minOccurs="0"/>
+      <xs:element name='rangelow' type='xs:decimal' minOccurs="0"/>
     </xs:sequence>
   </xs:group>
   <!-- ...DALINK - for cross-parameter data linking -->
@@ -203,9 +232,8 @@ e.g. XDFTABLE/XDFAXIS/MATH/@maxOccurs = @rows * @cols
                 <xs:group ref='has_description' />
                 <xs:element name='CATEGORYMEM' type='category_reference' minOccurs='0' maxOccurs='unbounded' />
                 <xs:element name='EMBEDDEDDATA' type='embedded_data' />
-                <xs:element name='outputtype' type='xs:positiveInteger' minOccurs='0' />
-                <xs:element name='decimalpl' minOccurs='0' type='xs:integer' />
-                <xs:element name='rangehigh' minOccurs='0' />
+                <xs:group ref='has_formatting' />
+                <xs:group ref="bounded_constant"></xs:group>
                 <xs:group ref='has_data_unit_types' />
                 <xs:group ref='has_da_link' />
                 <xs:element name='MATH' type='math' />

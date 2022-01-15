@@ -1,14 +1,10 @@
 import os
 import re
-from enum import Enum
 from itertools import (
   groupby
 )
 import sys
-from core.entity.Math import Math
 from core.entity.Xdf import Xdf, MathInterdependence
-
-import pdb
 
 cars_folder = './cars/testing'
 car_name_regex = rf"{cars_folder}/(?P<car>[\w+-_]+)"
@@ -46,5 +42,7 @@ if __name__ == '__main__':
       #val = major_rpm.Axes['x'].value
       zwb = xdf.xpath('./XDFCONSTANT[1]')[0].value
       x_axis = ignition_map.Axes['x'].value
-      y_axis = ignition_map.Axes['y'].value
+      y_axis = ignition_map.Axes['y']
+      a = y_axis.output_type
+      y_val = y_axis.value
       pass

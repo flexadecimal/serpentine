@@ -19,6 +19,56 @@ TunerPro XDF/ADX units and data types
             <xs:pattern value="[\da-fA-F]+" />
         </xs:restriction>
     </xs:simpleType>
+        <!-- output types -->
+        <xs:simpleType name="formatting_output">
+            <xs:restriction base="xs:integer">
+                <xs:enumeration value="1">
+                    <xs:annotation>
+                        <xs:appinfo>Floating Point</xs:appinfo>
+                    </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="2">
+                    <xs:annotation>
+                        <xs:appinfo>Integer</xs:appinfo>
+                    </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="3">
+                    <xs:annotation>
+                        <xs:appinfo>Hex Digits</xs:appinfo>
+                    </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="4">
+                    <xs:annotation>
+                        <xs:appinfo>ASCII String</xs:appinfo>
+                    </xs:annotation>
+                </xs:enumeration>
+            </xs:restriction>
+        </xs:simpleType>
+    <!-- embed info types -->
+    <xs:simpleType name="embed_type">
+        <xs:restriction base="xs:integer">
+            <xs:enumeration value="1">
+                <xs:annotation>
+                    <xs:appinfo>External (Manual)</xs:appinfo>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="2">
+                <xs:annotation>
+                    <xs:appinfo>Internal, Pure</xs:appinfo>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="3">
+                <xs:annotation>
+                    <xs:appinfo>Linked, Normalized (Function)</xs:appinfo>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="4">
+                <xs:annotation>
+                    <xs:appinfo>Linked, Scale</xs:appinfo>
+                </xs:annotation>
+            </xs:enumeration>
+        </xs:restriction>
+    </xs:simpleType>
     <!-- DATA TYPES -->
     <!-- tunerpro dropdown nullable, used in data/unit dropwdowns -->
     <xs:simpleType name="null_option">
