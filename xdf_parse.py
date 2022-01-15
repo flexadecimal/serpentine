@@ -41,9 +41,10 @@ if __name__ == '__main__':
       tables = {t.title: t.value for t in xdf.Tables}
 
       ignition_map = xdf.xpath('./XDFTABLE[1]')[0]
-      zwb = xdf.xpath('./XDFCONSTANT[1]')[0]
       #val = ignition_map.value
       major_rpm = xdf.xpath('./XDFTABLE[5]')[0]
       #val = major_rpm.Axes['x'].value
-      x_axis = ignition_map.Axes['x']
+      zwb = xdf.xpath('./XDFCONSTANT[1]')[0].value
+      x_axis = ignition_map.Axes['x'].value
+      y_axis = ignition_map.Axes['y'].value
       pass

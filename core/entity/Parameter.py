@@ -1,4 +1,4 @@
-from .Base import Base, XmlAbstractBaseMeta, XdfRefMixin, Array
+from .Base import Base, XmlAbstractBaseMeta, XdfRefMixin, Quantity, Array
 from abc import ABC, abstractmethod
 import numpy as np
 import numpy.typing as npt
@@ -14,7 +14,7 @@ class Parameter(Base, XdfRefMixin, ABC, metaclass=XmlAbstractBaseMeta):
 
   @property
   @abstractmethod
-  def value(self) -> Array:
+  def value(self) -> T.Union[Array, Quantity]:
       '''
       XDF parameters, using their `<MATH>` equation data, convert binary data to a numerical value - 
       right now, these are only `XDFCONSTANT` and `XDFTABLE`. `XDFTABLE` parses 3 axes to form a surface,

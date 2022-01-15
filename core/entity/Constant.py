@@ -1,8 +1,9 @@
-from .Base import Base, MeasurementMixin
+from .Base import Base, MeasurementMixin, Quantity
 from .EmbeddedData import EmbeddedMathMixin
 from .Math import Math
 from .Parameter import Parameter
 import numpy as np
+import pint
 
 class Constant(Parameter, EmbeddedMathMixin, MeasurementMixin):
   '''
@@ -11,7 +12,6 @@ class Constant(Parameter, EmbeddedMathMixin, MeasurementMixin):
   Math: Math = Base.xpath_synonym('./MATH')
 
   @property
-  def value(self):
-    return self.Math.conversion_func(
-      self.memory_map.astype(np.float, copy=False)
-    )
+  def value(self) -> Quantity:
+    unitless = self.Math.conversion_func(self.memory_map.astype(np.float_, copy=False))
+    return pint.Quantity(unitless, self.unit)

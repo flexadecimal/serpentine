@@ -1,7 +1,7 @@
 from __future__ import annotations
 import typing as t
 from abc import ABC, abstractmethod
-from .Base import Base, XmlAbstractBaseMeta, XdfRefMixin, Array
+from .Base import Base, XmlAbstractBaseMeta, XdfRefMixin, Array, ArrayLike
 import numpy as np
 import numpy.typing as npt
 
@@ -28,7 +28,7 @@ class FreeVar(Var, ABC, XdfRefMixin, metaclass=XmlAbstractBaseMeta):
   https://en.wikipedia.org/wiki/Free_variables_and_bound_variables
   '''  
   @abstractmethod
-  def value(self) -> npt.NDArray:
+  def value(self) -> ArrayLike:
     pass
   
 # actual tunerpro-style implementations
@@ -48,7 +48,7 @@ class LinkedVar(FreeVar):
     """)[0]
 
   @property
-  def value(self) -> Array:
+  def value(self) -> ArrayLike:
     # TODO: this does NOT guard against circular references, neither does TunerPro. We need to guard against circular references when saving.
     # only Z-axis of Table used for value
     return self.linked.value
@@ -68,7 +68,7 @@ class AddressVar(FreeVar):
     return int(self.xpath('./@flags')[0], 16)
 
   @property
-  def value(self) -> npt.NDArray:
+  def value(self):
     return np.memmap(
       self._xdf._binfile,
       shape = (1, ),

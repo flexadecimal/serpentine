@@ -10,7 +10,8 @@
             "request": "launch",
             "program": "xdf_parse.py",
             //"args": "./cars/testing/volvo-motronic44-test/"
-            "console": "integratedTerminal"
+            "console": "integratedTerminal",
+            "justMyCode": false
         }
     ]
 }

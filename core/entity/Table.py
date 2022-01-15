@@ -1,6 +1,6 @@
 import typing as T
 from abc import ABC, abstractmethod
-from .Base import Base, XmlAbstractBaseMeta, Array, UnitEnum, MeasurementEnum, MeasurementMixin
+from .Base import Base, XmlAbstractBaseMeta, Array, MeasurementMixin, Quantity, ArrayLike
 from .EmbeddedData import (
   EmbeddedData, 
   EmbeddedMathMixin, 
@@ -13,6 +13,7 @@ import functools
 from itertools import (
   chain
 )
+import pint
 
 # need this in `Axis` because python thinks we're referring to the property `Axis.Math`
 _math = Math
@@ -31,13 +32,14 @@ class Axis(Base, EmbeddedMathMixin):
 
   # each axis is a memory-mapped array
   @property
-  def value(self) -> Array:
-    return self.Math.conversion_func(
+  def value(self) -> ArrayLike:
+    out = self.Math.conversion_func(
       self.memory_map.astype(
         np.float64, 
         copy=False
         # use the underlying embedded row/col major ordering, shape, etc.
     ))
+    return out
 
 # custom math subclasses for ZAxis with row/col
 class Mask(Array[np.ma.MaskType]):
@@ -126,6 +128,11 @@ class XYAxis(Axis, MeasurementMixin):
   def length(self):
     return int(self.xpath('./indexcount/text()'))
 
+  @property
+  def value(self) -> Quantity:
+    original = Axis.value.fget(self) # type: ignore
+    return pint.Quantity(original, self.unit)
+
 class ZAxis(Axis):
   '''
   Special-case axis, generally referred to interchangeably with as a "Table", although the Table really contains the Axes and their related information.
@@ -175,8 +182,11 @@ class ZAxis(Axis):
       final_mask = math.mask
     # ...evaluate
     converted = math.conversion_func(accumulator)
+    # converted array may be Quantity or Array, depending on if referenced values had units or not.
     # putmask uses opposite of convention, so True = valid
-    np.putmask(accumulator, np.logical_not(final_mask), converted)
+    # TODO: subclass `pint.Quantity` to provide `np.putmask`?
+    to_put = converted.magnitude if issubclass(converted.__class__, Quantity) else converted
+    np.putmask(accumulator, np.logical_not(final_mask), to_put)
     return accumulator
 
   @functools.cached_property
