@@ -1,5 +1,5 @@
 import typing as T
-from .Base import Base, QuantityMixin, Quantity, ArrayLike, FormattingMixin, xml_type_map
+from .Base import Base, QuantityMixin, Quantity, ArrayLike, FormattingMixin, xml_type_map, FormatOutput
 from .EmbeddedData import EmbeddedMathMixin
 from .Math import Math
 import numpy as np

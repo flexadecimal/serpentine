@@ -168,7 +168,7 @@ e.g. XDFTABLE/XDFAXIS/MATH/@maxOccurs = @rows * @cols
         <xs:element name='XDFHEADER'>
           <xs:complexType>
             <xs:sequence>
-              <xs:element name='flags' type='xs:string' />
+              <xs:element name='flags' type='t:hex_string' />
               <xs:element name='deftitle' type='xs:string' />
               <xs:element name='description' type='xs:string' />
               <xs:element name='author' type='xs:string' />
@@ -201,7 +201,7 @@ e.g. XDFTABLE/XDFAXIS/MATH/@maxOccurs = @rows * @cols
               <!-- CATEGORIES -->
               <xs:element name='CATEGORY' maxOccurs='unbounded'>
                 <xs:complexType>
-                  <xs:attribute name='index' type='xs:string' />
+                  <xs:attribute name='index' type='t:hex_string' />
                   <xs:attribute name='name' type='xs:string' />
                 </xs:complexType>
               </xs:element>

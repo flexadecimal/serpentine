@@ -275,7 +275,6 @@ class QuantityMixin(Base):
     else:
       return None
 
-
 FormatOutput: ChainMap[int, str] = xml_type_map(
   'formatting_output'
 )

@@ -1,10 +1,10 @@
 from .Base import Base, XmlAbstractBaseMeta, XdfRefMixin, ArrayLike
 from abc import ABC, abstractmethod
 import numpy as np
-import numpy.typing as npt
 import typing as T
+from .Category import Categorized
 
-class Parameter(Base, XdfRefMixin, ABC, metaclass=XmlAbstractBaseMeta):
+class Parameter(Categorized, Base, XdfRefMixin, ABC, metaclass=XmlAbstractBaseMeta):
   id: str = Base.xpath_synonym('./@uniqueid')
   title: str = Base.xpath_synonym('./title/text()')
   description: T.Optional[str] = Base.xpath_synonym('./description/text()')

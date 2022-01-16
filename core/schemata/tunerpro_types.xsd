@@ -25,21 +25,25 @@ TunerPro XDF/ADX units and data types
                 <xs:enumeration value="1">
                     <xs:annotation>
                         <xs:appinfo>Floating Point</xs:appinfo>
+                        <xs:appinfo>numpy.float_</xs:appinfo>
                     </xs:annotation>
                 </xs:enumeration>
                 <xs:enumeration value="2">
                     <xs:annotation>
                         <xs:appinfo>Integer</xs:appinfo>
+                        <xs:appinfo>numpy.integer</xs:appinfo>
                     </xs:annotation>
                 </xs:enumeration>
                 <xs:enumeration value="3">
                     <xs:annotation>
                         <xs:appinfo>Hex Digits</xs:appinfo>
+                        <xs:appinfo>numpy.integer</xs:appinfo>
                     </xs:annotation>
                 </xs:enumeration>
                 <xs:enumeration value="4">
                     <xs:annotation>
                         <xs:appinfo>ASCII String</xs:appinfo>
+                        <xs:appinfo>numpy.str_</xs:appinfo>
                     </xs:annotation>
                 </xs:enumeration>
             </xs:restriction>

@@ -5,7 +5,7 @@ from pathlib import Path
 # import parameter classes
 from .Base import Base
 from . import (
-  Parameter, Table, Constant, EmbeddedData, Var, Math, Axis
+  Parameter, Table, Constant, EmbeddedData, Var, Math, Axis, Function, Category
 )
 import graphlib
 import functools
@@ -33,7 +33,7 @@ class Xdf(Base):
   title: str = Base.xpath_synonym('./XDFHEADER/deftitle/text()')
   description: str = Base.xpath_synonym('./XDFHEADER/description/text()')
   author: str = Base.xpath_synonym('./XDFHEADER/author/text()') 
-  Categories = Base.xpath_synonym('./XDFHEADER/CATEGORY', many=True)
+  Categories: T.List[Category.Category] = Base.xpath_synonym('./XDFHEADER/CATEGORY', many=True)
   Tables: T.List[Table.Table] = Base.xpath_synonym('./XDFTABLE', many=True)
   Constants: T.List[Constant.Constant] = Base.xpath_synonym('./XDFCONSTANT', many=True)
   # Tables and Constants are both Parameters, but Parameters have more general semantics in functions
@@ -152,10 +152,12 @@ are mutually interdependent.
 class XdfTyper(xml.PythonElementClassLookup):
   name_to_class = {
     'XDFFORMAT': Xdf,
+    'CATEGORY': Category.Category,
     'MATH': Math.Math,
     'XDFCONSTANT': Constant.Constant,
     'XDFTABLE': Table.Table,
-    'EMBEDDEDDATA': EmbeddedData.EmbeddedData
+    'EMBEDDEDDATA': EmbeddedData.EmbeddedData,
+    'XDFFUNCTION': Function.Function
   }
   
   # polymorphic dispatch by element
