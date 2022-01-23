@@ -29,6 +29,7 @@ e.g. XDFTABLE/XDFAXIS/MATH/@maxOccurs = @rows * @cols
   <xs:attributeGroup name='has_parameter_meta'>
     <xs:attribute name='uniqueid' type='t:hex_string' />
     <xs:attribute name='flags' type='t:hex_string' />
+    <xs:attribute name='vislevel' type='xs:integer' use='optional' />
   </xs:attributeGroup>
   <!-- ...has CATEGORYMEM reference to header CATEGORY -->
   <xs:complexType name='category_reference'>
@@ -76,38 +77,38 @@ e.g. XDFTABLE/XDFAXIS/MATH/@maxOccurs = @rows * @cols
   <!-- formatting - unit string, output format, decimal places -->
   <xs:group name='has_formatting_axis'>
     <xs:sequence>
-      <xs:element name='units' type='xs:string' minOccurs="0"/>
+      <xs:element name='units' type='xs:string' minOccurs="0" />
       <!-- only X/Y table axis will have this index count... -->
-      <xs:element name='indexcount' type='xs:integer' minOccurs="0"/>
-      <xs:element name='decimalpl' type='xs:integer' minOccurs="0"/>
+      <xs:element name='indexcount' type='xs:integer' minOccurs="0" />
+      <xs:element name='decimalpl' type='xs:integer' minOccurs="0" />
       <!-- XY/axis might put this in the middle... thanks mark -->
-      <xs:group ref='bounded' minOccurs="0"/>
-      <xs:element name='outputtype' type='t:formatting_output' minOccurs="0"/>
+      <xs:group ref='bounded' minOccurs="0" />
+      <xs:element name='outputtype' type='t:formatting_output' minOccurs="0" />
     </xs:sequence>
   </xs:group>
   <xs:group name='has_formatting'>
     <xs:sequence>
-      <xs:element name='units' type='xs:string' minOccurs="0"/>
-      <xs:element name='outputtype' type='t:formatting_output' minOccurs="0"/>
-      <xs:element name='decimalpl' type='xs:integer' minOccurs="0"/>
+      <xs:element name='units' type='xs:string' minOccurs="0" />
+      <xs:element name='outputtype' type='t:formatting_output' minOccurs="0" />
+      <xs:element name='decimalpl' type='xs:integer' minOccurs="0" />
     </xs:sequence>
   </xs:group>
   <!-- AXIS type - for Table and Function -->
   <xs:complexType name='axis'>
     <xs:sequence>
       <xs:element name='EMBEDDEDDATA' type='embedded_data' />
-      <xs:group ref='has_formatting_axis' minOccurs="0"/>
+      <xs:group ref='has_formatting_axis' minOccurs="0" />
       <!-- axis label reference -->
-        <xs:element name='embedinfo' minOccurs="0">
-          <xs:complexType>
-            <xs:attribute name='type' type='t:embed_type'></xs:attribute>
-            <xs:attribute name='linkobjid' type='t:hex_string' use="optional"></xs:attribute>
-            <!-- 
+      <xs:element name='embedinfo' minOccurs="0">
+        <xs:complexType>
+          <xs:attribute name='type' type='t:embed_type'></xs:attribute>
+          <xs:attribute name='linkobjid' type='t:hex_string' use="optional"></xs:attribute>
+          <!-- 
               linkid only required when type is 3 or 4, the linked types
               TODO: assert this https://stackoverflow.com/a/37080573
             -->
-          </xs:complexType>
-        </xs:element>
+        </xs:complexType>
+      </xs:element>
       <xs:group ref='has_data_unit_types' minOccurs='0' />
       <xs:group ref='has_da_link' minOccurs='0' />
       <!-- TODO: assert bounded by indexcount -->
@@ -138,15 +139,15 @@ e.g. XDFTABLE/XDFAXIS/MATH/@maxOccurs = @rows * @cols
   <xs:group name='bounded'>
     <xs:sequence>
       <!-- either can be specified -->
-      <xs:element name='min' type='xs:decimal' minOccurs="0"/>
-      <xs:element name='max' type='xs:decimal' minOccurs="0"/>
+      <xs:element name='min' type='xs:decimal' minOccurs="0" />
+      <xs:element name='max' type='xs:decimal' minOccurs="0" />
     </xs:sequence>
   </xs:group>
   <!-- constants use special rangehigh/rangelow.... weird -->
   <xs:group name='bounded_constant'>
     <xs:sequence>
-      <xs:element name='rangehigh' type='xs:decimal' minOccurs="0"/>
-      <xs:element name='rangelow' type='xs:decimal' minOccurs="0"/>
+      <xs:element name='rangehigh' type='xs:decimal' minOccurs="0" />
+      <xs:element name='rangelow' type='xs:decimal' minOccurs="0" />
     </xs:sequence>
   </xs:group>
   <!-- ...DALINK - for cross-parameter data linking -->
@@ -177,6 +178,9 @@ e.g. XDFTABLE/XDFAXIS/MATH/@maxOccurs = @rows * @cols
                 <xs:element name='baseoffset' type='base_offset' />
                 <xs:element name='BASEOFFSET' type='base_offset' />
               </xs:choice>
+              <!-- for linking to ADX data acquisition definition -->
+              <xs:element name='adsassoc' type='xs:string' minOccurs="0" />
+              <xs:element name='adscheck' type='t:hex_string' minOccurs="0" />
               <xs:element name='DEFAULTS'>
                 <xs:complexType>
                   <xs:attribute name='datasizeinbits' type='xs:positiveInteger' />

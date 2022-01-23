@@ -8,7 +8,7 @@ lark = "==0.11.3"
 lxml = "==4.6.3"
 numpy = "==1.21.1"
 toml = "==0.10.2"
-Pint = "==0.18
+Pint = "==0.18"
 
 [dev-packages]
 mypy = "==0.910"

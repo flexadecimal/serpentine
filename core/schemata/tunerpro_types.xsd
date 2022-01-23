@@ -51,22 +51,22 @@ TunerPro XDF/ADX units and data types
     <!-- embed info types -->
     <xs:simpleType name="embed_type">
         <xs:restriction base="xs:integer">
-            <xs:enumeration value="1">
+            <xs:enumeration value="0">
                 <xs:annotation>
                     <xs:appinfo>External (Manual)</xs:appinfo>
                 </xs:annotation>
             </xs:enumeration>
-            <xs:enumeration value="2">
+            <xs:enumeration value="1">
                 <xs:annotation>
                     <xs:appinfo>Internal, Pure</xs:appinfo>
                 </xs:annotation>
             </xs:enumeration>
-            <xs:enumeration value="3">
+            <xs:enumeration value="2">
                 <xs:annotation>
                     <xs:appinfo>Linked, Normalized (Function)</xs:appinfo>
                 </xs:annotation>
             </xs:enumeration>
-            <xs:enumeration value="4">
+            <xs:enumeration value="3">
                 <xs:annotation>
                     <xs:appinfo>Linked, Scale</xs:appinfo>
                 </xs:annotation>

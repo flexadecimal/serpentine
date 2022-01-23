@@ -251,7 +251,7 @@ Units: ChainMap[int, UnitDef] = xml_type_map(
 Quantity = pint.Quantity
 ArrayLike = t.Union[Quantity, Array]
 
-class QuantityMixin(Base):
+class Quantified(Base):
   '''
   Provides `data_type` and `unit_type` properties, e.g. vehicle speed in kilometers per second.
   '''
@@ -279,26 +279,29 @@ FormatOutput: ChainMap[int, str] = xml_type_map(
   'formatting_output'
 )
 
-class FormattingMixin(Base):
+# TODO: in frontend - 
+# setting the data is a backend function, but the actual presentation, e.g.
+# printing data as hex string or ASCII string, will be up to the frontend.
+class Formatted(Base):
   '''
   Provides:
     - `units` string
-      * different from typed enumeration of units/measurements in `QuantityMixin`.
-        For example, `Table.ZAxis` has `units` string, but not typed `QuantityMixin.data_type` or `QuantityMixin.unit_type`.
+      * different from typed enumeration of units/measurements in `Quantified`.
+        For example, `Table.ZAxis` has `units` string, but not typed `Quantified.data_type` or `Quantified.unit_type`.
     - `output_type`
       * float, int, hex, or ASCII string.
   '''
   @property
   def units(self) -> t.Optional[str]:
     out = self.xpath('./units/text()')
-    return out if out else None
+    return out[0] if out else None
 
   # TODO - use some sort of numpy memmap type?
   @property
   def output_type(self) -> str:
     out = self.xpath('./outputtype/text()')
     # if no XML element exists, default to float. `Table.XAxis`, `Table.YAxis`, `Constant` all do this.
-    return FormatOutput[(int(out))] if out else FormatOutput[1]
+    return FormatOutput[(int(out[0]))] if out else FormatOutput[1]
 
   DEFAULT_DIGITS = 2
 
@@ -315,5 +318,5 @@ class FormattingMixin(Base):
       - `Function` - 2
     '''
     out = self.xpath('./decimalpl/text()')
-    return int(out) if out else self.DEFAULT_DIGITS
+    return int(out[0]) if out else self.DEFAULT_DIGITS
 

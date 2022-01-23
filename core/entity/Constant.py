@@ -1,13 +1,13 @@
-from .Base import Base, QuantityMixin, Quantity, FormattingMixin
-from .EmbeddedData import EmbeddedMathMixin
+from .Base import Base, Quantified, Quantity, Formatted
+from .EmbeddedData import Embedded
 from .Math import Math
-from .Parameter import Parameter, ClampedMixin
+from .Parameter import Parameter, Clamped
 import numpy as np
 import pint
 import typing as t
 
 # weird TunerPro bullshit - only Constant needs to override min/max with rangehigh/rangelow
-class ConstantClampedMixin(ClampedMixin):
+class ConstantClamped(Clamped):
   @property
   def min(self) -> t.Optional[float]:
     out = self.xpath('./rangelow/text()')
@@ -19,7 +19,7 @@ class ConstantClampedMixin(ClampedMixin):
     return float(out[0]) if out else None
 
 
-class Constant(Parameter, EmbeddedMathMixin, FormattingMixin, QuantityMixin, ConstantClampedMixin):
+class Constant(Parameter, Embedded, Formatted, Quantified, ConstantClamped):
   '''
   XDF Constant, a.k.a. Scalar.
   '''

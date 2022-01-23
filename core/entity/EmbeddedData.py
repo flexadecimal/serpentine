@@ -1,4 +1,4 @@
-import typing as T
+import typing as t
 import numpy.typing as npt
 # for entities
 from .Base import Base, XdfRefMixin, Array
@@ -10,11 +10,11 @@ from enum import Flag
 class TypeFlags(Flag):
   '''
   Type flags found in binary conversion - endianness, signed, etc.
-  TunerPro uses "LSB first" (big-endian) and "MSB first" (little-endian)
+  TunerPro uses "LSB first" (little-endian) and "MSB first" (big-endian)
   terminology.
   '''
   SIGNED = 1
-  BIG_ENDIAN = 2
+  LITTLE_ENDIAN = 2
   FLOAT = 65536
   COLUMN_MAJOR = 4
 
@@ -23,7 +23,7 @@ class EmbeddedData(Base):
   Used under Math elements, providing details on parsing internal binary data.
   '''
   @property
-  def address(self) -> T.Optional[int]:
+  def address(self) -> t.Optional[int]:
     if 'mmedaddress' in self.attrib:
       return int(self.attrib['mmedaddress'], 16)
     else:
@@ -37,7 +37,7 @@ class EmbeddedData(Base):
     return int(self.attrib['mmedelementsizebits']) // 8
 
   @property
-  def shape(self) -> T.Union[T.Tuple[int], T.Tuple[int, int]]:
+  def shape(self) -> t.Union[t.Tuple[int], t.Tuple[int, int]]:
     '''
     Shape tuple following Numpy convention - 2D tables like that of `Table.ZAxis` have shape like `(16, 16)` (or occasionally `(16, )` for a 1D table). Constants have shape `(1, )` - a single number that will be broadcoast to an array length 1.
     '''
@@ -66,13 +66,13 @@ class EmbeddedData(Base):
       type = 'i'
     else:
       type = 'u'
-    endianness = '>' if TypeFlags.BIG_ENDIAN in self.type_flags else '<'
+    endianness = '<' if TypeFlags.LITTLE_ENDIAN in self.type_flags else '>'
     type_str = f'{endianness}{type}{self.length}'
     return np.dtype(type_str)
 
   # table only
   @property
-  def strides(self) -> T.Optional[T.Union[T.Tuple[int], T.Tuple[int, int]]]:
+  def strides(self) -> t.Optional[t.Union[t.Tuple[int], t.Tuple[int, int]]]:
     '''
     Array stride in memory.
     '''
@@ -85,10 +85,10 @@ class EmbeddedData(Base):
     else:
       raise ValueError
 
-class EmbeddedMathMixin(XdfRefMixin):
+class Embedded(XdfRefMixin):
   '''
   Mixin for objects exposing a value using both `<MATH>` and `<EMBEDDEDDATA>`.
-  `Constant` and `Table.Axis` do this. `Table` has a value itself, but its value is constructed from "real" `EmbeddedMathMixin` memory maps.
+  `Constant` and `Table.Axis` do this. `Table` has a value itself, but its value is constructed from "real" `Embedded` memory maps.
   '''
   EmbeddedData: EmbeddedData = Base.xpath_synonym('./EMBEDDEDDATA')
 

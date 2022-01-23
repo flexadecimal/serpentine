@@ -1,10 +1,10 @@
-import typing as T
+import typing as t
 from abc import ABC, abstractmethod
 from .Base import Base, Quantity, ArrayLike, XmlAbstractBaseMeta, Array
 from .Math import Math
 from .EmbeddedData import EmbeddedData
-from .Axis import Axis
-from .Parameter import Parameter, ClampedMixin
+from .Axis import Axis, EmbeddedAxis, XYEmbeddedAxis, XYLabelAxis, XYLinkAxis
+from .Parameter import Parameter, Clamped
 import numpy as np
 import numpy.typing as npt
 import functools
@@ -88,18 +88,18 @@ class CellMath(MaskedMath):
     out[self.row][self.column] = 1
     return Mask(np.logical_not(out))
 
-class ZAxis(Axis, ClampedMixin):
+class ZAxis(EmbeddedAxis, Clamped):
   '''
   Special-case axis, generally referred to interchangeably with as a "Table", although the Table really contains the Axes and their related information.
   '''
-  Math: T.List[_math] = Base.xpath_synonym('./MATH', many=True) # type: ignore
+  Math: t.List[_math] = Base.xpath_synonym('./MATH', many=True) # type: ignore
   global_Math: GlobalMath = Base.xpath_synonym('./MATH[not(@row) and not(@col)]')
-  column_Math: T.List[ColumnMath] = Base.xpath_synonym('./MATH[@col and not(@row)]', many=True)
-  row_Math: T.List[RowMath] = Base.xpath_synonym('./MATH[@row and not(@col)]', many=True)
-  cell_Math: T.List[CellMath] = Base.xpath_synonym('./MATH[@row and @col]', many=True)
+  column_Math: t.List[ColumnMath] = Base.xpath_synonym('./MATH[@col and not(@row)]', many=True)
+  row_Math: t.List[RowMath] = Base.xpath_synonym('./MATH[@row and not(@col)]', many=True)
+  cell_Math: t.List[CellMath] = Base.xpath_synonym('./MATH[@row and @col]', many=True)
 
   @staticmethod
-  def _combine_masks(*masks: Mask, initial: T.Optional[Mask] = None) -> Mask:
+  def _combine_masks(*masks: Mask, initial: t.Optional[Mask] = None) -> Mask:
     # un-invert combined mask...
     reducer = lambda a, b: np.logical_not(
       # ... after inverting masks so that OR works
@@ -113,8 +113,8 @@ class ZAxis(Axis, ClampedMixin):
   def _mask_reduction(
     self,
     accumulator: np.ma.MaskedArray,
-    type_math: T.Tuple[T.Type[MaskedMath], MaskedMath],
-    group_masks: T.Dict[T.Type[MaskedMath], Mask]
+    type_math: t.Tuple[t.Type[MaskedMath], MaskedMath],
+    group_masks: t.Dict[t.Type[MaskedMath], Mask]
   ):
     '''
     Used internally in `Table.ZAxis`'s binary conversion, where each `math: MaskedMath` takes a masked view of an original array and converts parts incrementally.
@@ -166,7 +166,7 @@ class ZAxis(Axis, ClampedMixin):
 
     # TABLE MATH CONVERSION
     # ...in order of lowest to highest precedence
-    math_groups: T.Dict[T.Type[MaskedMath], T.List[MaskedMath]] = {
+    math_groups: t.Dict[t.Type[MaskedMath], t.List[MaskedMath]] = {
       GlobalMath: [self.global_Math],
       ColumnMath: self.column_Math,
       RowMath: self.row_Math,
@@ -178,7 +178,7 @@ class ZAxis(Axis, ClampedMixin):
       if maths
     }
     # ...masks must be subtracted - combine masks amongst groups
-    combined_masks: T.Dict[T.Type[MaskedMath], npt.NDArray] = {
+    combined_masks: t.Dict[t.Type[MaskedMath], npt.NDArray] = {
       klass: self._combine_masks(
         *map(lambda math: math.mask, maths)
       )
@@ -205,27 +205,25 @@ class ZAxis(Axis, ClampedMixin):
     # optionally clamp
     return self.clamped(out)
 
+XYAxis = t.Union[XYEmbeddedAxis, XYLabelAxis, XYLinkAxis]
 class Table(Parameter):
   '''
   Table, a.k.a array/list of values. Usually this is a 2D table like a fuel or ignition map, or occasionally, a 1D list like an axis, e.g. Major RPM.
   '''
-  @property
-  def Axes(self) -> dict[str, Axis]:
-    '''
-    3D surface with X, Y, and Z axes.
-    '''
-    return {axis.attrib['id']: axis for axis in self.xpath('./XDFAXIS')}
+  x: XYAxis = Base.xpath_synonym("./XDFAXIS[@id='x']")
+  y: XYAxis = Base.xpath_synonym("./XDFAXIS[@id='y']")
+  z: XYAxis = Base.xpath_synonym("./XDFAXIS[@id='z']")
 
   @property
   def value(self):
-    return self.Axes['z'].value
+    return self.z.value
 
   def __str__(self):
     sep = ' '
     width = 6
     fmt = f"{{0:>{width}.1f}}"
     x_axis = sep.join(map(
-      lambda x: fmt.format(x), self.Axes['x'].value
+      lambda x: fmt.format(x), self.x.value
     ))
     x_preceding = ' ' * (width + 2 + len(sep))
     line = '-' * len(x_axis) 
@@ -233,12 +231,12 @@ class Table(Parameter):
     zs_with_y = '\n'.join(
       sep.join([
         # preceding y val
-        fmt.format(self.Axes['y'].value[index]),
+        fmt.format(self.y.value[index]),
         # divider
        '|',
         # z vals
         *map(lambda z: fmt.format(z), row)
-      ]) for index, row in enumerate(self.Axes['z'].value)
+      ]) for index, row in enumerate(self.z.value)
     )
     return f"{x_preceding}{x_axis}\n{x_preceding}{line}\n{zs_with_y}"
     

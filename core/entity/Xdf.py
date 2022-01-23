@@ -1,4 +1,4 @@
-import typing as T
+import typing as t
 from lxml import etree as xml, objectify
 import os
 from pathlib import Path
@@ -11,7 +11,7 @@ import graphlib
 import functools
 from itertools import chain
 
-Mathable = T.Union[Axis.XYAxis, Table.ZAxis, Constant.Constant]
+Mathable = t.Union[Axis.XYEmbeddedAxis, Table.ZAxis, Constant.Constant]
 
 # this is import-time
 core_path = Path(__file__).parent.parent
@@ -28,23 +28,24 @@ except xml.XMLSchemaParseError as schema_error:
 class Xdf(Base):
   # internals
   _path: Path
-  _binfile: T.BinaryIO
+  _binfile: t.BinaryIO
   # public
   title: str = Base.xpath_synonym('./XDFHEADER/deftitle/text()')
   description: str = Base.xpath_synonym('./XDFHEADER/description/text()')
   author: str = Base.xpath_synonym('./XDFHEADER/author/text()') 
-  Categories: T.List[Category.Category] = Base.xpath_synonym('./XDFHEADER/CATEGORY', many=True)
-  Tables: T.List[Table.Table] = Base.xpath_synonym('./XDFTABLE', many=True)
-  Constants: T.List[Constant.Constant] = Base.xpath_synonym('./XDFCONSTANT', many=True)
+  Categories: t.List[Category.Category] = Base.xpath_synonym('./XDFHEADER/CATEGORY', many=True)
+  Tables: t.List[Table.Table] = Base.xpath_synonym('./XDFTABLE', many=True)
+  Constants: t.List[Constant.Constant] = Base.xpath_synonym('./XDFCONSTANT', many=True)
+  Functions: t.List[Function.Function] = Base.xpath_synonym('./XDFFUNCTION', many=True)
   # Tables and Constants are both Parameters, but Parameters have more general semantics in functions
-  Parameters: T.List[Parameter.Parameter] = Base.xpath_synonym(
-    './XDFTABLE | ./XDFCONSTANT', 
+  Parameters: t.List[Parameter.Parameter] = Base.xpath_synonym(
+    './XDFTABLE | ./XDFCONSTANT | ./XDFFUNCTION', 
     many=True
   )
 
   # internals
   @property
-  def _bin_internals(self) -> T.Dict[str, T.Any]:
+  def _bin_internals(self) -> t.Dict[str, t.Any]:
     '''
     Internal binary details - base offset, start address. Parameters use this to convert from binary to numerical data.
     '''
@@ -81,20 +82,20 @@ class Xdf(Base):
       # this must be fully evaluated to see if it is cyclical
       order = list(xdf._math_eval_order)
     except graphlib.CycleError as error:
-      cycle: T.Set[Math.Math] = set(error.args[1])
+      cycle: t.Set[Math.Math] = set(error.args[1])
       # TODO: trying to construct kwargs of `Math.conversion_func` fails if they are dependent - YOU WILL OVERFLOW STACK. mark them dirty
       raise MathInterdependence(xdf, *cycle) from error
     # invalid state taken care of, we can still open
     return xdf
 
   @property
-  def parameters_by_id(self) -> T.Dict[str, Parameter.Parameter]:
+  def parameters_by_id(self) -> t.Dict[str, Parameter.Parameter]:
     return {param.id: param for param in self.Parameters}
 
 
   @functools.cached_property
-  def _math_dependency_graph(self) -> T.Mapping[Math.Math, T.Iterable[Math.Math]]:
-    has_link: T.Iterable[Math.Math] = self.xpath("//MATH[./VAR[@type='link']]")
+  def _math_dependency_graph(self) -> t.Mapping[Math.Math, t.Iterable[Math.Math]]:
+    has_link: t.Iterable[Math.Math] = self.xpath("//MATH[./VAR[@type='link']]")
     # see `Var.LinkedVar`
     #graph = {math:  
     #  list(map(lambda id: self.xpath(f"""
@@ -113,7 +114,7 @@ class Xdf(Base):
 
   #graphlib topsort
   @property
-  def _math_eval_order(self) -> T.Iterable[Math.Math]:
+  def _math_eval_order(self) -> t.Iterable[Math.Math]:
     graph = self._math_dependency_graph
     sorter = graphlib.TopologicalSorter(graph)
     return sorter.static_order()
@@ -123,7 +124,7 @@ class MathInterdependence(Exception):
     self.cycle = interdependent_maths
     # fancy printing
     root_tree: xml.ElementTree = root.getroottree()
-    printouts: T.List[str] = []
+    printouts: t.List[str] = []
     for math in interdependent_maths:
       # var.linked.Math may be a list in case of `Table.ZAxis`, when you have many conversion equation masks
       linked_Maths = set(
@@ -162,18 +163,23 @@ class XdfTyper(xml.PythonElementClassLookup):
   
   # polymorphic dispatch by element
   @staticmethod
-  def axis_polymorphic_dispatch(**attrib) -> T.Type[Axis.Axis]:
+  def axis_polymorphic_dispatch(root, **attrib) -> t.Type[Axis.Axis]:
     id = attrib['id']
-    if id == 'z':
-      # special case for ZAxis - has many <MATH>, etc.
-      return Table.ZAxis
-    elif id == 'x' or id == 'y':
-      return Axis.XYAxis
+    parent = root.getparent().tag
+    if parent == 'XDFTABLE':
+      if id == 'z':
+        return Table.ZAxis
+      elif id == 'x' or id == 'y':
+        klass = Axis.Axis_class_from_element(root)
+        return klass
+    elif parent == 'XDFFUNCTION':
+      # Function can only have EmbeddedAxis - by switching output_type, you change Axis subtype
+      return Axis.XYEmbeddedAxis
     else:
       return Axis.Axis
 
   @staticmethod
-  def var_polymorphic_dispatch(**attrib):
+  def var_polymorphic_dispatch(root, **attrib):
     type_to_class = {
       'link': Var.LinkedVar,
       'address': Var.AddressVar,
@@ -189,7 +195,7 @@ class XdfTyper(xml.PythonElementClassLookup):
     return klass
 
   @staticmethod
-  def math_polymorphic_dispatch(**attrib) -> T.Type[Table.MaskedMath]:
+  def math_polymorphic_dispatch(root, **attrib) -> t.Type[Table.MaskedMath]:
     if 'row' in attrib and 'col' in attrib:
       return Table.CellMath
     elif 'row' in attrib:
@@ -199,7 +205,6 @@ class XdfTyper(xml.PythonElementClassLookup):
     else:
       return Table.GlobalMath
 
-  
   # dispatch attributes as arguments to functions. __func__ DOES exist on staticmethod, mypy doesn't know about this
   name_to_attrib_func = {
     'VAR': var_polymorphic_dispatch.__func__, #type: ignore
@@ -213,7 +218,7 @@ class XdfTyper(xml.PythonElementClassLookup):
     '''
     if root.tag in self.name_to_attrib_func:
       func = self.name_to_attrib_func[root.tag]
-      return func(**root.attrib)
+      return func(root, **root.attrib)
     elif root.tag in self.name_to_class:
       klass = self.name_to_class[root.tag]
       return klass
