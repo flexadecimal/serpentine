@@ -1,0 +1,24 @@
+name: Run Unit Tests
+on:
+  push:
+    branches:
+      - cicd
+      - main
+  pull_request:
+    branches:
+      - cicd
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.9
+      - name: Install dependencies
+        run: pipenv install
+      - name: Run unit tests
+        run: pipenv run python -m unittest core.test.simpleTest
