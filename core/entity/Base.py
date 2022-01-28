@@ -7,8 +7,14 @@ from lxml import (
 import itertools as it
 import numpy as np
 import numpy.typing as npt
+import pint
 from abc import ABC
 import functools
+from collections import ChainMap
+from pathlib import Path
+import os
+import re
+from enum import Enum
 
 # to avoid circular import for XDF self-reference
 if t.TYPE_CHECKING:
@@ -134,3 +140,183 @@ class Array(np.ndarray, t.Generic[ScalarType]):
 
   def __repr__(self):
     return np.array2string(self, max_line_width=np.inf)
+
+# measurements/units singleton instantiated at import-time
+core_path = Path(__file__).parent.parent
+schemata_path = os.path.join(core_path, 'schemata')
+type_schema_path = 'tunerpro_types.xsd'
+type_schema = xml.parse(os.path.join(schemata_path, type_schema_path))
+namespaces = type_schema.getroot().nsmap
+
+
+def friendly_schemadef_name(el: xml.Element) -> str:
+  return el.xpath("./xs:annotation/xs:appinfo[1]/text()", namespaces=namespaces)[0]
+
+def schemadef_index(el: xml.Element) -> int:
+  base = el.xpath("./ancestor::xs:restriction/@base", namespaces = namespaces)[0]
+  if base == 'xs:integer':
+    return int(el.attrib['value'])
+  #elif base == 'xs:float':
+  # convert to integer prefix value
+  return int(float(el.attrib['value']))
+
+class UnitDef(t.NamedTuple):
+  friendly_name: str
+  unit: t.Optional[pint.Unit]
+ 
+def xml_type_map(
+  xml_type: str, 
+  # for enum key, use index
+  key: t.Callable[[xml.Element], t.Any] = schemadef_index,
+  # by default, use friendly name
+  val: t.Callable[[xml.Element], t.Any] = friendly_schemadef_name,
+  extends: t.Iterable[ChainMap[int, t.Any]] = [],
+) -> ChainMap[int, t.Any]:
+  elements = type_schema.xpath(
+    f"//xs:simpleType[@name='{xml_type}']//xs:enumeration", 
+    namespaces=namespaces
+  )
+  # pint unit - key is (index, friendly): unit
+  self_members = {key(el): val(el) for el in elements}
+  return ChainMap(self_members, *extends)
+
+# construct Pint definitions here...
+ureg = pint.UnitRegistry(
+  # don't use default Pint definitions
+  filename=None,
+  case_sensitive=False
+)
+pint_first_def_regex = rf"(?:(?P<alias>@alias) )?(?P<name>\w+)-?.*"
+def pintify(el: xml.Element, unit = True) -> t.Optional[pint.Unit]:
+  # second appinfo - newline seperated list of definitions, to append friendly alias to
+  defs = el.xpath("./xs:annotation/xs:appinfo[2]/text()", namespaces=namespaces)
+  # ...there may be no defs if option is a unitless value like Percent or Duty Cycle
+  if len(defs) > 0:
+    lines = list(map(
+      lambda l: l.strip(),
+      defs[0].strip().split("\n")
+    ))
+    # add friendly alias to last definition, implicity the final def
+    last_def = lines[-1]
+    # ...TODO: INDEX UNIT WITH FRIENDLY NAME, NOT INTEGER
+    # with_friendly = f"{last_def} = {friendly_name}"
+    # lines[-1] = with_friendly
+    # GET PINT UNIT
+    matches = re.search(pint_first_def_regex, last_def)
+    if not matches:
+      raise ValueError
+    groups = matches.groupdict()
+    last_def_name = groups['name']
+    for line in lines:
+      # register module-level definition
+      try:
+        # not an alias - define unit
+        if not groups['alias']:
+          ureg.define(line)
+      except pint.DefinitionSyntaxError as e:
+        raise e
+    # return tuple if unit, else nothing. index will be integer if unit
+    if unit:
+      try:
+        unit = getattr(ureg, last_def_name)
+      except pint.UndefinedUnitError as e:
+        raise e
+      return unit
+  return None
+
+# for tunerpro Unknown/Undefined/External/None to Python None - cast all to None, for Enum alias
+NullOptions: ChainMap[int, t.Tuple[str, None]] = xml_type_map(
+  'null_option',
+  val = lambda el: (friendly_schemadef_name(el), None)
+)
+Prefixes: ChainMap[int, t.Tuple[str, None]] = xml_type_map(
+  'unitPrefix',
+  val = lambda el: (friendly_schemadef_name(el), pintify(el, unit=False))
+)
+# really, only these two are used
+Measurements: ChainMap[int, str] = xml_type_map(
+  'data',
+  extends = [NullOptions]
+)
+Units: ChainMap[int, UnitDef] = xml_type_map(
+  'unit',
+  val = lambda el: UnitDef(
+    friendly_name=friendly_schemadef_name(el), 
+    unit = pintify(el)
+  ),
+  extends = [NullOptions]
+)
+
+# TODO - subclass pint.Quantity for custom stuff, like np.putmask?
+Quantity = pint.Quantity
+ArrayLike = t.Union[Quantity, Array]
+
+class Quantified(Base):
+  '''
+  Provides `data_type` and `unit_type` properties, e.g. vehicle speed in kilometers per second.
+  '''
+  @property
+  def data_type(self) -> t.Optional[str]:
+    '''
+    E.g. Engine Speed, Exhaust Temp, Fuel Trim.
+    '''
+    index = int(self.xpath('./datatype/text()')[0])
+    return Measurements[index]
+
+  @property
+  def unit(self) -> t.Optional[pint.Unit]:
+    '''
+    E.g. RPM, Quarts, Seconds, Percent, etc.
+    '''
+    index = int(self.xpath('./unittype/text()')[0])
+    definition = Units[index]
+    if definition[1] is not None:
+      return Units[index].unit # type: ignore
+    else:
+      return None
+
+FormatOutput: ChainMap[int, str] = xml_type_map(
+  'formatting_output'
+)
+
+# TODO: in frontend - 
+# setting the data is a backend function, but the actual presentation, e.g.
+# printing data as hex string or ASCII string, will be up to the frontend.
+class Formatted(Base):
+  '''
+  Provides:
+    - `units` string
+      * different from typed enumeration of units/measurements in `Quantified`.
+        For example, `Table.ZAxis` has `units` string, but not typed `Quantified.data_type` or `Quantified.unit_type`.
+    - `output_type`
+      * float, int, hex, or ASCII string.
+  '''
+  @property
+  def units(self) -> t.Optional[str]:
+    out = self.xpath('./units/text()')
+    return out[0] if out else None
+
+  # TODO - use some sort of numpy memmap type?
+  @property
+  def output_type(self) -> str:
+    out = self.xpath('./outputtype/text()')
+    # if no XML element exists, default to float. `Table.XAxis`, `Table.YAxis`, `Constant` all do this.
+    return FormatOutput[(int(out[0]))] if out else FormatOutput[1]
+
+  DEFAULT_DIGITS = 2
+
+  @property
+  def digits(self) -> int:
+    '''
+    When output type is floating point, this is the number of significant digits. 
+    When integer, this is number of digits to truncate by.
+
+    If no XML element, there is a default:
+      - `Table.XYAxis` - 2
+      - 'Table.ZAxis` - XML element always present, but default is 2
+      - `Constant` - 2
+      - `Function` - 2
+    '''
+    out = self.xpath('./decimalpl/text()')
+    return int(out[0]) if out else self.DEFAULT_DIGITS
+

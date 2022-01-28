@@ -1,0 +1,1196 @@
+<?xml version="1.0"?>
+<!-- 
+TunerPro XDF/ADX units and data types
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="tunerpro" xmlns:t="tunerpro">
+    <!-- COMMON TYPES -->
+    <xs:simpleType name="uuid">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}" />
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="hex_string">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="0x[\da-fA-F]+" />
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="hex_word">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[\da-fA-F]+" />
+        </xs:restriction>
+    </xs:simpleType>
+        <!-- output types -->
+        <xs:simpleType name="formatting_output">
+            <xs:restriction base="xs:integer">
+                <xs:enumeration value="1">
+                    <xs:annotation>
+                        <xs:appinfo>Floating Point</xs:appinfo>
+                        <xs:appinfo>numpy.float_</xs:appinfo>
+                    </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="2">
+                    <xs:annotation>
+                        <xs:appinfo>Integer</xs:appinfo>
+                        <xs:appinfo>numpy.integer</xs:appinfo>
+                    </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="3">
+                    <xs:annotation>
+                        <xs:appinfo>Hex Digits</xs:appinfo>
+                        <xs:appinfo>numpy.integer</xs:appinfo>
+                    </xs:annotation>
+                </xs:enumeration>
+                <xs:enumeration value="4">
+                    <xs:annotation>
+                        <xs:appinfo>ASCII String</xs:appinfo>
+                        <xs:appinfo>numpy.str_</xs:appinfo>
+                    </xs:annotation>
+                </xs:enumeration>
+            </xs:restriction>
+        </xs:simpleType>
+    <!-- embed info types -->
+    <xs:simpleType name="embed_type">
+        <xs:restriction base="xs:integer">
+            <xs:enumeration value="0">
+                <xs:annotation>
+                    <xs:appinfo>External (Manual)</xs:appinfo>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="1">
+                <xs:annotation>
+                    <xs:appinfo>Internal, Pure</xs:appinfo>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="2">
+                <xs:annotation>
+                    <xs:appinfo>Linked, Normalized (Function)</xs:appinfo>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="3">
+                <xs:annotation>
+                    <xs:appinfo>Linked, Scale</xs:appinfo>
+                </xs:annotation>
+            </xs:enumeration>
+        </xs:restriction>
+    </xs:simpleType>
+    <!-- DATA TYPES -->
+    <!-- tunerpro dropdown nullable, used in data/unit dropwdowns -->
+    <xs:simpleType name="null_option">
+        <xs:restriction base="xs:integer">
+            <!-- TODO: find out what this does -->
+            <xs:enumeration value="1">
+                <xs:annotation>
+                    <xs:appinfo>Externally Defined</xs:appinfo>
+                </xs:annotation>
+            </xs:enumeration>
+            <!-- these all go to Python None -->
+            <xs:enumeration value="0">
+                <xs:annotation>
+                    <xs:appinfo>None</xs:appinfo>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="2">
+                <xs:annotation>
+                    <xs:appinfo>Undefined</xs:appinfo>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="3">
+                <xs:annotation>
+                    <xs:appinfo>Unknown</xs:appinfo>
+                </xs:annotation>
+            </xs:enumeration>
+        </xs:restriction>
+    </xs:simpleType>
+    <!-- DATA TYPES -->
+    <xs:simpleType name="data">
+        <xs:union memberTypes="t:null_option">
+            <xs:simpleType>
+                <xs:restriction base="xs:integer">
+                    <xs:enumeration value="12">
+                        <xs:annotation>
+                            <xs:appinfo>Acceleration</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="30">
+                        <xs:annotation>
+                            <xs:appinfo>Actual Air Fuel Ratio</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="33">
+                        <xs:annotation>
+                            <xs:appinfo>Actual Lambda</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="28">
+                        <xs:annotation>
+                            <xs:appinfo>Air Fuel Ratio</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="25">
+                        <xs:annotation>
+                            <xs:appinfo>Airflow</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="55">
+                        <xs:annotation>
+                            <xs:appinfo>Average Fuel Economy</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="27">
+                        <xs:annotation>
+                            <xs:appinfo>Barometric Pressure</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="66">
+                        <xs:annotation>
+                            <xs:appinfo>Battery Voltage</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="71">
+                        <xs:annotation>
+                            <xs:appinfo>Boost</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="66">
+                        <xs:annotation>
+                            <xs:appinfo>Battery Voltage</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="4">
+                        <xs:annotation>
+                            <xs:appinfo>Calibration Version</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="13">
+                        <xs:annotation>
+                            <xs:appinfo>Coolant Temperature</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="6">
+                        <xs:annotation>
+                            <xs:appinfo>Engine Speed</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="15">
+                        <xs:annotation>
+                            <xs:appinfo>Exhaust Temperature</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="66">
+                        <xs:annotation>
+                            <xs:appinfo>Battery Voltage</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="16">
+                        <xs:annotation>
+                            <xs:appinfo>Exhaust Temperature, Left</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="17">
+                        <xs:annotation>
+                            <xs:appinfo>Exhaust Temperature, Right</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="54">
+                        <xs:annotation>
+                            <xs:appinfo>Fuel Economy</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="68">
+                        <xs:annotation>
+                            <xs:appinfo>Fuel Pressure</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="67">
+                        <xs:annotation>
+                            <xs:appinfo>Fuel Pump Voltage</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="46">
+                        <xs:annotation>
+                            <xs:appinfo>Fuel Trim</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="47">
+                        <xs:annotation>
+                            <xs:appinfo>Fuel Trim, Coarse</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="48">
+                        <xs:annotation>
+                            <xs:appinfo>Fuel Trim, Fine</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="49">
+                        <xs:annotation>
+                            <xs:appinfo>Fuel Trim, Long</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="50">
+                        <xs:annotation>
+                            <xs:appinfo>Fuel Trim, Short</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="36">
+                        <xs:annotation>
+                            <xs:appinfo>Idle Air Control Position</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="37">
+                        <xs:annotation>
+                            <xs:appinfo>Idle Speed</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="52">
+                        <xs:annotation>
+                            <xs:appinfo>Injector Base Pulse Width</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="53">
+                        <xs:annotation>
+                            <xs:appinfo>Injector Final Pulse Width</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="51">
+                        <xs:annotation>
+                            <xs:appinfo>Injector Pulse Width</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="56">
+                        <xs:annotation>
+                            <xs:appinfo>Instant Fuel Economy</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="19">
+                        <xs:annotation>
+                            <xs:appinfo>Intake Air Temp</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="34">
+                        <xs:annotation>
+                            <xs:appinfo>Knock Count</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="35">
+                        <xs:annotation>
+                            <xs:appinfo>Knock Retard</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="31">
+                        <xs:annotation>
+                            <xs:appinfo>Lambda</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="23">
+                        <xs:annotation>
+                            <xs:appinfo>Load</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="24">
+                        <xs:annotation>
+                            <xs:appinfo>Manifold Air Pressure</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="18">
+                        <xs:annotation>
+                            <xs:appinfo>Manifold Air Temp</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="26">
+                        <xs:annotation>
+                            <xs:appinfo>Mass Air Flow</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="73">
+                        <xs:annotation>
+                            <xs:appinfo>Multiplier</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="65">
+                        <xs:annotation>
+                            <xs:appinfo>NV Ratio</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="69">
+                        <xs:annotation>
+                            <xs:appinfo>Oil Pressure</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="21">
+                        <xs:annotation>
+                            <xs:appinfo>Oil Temperature</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="58">
+                        <xs:annotation>
+                            <xs:appinfo>Oxygen Sensor</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="59">
+                        <xs:annotation>
+                            <xs:appinfo>Oxygen Sensor, Left</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="60">
+                        <xs:annotation>
+                            <xs:appinfo>Oxygen Sensor, Right</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="61">
+                        <xs:annotation>
+                            <xs:appinfo>Oxygen Sensor (4)</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="62">
+                        <xs:annotation>
+                            <xs:appinfo>Oxygen Sensor (5)</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="63">
+                        <xs:annotation>
+                            <xs:appinfo>Oxygen Sensor (6)</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="70">
+                        <xs:annotation>
+                            <xs:appinfo>Power Steering Pressure</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="22">
+                        <xs:annotation>
+                            <xs:appinfo>Power Steering Temperature</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="38">
+                        <xs:annotation>
+                            <xs:appinfo>Spark Angle</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="40">
+                        <xs:annotation>
+                            <xs:appinfo>Spark Angle, Referenced</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="39">
+                        <xs:annotation>
+                            <xs:appinfo>Spark Angle, TDC</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="41">
+                        <xs:annotation>
+                            <xs:appinfo>Spark Trim</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="42">
+                        <xs:annotation>
+                            <xs:appinfo>Spark Trim, Coarse</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="43">
+                        <xs:annotation>
+                            <xs:appinfo>Spark Trim, Fine</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="44">
+                        <xs:annotation>
+                            <xs:appinfo>Spark Trim, Long</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="45">
+                        <xs:annotation>
+                            <xs:appinfo>Spark Trim, Short</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="14">
+                        <xs:annotation>
+                            <xs:appinfo>Startup Coolant Temperature</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="29">
+                        <xs:annotation>
+                            <xs:appinfo>Target Air/Fuel Ratio</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="32">
+                        <xs:annotation>
+                            <xs:appinfo>Target LambdaTarget</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="57">
+                        <xs:annotation>
+                            <xs:appinfo>Throttle Position</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="64">
+                        <xs:annotation>
+                            <xs:appinfo>Transmission Gear</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="20">
+                        <xs:annotation>
+                            <xs:appinfo>Transmission Temperature</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="72">
+                        <xs:annotation>
+                            <xs:appinfo>Vacuum</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="5">
+                        <xs:annotation>
+                            <xs:appinfo>Vehicle Speed</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="7">
+                        <xs:annotation>
+                            <xs:appinfo>Wheel Speed</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="8">
+                        <xs:annotation>
+                            <xs:appinfo>Wheel Speed, Front Left</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="9">
+                        <xs:annotation>
+                            <xs:appinfo>Wheel Speed, Front Right</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="10">
+                        <xs:annotation>
+                            <xs:appinfo>Wheel Speed, Rear Left</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="11">
+                        <xs:annotation>
+                            <xs:appinfo>Wheel Speed, Rear Right</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                </xs:restriction>
+            </xs:simpleType>
+        </xs:union>
+    </xs:simpleType>
+    <!-- 
+    PINT TYPES
+    see https://raw.githubusercontent.com/hgrecco/pint/master/pint/default_en.txt.
+    concatenation of all the individual second appinfo entries, 
+    e.g. 'ampere = [current] = A = amp', form definition file for a complete unit system.
+    -->
+    <!-- 
+    UNIT TYPES - not used in tunerpro, but for python Pint unit epistemology,
+    and for aliases below, e.g. `Kilometers', '@alias kilometer', eventually parsed as
+    '@alias kilometer = Kilometers'
+    -->
+    <xs:simpleType name="unitPrefix">
+        <xs:restriction base="xs:float">
+            <xs:enumeration value="1e-6">
+                <xs:annotation>
+                    <xs:appinfo>Micro</xs:appinfo>
+                    <xs:appinfo>micro- = 1e-6 = µ- = u-</xs:appinfo>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="1e-3">
+                <xs:annotation>
+                    <xs:appinfo>Milli</xs:appinfo>
+                    <xs:appinfo>milli- = 1e-3 = m-</xs:appinfo>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="1e-2">
+                <xs:annotation>
+                    <xs:appinfo>Centi</xs:appinfo>
+                    <xs:appinfo>centi- = 1e-2 = c-</xs:appinfo>
+                </xs:annotation>
+            </xs:enumeration>
+            <!-- deci not used in tunerpro... skipped -->
+            <xs:enumeration value="1e3">
+                <xs:annotation>
+                    <xs:appinfo>Kilo</xs:appinfo>
+                    <xs:appinfo>kilo- = 1e3 = k-</xs:appinfo>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="1e6">
+                <xs:annotation>
+                    <xs:appinfo>Mega</xs:appinfo>
+                    <xs:appinfo>mega- = 1e6 = M-</xs:appinfo>
+                </xs:annotation>
+            </xs:enumeration>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="unit">
+        <xs:union memberTypes="t:null_option">
+            <xs:simpleType>
+                <xs:restriction base='xs:integer'>
+                    <xs:enumeration value="21">
+                        <xs:annotation>
+                            <xs:appinfo>Air Fuel Ratio</xs:appinfo>
+                            <!-- no definiton means that this is a unitless value, like a percentage -->
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="84">
+                        <xs:annotation>
+                            <xs:appinfo>Seconds</xs:appinfo>
+                            <xs:appinfo>second = [time] = s = sec</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="32">
+                        <xs:annotation>
+                            <xs:appinfo>Volts</xs:appinfo>
+                            <xs:appinfo>
+                                [electric_potential] = [energy] / [charge]
+                                volt = joule / coulomb = V
+                            </xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="34">
+                        <xs:annotation>
+                            <xs:appinfo>Watts</xs:appinfo>
+                            <xs:appinfo>
+                                [power] = [energy] / [time]
+                                watt = joule / second = W
+                            </xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="40">
+                        <xs:annotation>
+                            <xs:appinfo>Amps</xs:appinfo>
+                            <xs:appinfo>
+                                ampere = [current] = A = amp
+                            </xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="38">
+                        <xs:annotation>
+                            <xs:appinfo>Ohms</xs:appinfo>
+                            <xs:appinfo>
+                                [charge] = [current] * [time]
+                                [electric_potential] = [energy] / [charge]
+                                [resistance] = [electric_potential] / [current]
+                                ohm = volt / ampere = Ω
+                            </xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="19">
+                        <xs:annotation>
+                            <xs:appinfo>Bar</xs:appinfo>
+                            <xs:appinfo>
+                                pascal = newton / meter ** 2 = Pa
+                                bar = 1e5 * pascal
+                            </xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="45">
+                        <xs:annotation>
+                            <xs:appinfo>Meters</xs:appinfo>
+                            <xs:appinfo>meter = [length] = m = metre</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="46">
+                        <xs:annotation>
+                            <xs:appinfo>Centimeters</xs:appinfo>
+                            <xs:appinfo>@alias centimeter</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="94">
+                        <xs:annotation>
+                            <xs:appinfo>Poise</xs:appinfo>
+                            <xs:appinfo>
+                                [viscosity] = [pressure] * [time]
+                                poise = 0.1 * Pa * second = P
+                            </xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="95">
+                        <xs:annotation>
+                            <xs:appinfo>Centipoise</xs:appinfo>
+                            <xs:appinfo>@alias centipoise</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="26">
+                        <xs:annotation>
+                            <xs:appinfo>Count</xs:appinfo>
+                            <xs:appinfo>count = []</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="60">
+                        <xs:annotation>
+                            <xs:appinfo>Cubic Centimeters</xs:appinfo>
+                            <xs:appinfo>cubic_centimeter = centimeter ** 3 = cc</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="57">
+                        <xs:annotation>
+                            <xs:appinfo>Cubic Feet</xs:appinfo>
+                            <xs:appinfo>cubic_foot = ft ** 3 = cu_ft = cubic_feet</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="58">
+                        <xs:annotation>
+                            <xs:appinfo>Cubic Inches</xs:appinfo>
+                            <xs:appinfo>cubic_inch = in ** 3 = cu_in</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="59">
+                        <xs:annotation>
+                            <xs:appinfo>Cubic Meters</xs:appinfo>
+                            <xs:appinfo>cubic_meter = meter ** 3</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="61">
+                        <xs:annotation>
+                            <xs:appinfo>Cubic Millimeters</xs:appinfo>
+                            <xs:appinfo>cubic_meter = millimeter ** 3</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="56">
+                        <xs:annotation>
+                            <xs:appinfo>Cubic Yards</xs:appinfo>
+                            <xs:appinfo>cubic_yard = yd ** 3 = cu_yd</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="81">
+                        <xs:annotation>
+                            <xs:appinfo>Days</xs:appinfo>
+                            <xs:appinfo>day = 24 * hour = d</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="31">
+                        <xs:annotation>
+                            <xs:appinfo>Decibels</xs:appinfo>
+                            <xs:appinfo>decibel = 1 ; logbase: 10; logfactor: 10 = dB</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="15">
+                        <xs:annotation>
+                            <xs:appinfo>Degrees Celsius</xs:appinfo>
+                            <xs:appinfo>degree_Celsius = kelvin; offset: 273.15 = °C = celsius = degC = degreeC</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="14">
+                        <xs:annotation>
+                            <xs:appinfo>Degrees Fahrenheit</xs:appinfo>
+                            <xs:appinfo>degree_Fahrenheit = 5 / 9 * kelvin; offset: 233.15 + 200 / 9 = °F = fahrenheit = degF = degreeF</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="16">
+                        <xs:annotation>
+                            <xs:appinfo>Degrees Kelvin</xs:appinfo>
+                            <xs:appinfo>kelvin = [temperature]; offset: 0 = K = degK = °K = degree_Kelvin = degreeK</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="68">
+                        <xs:annotation>
+                            <xs:appinfo>Duty Cycle</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="8">
+                        <xs:annotation>
+                            <xs:appinfo>Feet Per Second</xs:appinfo>
+                            <xs:appinfo>foot_per_second = foot / second = feet_per_second = fps</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="66">
+                        <xs:annotation>
+                            <xs:appinfo>Fluid Ounces</xs:appinfo>
+                            <xs:appinfo>fluid_ounce = pint / 16 = floz = US_fluid_ounce = US_liquid_ounce</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="75">
+                        <xs:annotation>
+                            <xs:appinfo>Foot-Pounds</xs:appinfo>
+                            <xs:appinfo>
+                                [torque] = [force] * [length]
+                                foot_pound = foot * force_pound = ft_lb = footpound
+                            </xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="65">
+                        <xs:annotation>
+                            <xs:appinfo>Gallons</xs:appinfo>
+                            <xs:appinfo>gallon = 231 * cubic_inch = gal = liquid_gallon = US_liquid_gallon</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="91">
+                        <xs:annotation>
+                            <xs:appinfo>Grams</xs:appinfo>
+                            <xs:appinfo>gram = [mass] = g</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="11">
+                        <xs:annotation>
+                            <!-- custom for tunerpro -->
+                            <xs:appinfo>Grams Per Second</xs:appinfo>
+                            <xs:appinfo>
+                               [flow] = [mass] / [time]
+                               grams_per_second = gram / second = gps
+                            </xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="28">
+                        <xs:annotation>
+                            <xs:appinfo>Hertz</xs:appinfo>
+                            <xs:appinfo>
+                                [frequency] = 1 / [time]
+                                hertz = 1 / second = Hz
+                            </xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="70">
+                        <xs:annotation>
+                            <xs:appinfo>Horsepower</xs:appinfo>
+                            <xs:appinfo>horsepower = 550 * foot * force_pound / second = hp</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="82">
+                        <xs:annotation>
+                            <xs:appinfo>Hours</xs:appinfo>
+                            <xs:appinfo>hour = 60 * minute = hr</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="99">
+                        <xs:annotation>
+                            <xs:appinfo>Inches of Mercury</xs:appinfo>
+                            <xs:appinfo>
+                                [density] = [mass] / [volume]
+                                mercury = 13.5951 * kilogram / liter = Hg = Hg_0C = Hg_32F
+                                inch_Hg = inch * Hg * g_0 = inHg = in_Hg = inch_Hg_32F
+                            </xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="101">
+                        <xs:annotation>
+                            <xs:appinfo>Inches of Water</xs:appinfo>
+                            <xs:appinfo>
+                                water = 1.0 * kilogram / liter = H2O
+                                inch_H2O = inch * water * g_0
+                            </xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="76">
+                        <xs:annotation>
+                            <xs:appinfo>Inch-Pounds</xs:appinfo>
+                            <!-- custom for tunerpro -->
+                            <xs:appinfo>inch_pounds = inch * force_pounds = in_lb = inchpound</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="72">
+                        <xs:annotation>
+                            <xs:appinfo>Joules</xs:appinfo>
+                            <xs:appinfo>
+                                [energy] = [force] * [length]
+                                joule = newton * meter = J
+                            </xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="92">
+                        <xs:annotation>
+                            <xs:appinfo>Kilograms</xs:appinfo>
+                            <xs:appinfo>@alias kilogram</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="13">
+                        <xs:annotation>
+                            <xs:appinfo>Kilograms Per Hour</xs:appinfo>
+                            <xs:appinfo>kilogram_per_hour = kilogram / hour = kgh</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="29">
+                        <xs:annotation>
+                            <xs:appinfo>Kilohertz</xs:appinfo>
+                            <xs:appinfo>@alias kilohertz</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="42">
+                        <xs:annotation>
+                            <xs:appinfo>Kilometers</xs:appinfo>
+                            <xs:appinfo>@alias kilometer</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="6">
+                        <xs:annotation>
+                            <xs:appinfo>Kilometers Per Hour</xs:appinfo>
+                            <xs:appinfo>kilometer_per_hour = kilometer / hour = kph = KPH</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="79">
+                        <xs:annotation>
+                            <xs:appinfo>Kilometers Per Liter</xs:appinfo>
+                            <!-- special for tunerpro -->
+                            <xs:appinfo>
+                                [fuelconsumption] = [length] / [volume]
+                                kilometer_per_liter = kilometer / liter = kpl
+                            </xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="17">
+                        <xs:annotation>
+                            <xs:appinfo>Kilopascal</xs:appinfo>
+                            <xs:appinfo>@alias kilopascal</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="35">
+                        <xs:annotation>
+                            <xs:appinfo>Kilowatts</xs:appinfo>
+                            <xs:appinfo>@alias kilowatt</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="7">
+                        <xs:annotation>
+                            <xs:appinfo>Knots</xs:appinfo>
+                            <xs:appinfo>knot = nautical_mile / hour = kt</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="22">
+                        <xs:annotation>
+                            <xs:appinfo>Lambda</xs:appinfo>
+                            <!-- this is not the volume lambda, but AFR lambda, so unitless -->
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="62">
+                        <xs:annotation>
+                            <xs:appinfo>Liters</xs:appinfo>
+                            <xs:appinfo>
+                                [volume] = [length] ** 3
+                                liter = decimeter ** 3 = l = L = litre
+                            </xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="78">
+                        <xs:annotation>
+                            <xs:appinfo>Liters Per 100km</xs:appinfo>
+                            <xs:appinfo>
+                               liter_per_100km = liter / (100 * kilometer)
+                            </xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="25">
+                        <xs:annotation>
+                            <xs:appinfo>Load Value (LV16)</xs:appinfo>
+                            <!-- unitless percent -->
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="24">
+                        <xs:annotation>
+                            <xs:appinfo>Load Value (LV8)</xs:appinfo>
+                            <!-- unitless percent -->
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="30">
+                        <xs:annotation>
+                            <xs:appinfo>Megahertz</xs:appinfo>
+                            <xs:appinfo>@alias megahertz</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="36">
+                        <xs:annotation>
+                            <xs:appinfo>Megawatts</xs:appinfo>
+                            <xs:appinfo>@alias megawatt</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="9">
+                        <xs:annotation>
+                            <xs:appinfo>Meters Per Second</xs:appinfo>
+                            <xs:appinfo>meter_per_second = meter / second = mps</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="10">
+                        <xs:annotation>
+                            <xs:appinfo>Meters Per Second Squared</xs:appinfo>
+                            <xs:appinfo>
+                                [acceleration] = [velocity] / [time]
+                                meter_per_second = meter / second = mps
+                            </xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="86">
+                        <xs:annotation>
+                            <xs:appinfo>Microseconds</xs:appinfo>
+                            <xs:appinfo>@alias microsecond</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="43">
+                        <xs:annotation>
+                            <xs:appinfo>Miles</xs:appinfo>
+                            <xs:appinfo>mile = 1760 * yard = mi</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="77">
+                        <xs:annotation>
+                            <xs:appinfo>Miles Per Gallon</xs:appinfo>
+                            <xs:appinfo>
+                                mile_per_gallon = mile / gallon = mpg
+                            </xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="5">
+                        <xs:annotation>
+                            <xs:appinfo>Miles Per Hour</xs:appinfo>
+                            <xs:appinfo>mile_per_hour = mile / hour = mph = MPH</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="41">
+                        <xs:annotation>
+                            <xs:appinfo>Milliamps</xs:appinfo>
+                            <xs:appinfo>@alias milliamp</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="20">
+                        <xs:annotation>
+                            <xs:appinfo>Millibar</xs:appinfo>
+                            <xs:appinfo>@alias millibar</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="90">
+                        <xs:annotation>
+                            <xs:appinfo>Milligrams</xs:appinfo>
+                            <xs:appinfo>@alias milligram</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="47">
+                        <xs:annotation>
+                            <xs:appinfo>Millimeters</xs:appinfo>
+                            <xs:appinfo>@alias millimeter</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="39">
+                        <xs:annotation>
+                            <xs:appinfo>Milliohms</xs:appinfo>
+                            <xs:appinfo>@alias milliohm</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="85">
+                        <xs:annotation>
+                            <xs:appinfo>Milliseconds</xs:appinfo>
+                            <xs:appinfo>@alias millisecond</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="33">
+                        <xs:annotation>
+                            <xs:appinfo>Millivolts</xs:appinfo>
+                            <xs:appinfo>@alias millivolt</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="37">
+                        <xs:annotation>
+                            <xs:appinfo>Milliwatts</xs:appinfo>
+                            <xs:appinfo>@alias milliwatt</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="83">
+                        <xs:annotation>
+                            <xs:appinfo>Minutes</xs:appinfo>
+                            <xs:appinfo>minute = 60 * second = min</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="98">
+                        <xs:annotation>
+                            <xs:appinfo>mm of Mercury</xs:appinfo>
+                            <xs:appinfo>millimeter_Hg = millimeter * Hg * g_0 = mmHg = mm_Hg = millimeter_Hg_0C</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="100">
+                        <xs:annotation>
+                            <xs:appinfo>mm of Water</xs:appinfo>
+                            <xs:appinfo>millimeter_H20 = millimeter * H20 * g_0 = mmH20 = mm_H20 = millimeter_H20</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="97">
+                        <xs:annotation>
+                            <xs:appinfo>Multiplier</xs:appinfo>
+                            <!-- unitless multiplier -->
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="44">
+                        <xs:annotation>
+                            <xs:appinfo>Nautical Mile</xs:appinfo>
+                            <xs:appinfo>nautical_mile = 1852 * meter = nmi</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="74">
+                        <xs:annotation>
+                            <xs:appinfo>Newton-Centimeter</xs:appinfo>
+                            <xs:appinfo>newton_centimeter = newton * centimeter = n_cm</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="73">
+                        <xs:annotation>
+                            <xs:appinfo>Newton-Meters</xs:appinfo>
+                            <xs:appinfo>
+                                newton_meter = newton * meter = n_m
+                            </xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="71">
+                        <xs:annotation>
+                            <xs:appinfo>Newtons</xs:appinfo>
+                            <xs:appinfo>
+                                [force] = [mass] * [acceleration]
+                                newton = kilogram * meter / second ** 2 = N
+                            </xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="89">
+                        <xs:annotation>
+                            <xs:appinfo>Ounces</xs:appinfo>
+                            <xs:appinfo>ounce = pound / 16 = oz</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="96">
+                        <xs:annotation>
+                            <xs:appinfo>Pascal-Second</xs:appinfo>
+                            <xs:appinfo>
+                                pascal_second = poise / 10
+                            </xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="67">
+                        <xs:annotation>
+                            <xs:appinfo>Percent</xs:appinfo>
+                            <!-- unitless -->
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="64">
+                        <xs:annotation>
+                            <xs:appinfo>Pints</xs:appinfo>
+                            <xs:appinfo>pint = quart / 2 = pt = liquid_pint = US_pint</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="88">
+                        <xs:annotation>
+                            <xs:appinfo>Pounds</xs:appinfo>
+                            <xs:appinfo>
+                                grain = 64.79891 * milligram = gr
+                                pound = 7e3 * grain = lb 
+                            </xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="12">
+                        <xs:annotation>
+                            <xs:appinfo>Pounds Per Hour</xs:appinfo>
+                            <xs:appinfo>
+                                pound_per_hour = pound / hour
+                            </xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="18">
+                        <xs:annotation>
+                            <xs:appinfo>Pounds Per Square Inch</xs:appinfo>
+                            <xs:appinfo>
+                                [pressure] = [force] / [area]
+                                pound_force_per_square_inch = force_pound / inch ** 2 = psi
+                            </xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="69">
+                        <xs:annotation>
+                            <xs:appinfo>Pulse Width</xs:appinfo>
+                            <xs:appinfo>
+                                pulse = []
+                                pulse_width = pulse / second = pw
+                            </xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="63">
+                        <xs:annotation>
+                            <xs:appinfo>Quarts</xs:appinfo>
+                            <xs:appinfo>
+                                quart = gallon / 4 = qt = liquid_quart
+                            </xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="4">
+                        <xs:annotation>
+                            <xs:appinfo>Revolutions Per Minute</xs:appinfo>
+                            <xs:appinfo>
+                                revolutions_per_minute = revolution / minute = rpm
+                            </xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="23">
+                        <xs:annotation>
+                            <xs:appinfo>Rotational Degrees</xs:appinfo>
+                            <xs:appinfo>
+                                degree = π / 180 * radian = deg = arcdeg = arcdegree = angular_degree = rotational_degree
+                            </xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="54">
+                        <xs:annotation>
+                            <xs:appinfo>Square Centimeters</xs:appinfo>
+                            <!-- special for tunerpro -->
+                            <xs:appinfo>square_centimeter = centimeter ** 2 = sq_cm = square_centimeters</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="50">
+                        <xs:annotation>
+                            <xs:appinfo>Square Feet</xs:appinfo>
+                            <xs:appinfo>square_foot = foot ** 2 = sq_ft = square_feet</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="51">
+                        <xs:annotation>
+                            <xs:appinfo>Square Inches</xs:appinfo>
+                            <xs:appinfo>square_inch = inch ** 2 = sq_in = square_inches</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="52">
+                        <xs:annotation>
+                            <xs:appinfo>Square Kilometers</xs:appinfo>
+                            <!-- special for tunerpro -->
+                            <xs:appinfo>square_kilometer = kilometer ** 2 = sq_km = square_kilometers</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="53">
+                        <xs:annotation>
+                            <xs:appinfo>Square Meters</xs:appinfo>
+                            <!-- special for tunerpro -->
+                            <xs:appinfo>square_meter = meter ** 2 = sq_m = square_meters</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="48">
+                        <xs:annotation>
+                            <xs:appinfo>Square Miles</xs:appinfo>
+                            <xs:appinfo>square_mile = mile ** 2 = sq_mi</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="55">
+                        <xs:annotation>
+                            <xs:appinfo>Square Millimeters</xs:appinfo>
+                            <!-- special for tunerpro -->
+                            <xs:appinfo>square_millimeter = millimeter ** 2 = sq_mm = square_millimeters</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="49">
+                        <xs:annotation>
+                            <xs:appinfo>Square Yards</xs:appinfo>
+                            <xs:appinfo>square_yard = yard ** 2 = sq_yd</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="27">
+                        <xs:annotation>
+                            <xs:appinfo>Steps</xs:appinfo>
+                            <xs:appinfo>@alias count</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="93">
+                        <xs:annotation>
+                            <xs:appinfo>Tonne</xs:appinfo>
+                            <xs:appinfo>metric_ton = 1e3 * kilogram = t = tonne</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="87">
+                        <xs:annotation>
+                            <xs:appinfo>Tons</xs:appinfo>
+                            <xs:appinfo>ton = 2e3 * pound = _ = short_ton</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="80">
+                        <xs:annotation>
+                            <xs:appinfo>Years</xs:appinfo>
+                            <xs:appinfo>year = 365.25 * day = a = yr</xs:appinfo>
+                        </xs:annotation>
+                    </xs:enumeration>
+                </xs:restriction>
+            </xs:simpleType>
+        </xs:union>
+    </xs:simpleType>
+</xs:schema>
