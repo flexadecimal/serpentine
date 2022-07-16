@@ -1,9 +1,7 @@
 import typing as t
-from abc import ABC, abstractmethod
-from .Base import Base, Quantity, ArrayLike, XmlAbstractBaseMeta, Array
+from .Base import Base, Quantity, ArrayLike
 from .Math import Math
-from .EmbeddedData import EmbeddedData
-from .Axis import Axis, EmbeddedAxis, XYEmbeddedAxis, XYLabelAxis, XYLinkAxis
+from . import Axis
 from .Parameter import Parameter, Clamped
 import numpy as np
 import numpy.typing as npt
@@ -11,40 +9,9 @@ import functools
 from itertools import (
   chain
 )
+from .Mask import Mask, MaskedMath
 
 _math = Math
-
-# custom math subclasses for ZAxis with row/col
-class Mask(Array[np.ma.MaskType]):
-  def __repr__(self):
-    # interpret masks as binary for space-saving printing
-    return Array.__repr__(self.astype(np.int))
-
-class MaskedMath(Math, ABC, metaclass=XmlAbstractBaseMeta):
-  '''
-  Specifically for `Table.ZAxis`, `<MATH>` elements with varying attributes must provide a Numpy mask to use in binary conversion.
-
-  See the [Numpy documention on masked arrays](https://numpy.org/doc/stable/reference/maskedarray.html) for more details.
-
-  TunerPro-style table equation matrix has the following `Math` elements in order of lowest to highest precedence. Calculation does not overlap - masks are excluded against others.
-
-  - global table equation has no additional attributes,
-  - row `Math` has row attribute,
-  - col `Math` has column attirbute,
-  - cell `Math` has both row and column.
-  '''
-  @property
-  def shape(self):
-    embedded_data: EmbeddedData = self.xpath('./preceding-sibling::EMBEDDEDDATA')[0]
-    return embedded_data.shape
-  
-  @property
-  @abstractmethod
-  def mask(self) -> Mask:
-    '''
-    Numpy boolean mask array, following convention of `False` meaning valid data, and `True` meaning invalid data..
-    '''
-    pass
 
 class GlobalMath(MaskedMath):
   @property
@@ -88,7 +55,7 @@ class CellMath(MaskedMath):
     out[self.row][self.column] = 1
     return Mask(np.logical_not(out))
 
-class ZAxis(EmbeddedAxis, Clamped):
+class ZAxis(Axis.EmbeddedAxis, Clamped):
   '''
   Special-case axis, generally referred to interchangeably with as a "Table", although the Table really contains the Axes and their related information.
   '''
@@ -205,7 +172,7 @@ class ZAxis(EmbeddedAxis, Clamped):
     # optionally clamp
     return self.clamped(out)
 
-XYAxis = t.Union[XYEmbeddedAxis, XYLabelAxis, XYLinkAxis]
+XYAxis = t.Union[Axis.QuantifiedEmbeddedAxis, Axis.XYLabelAxis, Axis.XYLinkAxis]
 class Table(Parameter):
   '''
   Table, a.k.a array/list of values. Usually this is a 2D table like a fuel or ignition map, or occasionally, a 1D list like an axis, e.g. Major RPM.
