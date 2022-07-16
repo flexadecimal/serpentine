@@ -49,4 +49,7 @@ if __name__ == '__main__':
       ignition = ignition_map.value
       ve = xdf.xpath('./XDFTABLE[2]')[0]
       ve_val = ve.value
+      # test setters
+      zwb.value = 4
       pass
+      #ignition_map.value = [2]

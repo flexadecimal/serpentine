@@ -13,6 +13,7 @@ from ..equation_parser.transformations import (
 from .Var import Var, BoundVar, FreeVar, LinkedVar, AddressVar
 # general stuff
 import functools
+from pynverse import inversefunc
 
 class ConversionFuncType(T.Protocol):
   '''
@@ -47,7 +48,15 @@ class Math(Base):
     curried = functools.partial(parameterized, **kwargs)
     curried.__doc__ = parameterized.__doc__
     return curried
-    
+
+  @property
+  def inverse_conversion_func(self) -> ConversionFuncType:
+    '''
+    Inverse conversion func, such that inverse(conversion(bin)) = bin.
+    This is used to save values to the binary.
+    '''
+    return inversefunc(self.conversion_func)
+
   @property
   def conversion_func_parameterized(self) -> ConversionFuncType:
     '''
@@ -103,7 +112,9 @@ class Math(Base):
       FunctionCallTransformer.FunctionCallTransformer()
     )
     return equation_ast
-    
+
+
+
   def __repr__(self):
     equation_str = self.attrib['equation']
     #return f"{equation_str}"

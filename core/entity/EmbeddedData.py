@@ -93,9 +93,9 @@ class Embedded(XdfRefMixin):
   EmbeddedData: EmbeddedData = Base.xpath_synonym('./EMBEDDEDDATA')
 
   @functools.cached_property
-  def memory_map(self) -> Array:
+  def memory_map(self) -> np.memmap:
     embedded_data = self.EmbeddedData
-    map: npt.NDArray = np.memmap(
+    map = np.memmap(
       self._xdf._binfile,
       shape = embedded_data.shape,
       # see TunerPro docs - base offset not applied here
@@ -103,8 +103,10 @@ class Embedded(XdfRefMixin):
       dtype = embedded_data.data_type,
       # 'C' for C-style row-major, 'F' for Fortran-style col major 
       order = 'F' if TypeFlags.COLUMN_MAJOR in embedded_data.type_flags else 'C',
+      # enable write - `value` setters must explicitly flush
+      mode='w+'
     )
     # set strides, if they exist - default XML stride of (0,0) is invalid
     if embedded_data.strides:
       map.strides = embedded_data.strides
-    return Array(map)
+    return map

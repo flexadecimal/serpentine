@@ -27,5 +27,17 @@ class Constant(Parameter, Embedded, Formatted, Quantified, ConstantClamped):
 
   @property
   def value(self) -> Quantity:
-    unitless = self.Math.conversion_func(self.memory_map.astype(np.float_, copy=False))
+    unitless = self.Math.conversion_func(
+      self.memory_map.astype(np.float_, copy=False)
+    )
     return pint.Quantity(self.clamped(unitless), self.unit)
+
+  @value.setter
+  def value(self, value):
+    out = np.array([self.Math.inverse_conversion_func(value)])
+    # write to map
+    # see https://numpy.org/devdocs/reference/generated/numpy.memmap.html
+    # this will implicitly truncate floats
+    self.memory_map[:] = np.array([out])[:]
+    # flush ? 
+    #self.memory_map.flush()

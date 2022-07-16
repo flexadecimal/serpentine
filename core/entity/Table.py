@@ -185,6 +185,10 @@ class Table(Parameter):
   def value(self):
     return self.z.value
 
+  @value.setter
+  def value(self, Array):
+    self.z.value = Array
+
   def __str__(self):
     sep = ' '
     width = 6
