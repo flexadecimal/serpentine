@@ -57,10 +57,14 @@ class FunctionCallTransformer(Transformer):
     'ACOS': np.arccos,
     'ATAN': np.arctan,
     # XDF SPECIFIC
+    # ...xdf general
+    # ADDRESS, THIS, THAT
     # ...axis
     #'INDEX': lambda: None,
     #'INDEXES': lambda: None,
     #'CELL': lambda idx, precalc: None
+    # ...table
+    # ROW, COL, ROWS, COLS, CELL
   }
   
   # TODO - get signature from core/Math.ConversionFuncType?

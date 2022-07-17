@@ -1,6 +1,7 @@
 from .Base import Base, XmlAbstractBaseMeta, XdfRefMixin, ArrayLike
 from abc import ABC, abstractmethod
 import numpy as np
+import numpy.typing as npt
 import typing as T
 from .Category import Categorized
 from enum import Flag
@@ -21,16 +22,6 @@ class Parameter(Categorized, Base, XdfRefMixin, ABC, metaclass=XmlAbstractBaseMe
   def visibiity(self) -> T.Optional[int]:
     out = self.xpath('./@vislevel')
     return int(out[0]) if out else None
-
-  @property
-  @abstractmethod
-  def value(self) -> ArrayLike:
-      '''
-      XDF parameters, using their `<MATH>` equation data, convert binary data to a numerical value - 
-      right now, these are only `XDFCONSTANT` and `XDFTABLE`. `XDFTABLE` parses 3 axes to form a surface,
-      and `XDFCONSTANT` need just parse one. These numerical values can then be referenced in other equations.
-      '''
-      pass
 
   def __repr__(self):
       return f"<{self.__class__.__qualname__} '{self.title}'>: {Base.__repr__(self)}"

@@ -1,6 +1,6 @@
+from core.entity.Axis import QuantifiedEmbeddedAxis
 from .Base import Base, Quantified, Quantity, Formatted
-from .EmbeddedData import Embedded
-from .Math import Math
+from .EmbeddedData import Embedded, EmbeddedValueError
 from .Parameter import Parameter, Clamped
 import numpy as np
 import pint
@@ -18,14 +18,14 @@ class ConstantClamped(Clamped):
     out = self.xpath('./rangehigh/text()')
     return float(out[0]) if out else None
 
-
 class Constant(Parameter, Embedded, Formatted, Quantified, ConstantClamped):
   '''
   XDF Constant, a.k.a. Scalar.
   '''
-  Math: Math = Base.xpath_synonym('./MATH')
-
   @property
-  def value(self) -> Quantity:
-    unitless = self.Math.conversion_func(self.memory_map.astype(np.float_, copy=False))
-    return pint.Quantity(self.clamped(unitless), self.unit)
+  def value(self) -> pint.Quantity:
+    return Quantity(Embedded.value.fget(self), self.unit)
+
+  @value.setter
+  def value(self, value):
+    return Embedded.value.fset(self, value)

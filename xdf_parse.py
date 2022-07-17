@@ -47,6 +47,10 @@ if __name__ == '__main__':
       a = y_axis.output_type
       y_val = y_axis.value
       ignition = ignition_map.value
+      degreesBTDC = ignition_map.z.unit
       ve = xdf.xpath('./XDFTABLE[2]')[0]
-      ve_val = ve.value
+      #ve_val = ve.value
+      # test setters
+      zwb.value = 12.24 + 5
       pass
+      #ignition_map.value = [2]

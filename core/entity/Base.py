@@ -14,7 +14,6 @@ from collections import ChainMap
 from pathlib import Path
 import os
 import re
-from enum import Enum
 
 # to avoid circular import for XDF self-reference
 if t.TYPE_CHECKING:
@@ -148,7 +147,6 @@ type_schema_path = 'tunerpro_types.xsd'
 type_schema = xml.parse(os.path.join(schemata_path, type_schema_path))
 namespaces = type_schema.getroot().nsmap
 
-
 def friendly_schemadef_name(el: xml.Element) -> str:
   return el.xpath("./xs:annotation/xs:appinfo[1]/text()", namespaces=namespaces)[0]
 
@@ -181,7 +179,7 @@ def xml_type_map(
   return ChainMap(self_members, *extends)
 
 # construct Pint definitions here...
-ureg = pint.UnitRegistry(
+UnitRegistry = pint.UnitRegistry(
   # don't use default Pint definitions
   filename=None,
   case_sensitive=False
@@ -212,13 +210,13 @@ def pintify(el: xml.Element, unit = True) -> t.Optional[pint.Unit]:
       try:
         # not an alias - define unit
         if not groups['alias']:
-          ureg.define(line)
+          UnitRegistry.define(line)
       except pint.DefinitionSyntaxError as e:
         raise e
     # return tuple if unit, else nothing. index will be integer if unit
     if unit:
       try:
-        unit = getattr(ureg, last_def_name)
+        unit = getattr(UnitRegistry, last_def_name)
       except pint.UndefinedUnitError as e:
         raise e
       return unit
@@ -249,7 +247,7 @@ Units: ChainMap[int, UnitDef] = xml_type_map(
 
 # TODO - subclass pint.Quantity for custom stuff, like np.putmask?
 Quantity = pint.Quantity
-ArrayLike = t.Union[Quantity, Array]
+ArrayLike = t.Union[Quantity, Array, np.memmap]
 
 class Quantified(Base):
   '''
@@ -274,6 +272,23 @@ class Quantified(Base):
       return Units[index].unit # type: ignore
     else:
       return None
+
+class ReferenceQuantified(Quantified):
+  '''
+  `XDFTABLE/XDFAXIS[id = z]` and `XDFFUNCTION` have this key-reference unit, overriding `Quantified.unit`
+  '''
+  @property
+  def data_type(self) -> t.Optional[str]:
+    return None
+
+  @property
+  def unit(self) -> t.Optional[pint.Unit]:
+    '''
+    E.g. RPM, Quarts, Seconds, Percent, etc.
+    '''
+    units: t.List[str] = self.xpath('./units/text()')
+    key = units[0] if len(units) else None
+    return UnitRegistry[key] if key and key in UnitRegistry else None
 
 FormatOutput: ChainMap[int, str] = xml_type_map(
   'formatting_output'

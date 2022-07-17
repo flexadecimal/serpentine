@@ -11,9 +11,10 @@ import graphlib
 import functools
 from itertools import chain
 
-Mathable = t.Union[Axis.XYEmbeddedAxis, Table.ZAxis, Constant.Constant]
+Mathable = t.Union[Axis.QuantifiedEmbeddedAxis, Table.ZAxis, Constant.Constant]
 
 # this is import-time
+EmbeddedValueError = EmbeddedData.EmbeddedValueError
 core_path = Path(__file__).parent.parent
 schemata_path = os.path.join(core_path, 'schemata')
 xdf_schema_path = 'xdf_schema.xsd'
@@ -173,8 +174,7 @@ class XdfTyper(xml.PythonElementClassLookup):
         klass = Axis.Axis_class_from_element(root)
         return klass
     elif parent == 'XDFFUNCTION':
-      # Function can only have EmbeddedAxis - by switching output_type, you change Axis subtype
-      return Axis.XYEmbeddedAxis
+      return Axis.EmbeddedAxis
     else:
       return Axis.Axis
 
