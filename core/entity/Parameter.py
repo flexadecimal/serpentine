@@ -1,6 +1,7 @@
 from .Base import Base, XmlAbstractBaseMeta, XdfRefMixin, ArrayLike
 from abc import ABC, abstractmethod
 import numpy as np
+import numpy.typing as npt
 import typing as T
 from .Category import Categorized
 from enum import Flag

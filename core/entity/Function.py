@@ -2,6 +2,8 @@ from .Base import Base, Array, Quantity, ArrayLike
 from .Axis import EmbeddedAxis
 from .Parameter import Parameter
 import numpy as np
+import numpy.typing as npt
+from decimal import Decimal, ROUND_HALF_UP
 
 def round_off(number, ndigits=None):
     """
@@ -11,7 +13,7 @@ def round_off(number, ndigits=None):
     exp = Decimal('1.{}'.format(ndigits * '0')) if ndigits else Decimal('1')
     return type(number)(Decimal(number).quantize(exp, ROUND_HALF_UP))
 
-def increasing(a: Array) -> np.ma.masked_array:
+def increasing(a: npt.ArrayLike) -> np.ma.masked_array:
   '''
   Retain monotonically-increasing subset by masking out values that fall below the max, e.g.
   `[0, 1, 2, 0, -2, 4, 0, -5, 6, 7, 8]` => 
@@ -43,7 +45,7 @@ def gaps(indices: np.ma.masked_array, vals: np.ma.masked_array) -> np.ma.masked_
   gaps = boundsAndDiff[boundsAndDiff[:, 2] > 1]
   return gaps
 
-def monotone_interpolated(values: Array, indices: Array) -> Array:
+def monotone_interpolated(values: npt.NDArray, indices: npt.NDArray) -> npt.NDArray:
   '''
   TunerPro uses a unique interpolation strategy when using `Function` as an axis. 
   Fill in the monotone parts using the indices and their matching value, and interpolate the non-monotone parts using the previous value/
@@ -125,7 +127,7 @@ def monotone_interpolated(values: Array, indices: Array) -> Array:
   return out
 
 # TODO: use tunerpro round? 0.5 => 1 always
-def round(a: Array) -> Array:
+def round(a: npt.NDArray) -> npt.NDArray:
   return np.around(a, decimals = 0)
 
 class Function(Parameter):

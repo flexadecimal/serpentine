@@ -1,11 +1,13 @@
+from re import M
 import typing as t
 import numpy.typing as npt
 # for entities
-from .Base import Base, XdfRefMixin, Array
+from .Base import ArrayLike, Base, XdfRefMixin, Array
 # general stuff
-import functools
+import functools as ft
 import numpy as np
 from enum import Flag
+import itertools as it
 
 class TypeFlags(Flag):
   '''
@@ -85,17 +87,144 @@ class EmbeddedData(Base):
     else:
       raise ValueError
 
+def print_array(x: ArrayLike) -> npt.NDArray[np.string_]:
+  if np.ma.is_masked(x):
+    out = np.vectorize(
+      lambda n: '--' if np.ma.is_masked(n) else str(n),
+    )(x)
+    # fill mask with default
+    out = out.filled('--')
+    return out
+  else:
+    return np.array(x).astype(np.string_)
+
+def pad_with(vector, pad_width, iaxis, kwargs):
+  '''
+  Numpy padding utility function. See https://numpy.org/doc/stable/reference/generated/numpy.pad.html.
+  '''
+  pad_value = '  '
+  vector[:pad_width[0]] = pad_value
+  vector[-pad_width[1]:] = pad_value
+
+def print_cols(kwargs: t.Mapping[str, t.Union[ArrayLike, str]]) -> str:  
+  vals = kwargs.values()
+  max_height = max(map(lambda x: np.array(x).shape[-1:], vals))[0]
+  middle = max_height // 2
+  as_char_arrays = {
+    key: print_array(arr) for key, arr in kwargs.items()
+  }
+  def padder(key, arr):
+    out = np.empty(arr.shape)
+    if len(arr.shape) == 1:
+      out = np.pad([arr], (middle, middle), pad_with)[1: max_height + 1]
+    else:
+      out = arr
+    return out
+  padded = {
+    key: padder(key, arr) for key, arr in as_char_arrays.items()
+  }
+  combined = np.hstack(padded.values())
+  lines = map(
+    lambda row: ' '.join(row),
+    combined
+  )
+  out = '\n'.join(lines)
+  return out
+
+class EmbeddedValueError(ValueError):
+  '''
+  `raise`d when writing a value to a `memmap`-backed array would go outside of its intrinsic bounds and silently clip.
+
+  TunerPro and `np.memmap` silently clip, but the editor needs to be shown logical/memmap bounds when editing. 
+  '''
+  min: npt.NDArray
+  max: npt.NDArray
+  val: npt.NDArray
+  # used by callers to prompt user to correct only certain values
+  out_minmax: t.Tuple[np.ma.masked_array, np.ma.masked_array]
+
+  def __init__(self, min: npt.NDArray, max: npt.NDArray, val: npt.NDArray):
+    self.min, self.max = min, max
+    self.val = val
+    # out of bounds values
+    out_min: np.ma.masked_array = np.ma.masked_array(
+      self.val, 
+      mask = np.logical_not(self.val < self.min)
+    )
+    out_max: np.ma.masked_array = np.ma.masked_array(
+      self.val, 
+      mask = np.logical_not(self.val > self.max )
+    )
+    self.out_minmax = out_min, out_max
+    pass
+  
+  def __str__(self):
+    minmax_count = list(map(
+      lambda bound: np.count_nonzero(bound.compressed()),
+      self.out_minmax
+    ))
+    min, max = minmax_count
+    out_min = print_cols({
+      'invalid': self.out_minmax[0], 
+      '': ['<'], 
+      'min': self.min
+    })
+    out_max = print_cols({
+    'invalid': self.out_minmax[1], 
+      '': ['>'], 
+      'max': self.max
+    })
+    # final adjustments
+    out = ''
+    out_minmax = '\n'.join([out_min, out_max])
+    # set up print args
+    # out on both bounds
+    if min > 0 and max > 0:
+      out = out_minmax
+    # out on max only
+    elif max > 0:
+      out = out_max
+    # out on min only
+    else:
+      out = out_min
+    # print helpful info
+    formatted = f"""Writing out-of-bounds values to memory map.
+
+{out}
+    """
+    return formatted
+
 class Embedded(XdfRefMixin):
   '''
   Mixin for objects exposing a value using both `<MATH>` and `<EMBEDDEDDATA>`.
   `Constant` and `Table.Axis` do this. `Table` has a value itself, but its value is constructed from "real" `Embedded` memory maps.
   '''
   EmbeddedData: EmbeddedData = Base.xpath_synonym('./EMBEDDEDDATA')
+  
+  def clip_to_memmap_bounds(self, x: ArrayLike):
+    min, max = self.memmap_bounds
+    return np.clip(x, min, max)
 
-  @functools.cached_property
+  @staticmethod
+  def out_of_bounds(x: npt.NDArray, real_min: npt.NDArray, real_max: npt.NDArray) -> bool:
+    return bool(np.any(x > real_max) or np.any(x < real_min))
+
+  @property
+  def memmap_bounds(self) -> t.Tuple[npt.NDArray, npt.NDArray]:
+    '''
+    When writing back 'real' data to memory, there is a "max" value that can be converted back as a practical bound, e.g.
+    [int] -> [255] * byte_width
+    [float] -> [1]
+    '''
+    dtype_bounds = np.iinfo(self.EmbeddedData.data_type)
+    min = np.full(self.EmbeddedData.shape, dtype_bounds.min)
+    max = np.full(self.EmbeddedData.shape, dtype_bounds.max)
+    return min, max
+  
+  @ft.cached_property
   def memory_map(self) -> np.memmap:
     embedded_data = self.EmbeddedData
-    map = np.memmap(
+    map: np.memmap = np.memmap(
       self._xdf._binfile,
       shape = embedded_data.shape,
       # see TunerPro docs - base offset not applied here
@@ -110,3 +239,12 @@ class Embedded(XdfRefMixin):
     if embedded_data.strides:
       map.strides = embedded_data.strides
     return map
+  
+  @staticmethod
+  def print_hex(a: npt.ArrayLike) -> str:
+    with np.printoptions(formatter={'int':hex}):
+      return str(a)
+  
+  @property
+  def map_hex(self) -> str:
+    return Embedded.print_hex(self.memory_map)

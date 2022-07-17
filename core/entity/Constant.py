@@ -1,5 +1,5 @@
 from .Base import Base, Quantified, Quantity, Formatted
-from .EmbeddedData import Embedded
+from .EmbeddedData import Embedded, EmbeddedValueError
 from .Math import Math
 from .Parameter import Parameter, Clamped
 import numpy as np
@@ -18,7 +18,6 @@ class ConstantClamped(Clamped):
     out = self.xpath('./rangehigh/text()')
     return float(out[0]) if out else None
 
-
 class Constant(Parameter, Embedded, Formatted, Quantified, ConstantClamped):
   '''
   XDF Constant, a.k.a. Scalar.
@@ -34,10 +33,18 @@ class Constant(Parameter, Embedded, Formatted, Quantified, ConstantClamped):
 
   @value.setter
   def value(self, value):
-    out = np.array([self.Math.inverse_conversion_func(value)])
+    matrix = np.array([value])
+    out = self.Math.inverse_conversion_func(matrix)
+    min, max = map(
+      self.Math.conversion_func,
+      self.memmap_bounds
+    )
+    if Embedded.out_of_bounds(matrix, min, max):
+      e = EmbeddedValueError(min, max, matrix)
+      raise e
     # write to map
     # see https://numpy.org/devdocs/reference/generated/numpy.memmap.html
     # this will implicitly truncate floats
-    self.memory_map[:] = np.array([out])[:]
+    #self.memory_map[:] = np.array([out])[:]
     # flush ? 
     #self.memory_map.flush()
