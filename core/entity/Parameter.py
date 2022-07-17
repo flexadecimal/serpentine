@@ -23,16 +23,6 @@ class Parameter(Categorized, Base, XdfRefMixin, ABC, metaclass=XmlAbstractBaseMe
     out = self.xpath('./@vislevel')
     return int(out[0]) if out else None
 
-  @property
-  @abstractmethod
-  def value(self) -> ArrayLike:
-      '''
-      XDF parameters, using their `<MATH>` equation data, convert binary data to a numerical value - 
-      right now, these are only `XDFCONSTANT` and `XDFTABLE`. `XDFTABLE` parses 3 axes to form a surface,
-      and `XDFCONSTANT` need just parse one. These numerical values can then be referenced in other equations.
-      '''
-      pass
-
   def __repr__(self):
       return f"<{self.__class__.__qualname__} '{self.title}'>: {Base.__repr__(self)}"
       

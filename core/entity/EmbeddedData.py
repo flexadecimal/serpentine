@@ -2,12 +2,14 @@ from re import M
 import typing as t
 import numpy.typing as npt
 # for entities
-from .Base import ArrayLike, Base, XdfRefMixin, Array
+from .Base import ArrayLike, Base, XdfRefMixin, Array, Quantity
 # general stuff
 import functools as ft
 import numpy as np
 from enum import Flag
 import itertools as it
+from .Math import Math
+import pint
 
 class TypeFlags(Flag):
   '''
@@ -87,7 +89,7 @@ class EmbeddedData(Base):
     else:
       raise ValueError
 
-def print_array(x: ArrayLike) -> npt.NDArray[np.string_]:
+def print_array(x: ArrayLike) -> npt.NDArray[np.unicode_]:
   if np.ma.is_masked(x):
     out = np.vectorize(
       lambda n: '--' if np.ma.is_masked(n) else str(n),
@@ -96,7 +98,7 @@ def print_array(x: ArrayLike) -> npt.NDArray[np.string_]:
     out = out.filled('--')
     return out
   else:
-    return np.array(x).astype(np.string_)
+    return np.array(x).astype(np.unicode_)
 
 def pad_with(vector, pad_width, iaxis, kwargs):
   '''
@@ -106,7 +108,7 @@ def pad_with(vector, pad_width, iaxis, kwargs):
   vector[:pad_width[0]] = pad_value
   vector[-pad_width[1]:] = pad_value
 
-def print_cols(kwargs: t.Mapping[str, t.Union[ArrayLike, str]]) -> str:  
+def print_cols(kwargs: t.Mapping[str, ArrayLike]) -> str:  
   vals = kwargs.values()
   max_height = max(map(lambda x: np.array(x).shape[-1:], vals))[0]
   middle = max_height // 2
@@ -114,20 +116,21 @@ def print_cols(kwargs: t.Mapping[str, t.Union[ArrayLike, str]]) -> str:
     key: print_array(arr) for key, arr in kwargs.items()
   }
   def padder(key, arr):
-    out = np.empty(arr.shape)
+    out = np.empty(arr.shape, dtype=np.unicode_)
+    edge = max(middle, max_height)
     if len(arr.shape) == 1:
-      out = np.pad([arr], (middle, middle), pad_with)[1: max_height + 1]
+      out = np.pad([arr], (edge, edge), pad_with)[1: edge + 1]
     else:
       out = arr
     return out
   padded = {
     key: padder(key, arr) for key, arr in as_char_arrays.items()
   }
-  combined = np.hstack(padded.values())
-  lines = map(
-    lambda row: ' '.join(row),
+  combined = np.hstack(padded.values()) # type: ignore
+  lines = list(map(
+    lambda row: ''.join(row),
     combined
-  )
+  ))
   out = '\n'.join(lines)
   return out
 
@@ -170,7 +173,7 @@ class EmbeddedValueError(ValueError):
       'min': self.min
     })
     out_max = print_cols({
-    'invalid': self.out_minmax[1], 
+      'invalid': self.out_minmax[1], 
       '': ['>'], 
       'max': self.max
     })
@@ -200,7 +203,42 @@ class Embedded(XdfRefMixin):
   `Constant` and `Table.Axis` do this. `Table` has a value itself, but its value is constructed from "real" `Embedded` memory maps.
   '''
   EmbeddedData: EmbeddedData = Base.xpath_synonym('./EMBEDDEDDATA')
-  
+  Math: Math = Base.xpath_synonym('./MATH')
+
+  @property
+  def value(self) -> ArrayLike:
+    unitless = self.Math.conversion_func(
+      self.memory_map.astype(np.float_, copy=False)
+    )
+    return unitless
+
+  @property
+  def logical_bounds(self):
+    '''
+    Logical bounds of this value by its `numpy` data type, to raise `EmbeddedValueError` with and draw UI with
+    '''
+    min, max = map(
+      self.Math.conversion_func,
+      self.memmap_bounds
+    )
+    return min, max
+
+  @value.setter # type: ignore
+  def value(self, value): 
+    matrix = np.array([value])
+    min, max = self.logical_bounds
+    out = self.Math.inverse_conversion_func(matrix)
+    if Embedded.out_of_bounds(matrix, min, max):
+      e = EmbeddedValueError(min, max, matrix)
+      raise e
+    else:
+      # silently fail, write to map
+      # see https://numpy.org/devdocs/reference/generated/numpy.memmap.html
+      # this will implicitly truncate floats
+      self.memory_map[:] = np.array([out])[:]
+      # flush ? 
+      #self.memory_map.flush()
+
   def clip_to_memmap_bounds(self, x: ArrayLike):
     min, max = self.memmap_bounds
     return np.clip(x, min, max)

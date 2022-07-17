@@ -147,7 +147,8 @@ class Function(Parameter):
 
   @property
   def interpolated(self):
-    return monotone_interpolated(self.x.value, self.y.value)
+    out = monotone_interpolated(self.x.value, self.y.value)
+    return out
 
 __all__= [
   'Function'

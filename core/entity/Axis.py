@@ -1,12 +1,13 @@
 from __future__ import annotations
-from abc import ABC, abstractmethod
+from abc import ABC
 import typing as t
-from .Base import Base, Quantified, Quantity, ArrayLike, Formatted, XmlAbstractBaseMeta, xml_type_map, Array
+from .Base import Base, Quantified, Quantity, ArrayLike, Formatted, ReferenceQuantified, UnitRegistry, XmlAbstractBaseMeta, xml_type_map, Array
 from .EmbeddedData import Embedded
 from .Math import Math
 import numpy as np
 from collections import ChainMap
 from lxml import etree as xml
+import pint
 
 # to avoid circular import
 if t.TYPE_CHECKING:
@@ -48,35 +49,8 @@ class Axis(AxisFormatted, Base, ABC, metaclass=XmlAbstractBaseMeta):
   Math: _math = Base.xpath_synonym('./MATH')
   id = Base.xpath_synonym('./@id')
 
-  @property # type: ignore
-  @abstractmethod
-  def value(self) -> ArrayLike:
-    pass
-
-  # decorated property not supported by mypy, so ignore...
-  @value.setter # type: ignore
-  @abstractmethod 
-  def value(self, value: ArrayLike) -> None:
-    pass
-
-  def __repr__(self):
-    return f"<{self.__class__.__qualname__} '{self.title}'>: {Base.__repr__(self)}"
-
 class EmbeddedAxis(Axis, Embedded):
-  # each axis is a memory-mapped array
-  @property
-  def value(self):
-    out = self.Math.conversion_func(
-      self.memory_map.astype(
-        np.float64,
-        copy=False
-        # use the underlying embedded row/col major ordering, shape, etc.
-    ))
-    return out
-
-  @value.setter
-  def value(self, value):
-    pass
+  pass
 
 class XYLabelAxis(Axis, Quantified):
   labels: t.List[xml.ElementTree]= Base.xpath_synonym('./LABEL', many=True)
@@ -115,7 +89,7 @@ class XYLinkAxis(Axis, Quantified):
       raise NotImplementedError('Axis erroneously classified as linked.')
 
   @property
-  def value(self):
+  def value(self) -> Quantity:
     # this should be immutable - you can change the link, but not the value
     # see Var.LinkedVar.linked - this is similar, but no Constant
     # TODO - this needs a dependency tree like `Xdf._math_depedency_graph`
@@ -123,25 +97,25 @@ class XYLinkAxis(Axis, Quantified):
     #if self.linked.__class__ is Function:
       # DO NORMALIZATION...
       function: Function = self.linked
-      return function.interpolated
+      return Quantity(function.interpolated, self.unit)
     else:
       # output regular quantity
       out = self.linked.value
-      if issubclass(out.__class__, Quantity):
-        if self.unit and not out.unitless:
-          return out.to(self.unit)
-        else:
-          return out
-      else:
-        return Quantity(out, self.unit)
+      return Quantity(out, self.unit)
+      #if issubclass(out.__class__, Quantity):
+      #  if self.unit and not out.unitless:
+      #    return out.to(self.unit)
+      #  else:
+      #    return out
+      #else:
+      #  return Quantity(out, self.unit)
 
 # TODO: X/Y Axes can have stock units and data types, but Z axis does not? weird
-class QuantifiedEmbeddedAxis(EmbeddedAxis, Quantified):
-  @property
+class QuantifiedEmbeddedAxis(EmbeddedAxis, ReferenceQuantified):
   def value(self) -> Quantity:
-    original = EmbeddedAxis.value.fget(self) # type: ignore
+    original = super().fget(self) # type: ignore
     return Quantity(original, self.unit)
-
+    
 # used in `Xdf.XdfTyper`
 def Axis_class_from_element(axis: xml.Element):
   children = axis.getchildren()

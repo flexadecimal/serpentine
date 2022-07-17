@@ -1,6 +1,6 @@
+from core.entity.Axis import QuantifiedEmbeddedAxis
 from .Base import Base, Quantified, Quantity, Formatted
 from .EmbeddedData import Embedded, EmbeddedValueError
-from .Math import Math
 from .Parameter import Parameter, Clamped
 import numpy as np
 import pint
@@ -22,29 +22,10 @@ class Constant(Parameter, Embedded, Formatted, Quantified, ConstantClamped):
   '''
   XDF Constant, a.k.a. Scalar.
   '''
-  Math: Math = Base.xpath_synonym('./MATH')
-
   @property
-  def value(self) -> Quantity:
-    unitless = self.Math.conversion_func(
-      self.memory_map.astype(np.float_, copy=False)
-    )
-    return pint.Quantity(self.clamped(unitless), self.unit)
+  def value(self) -> pint.Quantity:
+    return Quantity(Embedded.value.fget(self), self.unit)
 
   @value.setter
   def value(self, value):
-    matrix = np.array([value])
-    out = self.Math.inverse_conversion_func(matrix)
-    min, max = map(
-      self.Math.conversion_func,
-      self.memmap_bounds
-    )
-    if Embedded.out_of_bounds(matrix, min, max):
-      e = EmbeddedValueError(min, max, matrix)
-      raise e
-    # write to map
-    # see https://numpy.org/devdocs/reference/generated/numpy.memmap.html
-    # this will implicitly truncate floats
-    #self.memory_map[:] = np.array([out])[:]
-    # flush ? 
-    #self.memory_map.flush()
+    return Embedded.value.fset(self, value)

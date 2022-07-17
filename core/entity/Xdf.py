@@ -14,6 +14,7 @@ from itertools import chain
 Mathable = t.Union[Axis.QuantifiedEmbeddedAxis, Table.ZAxis, Constant.Constant]
 
 # this is import-time
+EmbeddedValueError = EmbeddedData.EmbeddedValueError
 core_path = Path(__file__).parent.parent
 schemata_path = os.path.join(core_path, 'schemata')
 xdf_schema_path = 'xdf_schema.xsd'

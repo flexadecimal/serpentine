@@ -10,6 +10,7 @@ from itertools import (
   chain
 )
 from .Mask import Mask, MaskedMath
+import pint
 
 _math = Math
 
@@ -55,7 +56,7 @@ class CellMath(MaskedMath):
     out[self.row][self.column] = 1
     return Mask(np.logical_not(out))
 
-class ZAxis(Axis.EmbeddedAxis, Clamped):
+class ZAxis(Axis.QuantifiedEmbeddedAxis, Clamped):
   '''
   Special-case axis, generally referred to interchangeably with as a "Table", although the Table really contains the Axes and their related information.
   '''
@@ -112,7 +113,7 @@ class ZAxis(Axis.EmbeddedAxis, Clamped):
     return accumulator
 
   @functools.cached_property
-  def value(self) -> ArrayLike:
+  def value(self):
     '''
     Equations are replaced by the following in order from lowest to highest priority:
     1. Global table equation
@@ -170,7 +171,9 @@ class ZAxis(Axis.EmbeddedAxis, Clamped):
       initial
     )
     # optionally clamp
-    return self.clamped(out)
+    clamped = self.clamped(out)
+    # retain units 
+    return pint.Quantity(clamped, self.unit)
 
 XYAxis = t.Union[Axis.QuantifiedEmbeddedAxis, Axis.XYLabelAxis, Axis.XYLinkAxis]
 class Table(Parameter):
@@ -179,7 +182,7 @@ class Table(Parameter):
   '''
   x: XYAxis = Base.xpath_synonym("./XDFAXIS[@id='x']")
   y: XYAxis = Base.xpath_synonym("./XDFAXIS[@id='y']")
-  z: XYAxis = Base.xpath_synonym("./XDFAXIS[@id='z']")
+  z: ZAxis = Base.xpath_synonym("./XDFAXIS[@id='z']")
 
   @property
   def value(self):
