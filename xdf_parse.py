@@ -4,7 +4,7 @@ from itertools import (
   groupby
 )
 import sys
-from core.entity.Xdf import Xdf, MathInterdependence
+import core.entity.Xdf as xdf
 
 cars_folder = './cars/testing'
 car_name_regex = rf"{cars_folder}/(?P<car>[\w+-_]+)"
@@ -26,29 +26,27 @@ if __name__ == '__main__':
     for xdf_path, bin_path, adx_path in zip(files_by_type['xdf'], files_by_type['bin'], files_by_type['adx']):
       print(f"Opening '{os.path.join(root, xdf_path)}'...")
       try:
-        xdf = Xdf.from_path(
+        tune = xdf.Xdf.from_path(
           os.path.join(root, xdf_path),
-          os.path.join(root, bin_path)
+          os.path.join(root, bin_path),
+          # ignore invalid
+          xdf.MathInterdependence,
+          xdf.AxisInterdependence
         )
-      except MathInterdependence:
-        print(f"Xdf '{xdf_path}' is invalid.")
+      except Exception as e:
+        raise(e)
 
       #constants = {c.title: c.value for c in xdf.Constants}
       #tables = {t.title: t.value for t in xdf.Tables}
-      functions = {f.title: f for f in xdf.Functions}
+      functions = {f.title: f for f in tune.Functions}
 
-      ignition_map = xdf.xpath('./XDFTABLE[1]')[0]
-      #val = ignition_map.value
-      major_rpm = xdf.xpath('./XDFTABLE[5]')[0]
-      #val = major_rpm.Axes['x'].value
-      zwb = xdf.xpath('./XDFCONSTANT[1]')[0]
-      x_axis = ignition_map.x
-      y_axis = ignition_map.y
-      a = y_axis.output_type
-      y_val = y_axis.value
-      ignition = ignition_map.value
-      degreesBTDC = ignition_map.z.unit
-      ve = xdf.xpath('./XDFTABLE[2]')[0]
+      for idx, t in enumerate(tune.Tables):
+        print(t.title)
+        x, y = t.x.value, t.y.value
+
+
+      zwb = tune.xpath('./XDFCONSTANT[1]')[0]
+      ve = tune.xpath('./XDFTABLE[2]')[0]
       #ve_val = ve.value
       # test setters
       zwb.value = 12.24 + 5

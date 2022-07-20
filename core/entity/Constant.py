@@ -24,7 +24,7 @@ class Constant(Parameter, Embedded, Formatted, Quantified, ConstantClamped):
   '''
   @property
   def value(self) -> pint.Quantity:
-    return Quantity(Embedded.value.fget(self), self.unit)
+    return Quantity(Embedded.value.fget(self), self.unit) # type: ignore
 
   @value.setter
   def value(self, value):

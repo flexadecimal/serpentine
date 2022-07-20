@@ -8,16 +8,14 @@ import itertools as it
 import numpy as np
 import numpy.typing as npt
 import pint
-from abc import ABC
+from abc import ABC, ABCMeta, abstractclassmethod, abstractmethod, abstractproperty, abstractstaticmethod
 import functools
 from collections import ChainMap
 from pathlib import Path
 import os
 import re
-
-# to avoid circular import for XDF self-reference
-if t.TYPE_CHECKING:
-  from .Xdf import Xdf
+import graphlib
+from . import Xdf as xdf
 
 XmlBase = xml.ElementBase
 #XmlBase = objectify.ObjectifiedDataElement
@@ -117,7 +115,7 @@ class XdfRefMixin:
   Utility Mixin class that provides the `_xdf` reference to the containing document.
   '''
   @property
-  def _xdf(self: t.Any) -> Xdf:
+  def _xdf(self: t.Any) -> xdf.Xdf:
     return self.xpath("/XDFFORMAT")[0]
 
 # stolen from numpy.typing
@@ -300,16 +298,9 @@ FormatOutput: ChainMap[int, str] = xml_type_map(
 class Formatted(Base):
   '''
   Provides:
-    - `units` string
-      * different from typed enumeration of units/measurements in `Quantified`.
-        For example, `Table.ZAxis` has `units` string, but not typed `Quantified.data_type` or `Quantified.unit_type`.
     - `output_type`
       * float, int, hex, or ASCII string.
   '''
-  @property
-  def units(self) -> t.Optional[str]:
-    out = self.xpath('./units/text()')
-    return out[0] if out else None
 
   # TODO - use some sort of numpy memmap type?
   @property
@@ -334,4 +325,54 @@ class Formatted(Base):
     '''
     out = self.xpath('./decimalpl/text()')
     return int(out[0]) if out else self.DEFAULT_DIGITS
+
+X = t.TypeVar('X', covariant=True)
+class CyclicReferenceException(t.Generic[X], ABC, BaseException):
+  cycle: t.Iterable[X]
+  root: xdf.Xdf
+
+  @abstractmethod
+  def __init__(self, root: xdf.Xdf, *cycle: t.Iterable[X]):
+    pass
+
+  @abstractmethod
+  def __str__(self):
+    pass
+
+E = t.TypeVar('E', bound = CyclicReferenceException, covariant=True)
+class RefersCyclically(t.Generic[E], ABC, XdfRefMixin, metaclass=XmlAbstractBaseMeta):
+  '''
+  Base class for entities like `XDFAXIS` and `XDFMATH` that can refer to other objects cyclically, and so must provide a dependency graph, evaluation order, and exceptions to match.
+  '''
+  @abstractclassmethod
+  def dependency_graph(cls, xdf: xdf.Xdf) -> t.Mapping[t.Any, t.Any]:
+    pass
+
+  @abstractproperty
+  def exception(self) -> t.Type[E]:
+    '''
+    Things that reference cyclically must provide a detail exception.
+
+    e.g. `MathInterdependence` for equation vars with cyclical referencs, or `AxisInterdependence` for linked `Table.Axis
+    '''
+    pass
+    
+  @classmethod
+  def acyclic(cls, xdf: xdf.Xdf) -> bool:
+    '''
+    Returns `true` if this self-referential entity is acyclic, or raise our specific error.
+    '''
+    try:
+      out = list(cls.eval_order(xdf))
+      return True
+    except graphlib.CycleError as error:
+      cycle = set(error.args[1])
+      raise cls.exception(xdf, *cycle)
+
+  @classmethod
+  def eval_order(cls, xdf: xdf.Xdf) -> t.Iterable[t.Any]:
+    graph = cls.dependency_graph(xdf) # type: ignore
+    sorter = graphlib.TopologicalSorter(graph)
+    out: t.Iterable = sorter.static_order()
+    return out
 

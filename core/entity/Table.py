@@ -1,7 +1,9 @@
 import typing as t
 from .Base import Base, Quantity, ArrayLike
 from .Math import Math
-from . import Axis
+from .Axis import QuantifiedEmbeddedAxis
+# to avoid circular import
+from .Axis import XYAxis
 from .Parameter import Parameter, Clamped
 import numpy as np
 import numpy.typing as npt
@@ -56,7 +58,7 @@ class CellMath(MaskedMath):
     out[self.row][self.column] = 1
     return Mask(np.logical_not(out))
 
-class ZAxis(Axis.QuantifiedEmbeddedAxis, Clamped):
+class ZAxis(QuantifiedEmbeddedAxis, Clamped):
   '''
   Special-case axis, generally referred to interchangeably with as a "Table", although the Table really contains the Axes and their related information.
   '''
@@ -175,7 +177,6 @@ class ZAxis(Axis.QuantifiedEmbeddedAxis, Clamped):
     # retain units 
     return pint.Quantity(clamped, self.unit)
 
-XYAxis = t.Union[Axis.QuantifiedEmbeddedAxis, Axis.XYLabelAxis, Axis.XYLinkAxis]
 class Table(Parameter):
   '''
   Table, a.k.a array/list of values. Usually this is a 2D table like a fuel or ignition map, or occasionally, a 1D list like an axis, e.g. Major RPM.
@@ -189,8 +190,8 @@ class Table(Parameter):
     return self.z.value
 
   @value.setter
-  def value(self, Array):
-    self.z.value = Array
+  def value(self, value: ArrayLike):
+    self.z.value
 
   def __str__(self):
     sep = ' '
@@ -214,3 +215,4 @@ class Table(Parameter):
     )
     return f"{x_preceding}{x_axis}\n{x_preceding}{line}\n{zs_with_y}"
     
+__all__ = ['Table']

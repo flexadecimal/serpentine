@@ -1,8 +1,9 @@
 from __future__ import annotations
-import typing as T
+from logging import exception
+import typing as t
 import numpy.typing as npt
 # for entities
-from .Base import Base, Array, Quantity, ArrayLike
+from .Base import Base, RefersCyclically, CyclicReferenceException, ArrayLike
 # for Math equation parsing
 from .. import equation_parser as eq
 from ..equation_parser.transformations import (
@@ -14,8 +15,11 @@ from .Var import Var, BoundVar, FreeVar, LinkedVar, AddressVar
 # general stuff
 import functools
 from pynverse import inversefunc
+from itertools import chain
+from . import Xdf as xdf
+import lxml as xml
 
-class ConversionFuncType(T.Protocol):
+class ConversionFuncType(t.Protocol):
   '''
   Type signature for binary conversion functions, e.g.:
   
@@ -25,13 +29,68 @@ class ConversionFuncType(T.Protocol):
 
   See [this StackOverflow answer](https://stackoverflow.com/a/64106593) for details on using `typing.Protocol`.
   '''
-  def __call__(self, x: npt.ArrayLike, **kwargs: T.Dict[str, npt.ArrayLike]) -> ArrayLike:
+  def __call__(self, x: npt.ArrayLike, **kwargs: t.Dict[str, npt.ArrayLike]) -> ArrayLike:
     ...
 
-class Math(Base):
-  Vars: T.List[Var] = Base.xpath_synonym('./VAR', many=True)
 
-  LinkedVars: T.List[LinkedVar] = Base.xpath_synonym("./VAR[@type='link']", many=True)
+class MathInterdependence(CyclicReferenceException):
+  def __init__(self, xdf: xdf.Xdf, *interdependent_maths: Math):
+    self.cycle = interdependent_maths
+    # fancy printing
+    self.xdf = xdf
+
+  def __str__(self):
+    root_tree: xml.ElementTree = self.xdf.getroottree()
+    printouts: t.List[str] = []
+    for math in self.cycle:
+      # var.linked.Math may be a list in case of `Table.ZAxis`, when you have many conversion equation masks
+      linked_Maths = set(
+        chain.from_iterable(var.linked.Math for var in math.LinkedVars)
+      )
+      dependent = next(iter(linked_Maths.intersection(self.cycle)))
+      dependent_Var = next(filter(
+        lambda var: dependent in var.linked.Math, math.LinkedVars
+      ))
+      # set printout
+      printout = "  "
+      printout += f"{root_tree.getpath(math.getparent())}: {math.attrib['equation']}"
+      printout += f"\n    {dependent_Var.id}: {root_tree.getpath(dependent)}"
+      printouts.append(printout)
+      seperator = ',\n'
+    message = f"""Parameter conversion equations in file `{self.xdf._path}`
+    
+{seperator.join(printouts)}
+
+are mutually interdependent.
+    """
+    return message
+    #Exception.__init__(self, message)
+
+class Math(RefersCyclically[MathInterdependence], Base):
+  exception = MathInterdependence
+  
+  @classmethod
+  def dependency_graph(cls, xdf) -> t.Mapping[Math, t.Iterable[Math]]:
+    has_link: t.Iterable[Math] = xdf.xpath("//MATH[./VAR[@type='link']]")
+    # see `Var.LinkedVar`
+    #graph = {math:  
+    #  list(map(lambda id: self.xpath(f"""
+    #    //XDFTABLE[@uniqueid='{id}']/XDFAXIS[@id='z']/MATH | 
+    #    //XDFCONSTANT[@uniqueid='{id}']/MATH
+    #    """)[0],
+    #    math.linked_ids.values()
+    #  )) for math in has_link
+    #}
+    graph = {
+      # TODO: flatten math 
+      math: list(chain.from_iterable(var.linked.Math for var in math.LinkedVars))
+      for math in has_link
+    }
+    return graph
+
+  Vars: t.List[Var] = Base.xpath_synonym('./VAR', many=True)
+
+  LinkedVars: t.List[LinkedVar] = Base.xpath_synonym("./VAR[@type='link']", many=True)
 
   # TODO: maybe link should be removed from math?
   DataLink = Base.xpath_synonym('./preceding-sibling::DALINK')
@@ -112,8 +171,6 @@ class Math(Base):
       FunctionCallTransformer.FunctionCallTransformer()
     )
     return equation_ast
-
-
 
   def __repr__(self):
     equation_str = self.attrib['equation']

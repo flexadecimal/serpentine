@@ -10,11 +10,18 @@ from . import (
 import graphlib
 import functools
 from itertools import chain
+import contextlib as ctx
 
 Mathable = t.Union[Axis.QuantifiedEmbeddedAxis, Table.ZAxis, Constant.Constant]
 
-# this is import-time
+# export these errors for callers
 EmbeddedValueError = EmbeddedData.EmbeddedValueError
+MathInterdependence = Math.MathInterdependence
+AxisInterdependence = Axis.AxisInterdependence
+# ... and allow these to be suppressed
+Ignorable = t.Union[EmbeddedValueError, MathInterdependence, AxisInterdependence]
+
+# this is import-time
 core_path = Path(__file__).parent.parent
 schemata_path = os.path.join(core_path, 'schemata')
 xdf_schema_path = 'xdf_schema.xsd'
@@ -59,9 +66,17 @@ class Xdf(Base):
     base_offset = -magnitude if bool(int(base_offset_attr['subtract'])) else magnitude
     out['base_offset'] = base_offset
     return out
-  
+
+
+
+
   @classmethod
-  def from_path(cls, path, binpath):
+  def from_path(
+    cls, 
+    path: str, 
+    binpath: str, 
+    *ignore: t.Iterable[Ignorable]
+  ):
     # ...validate
     #xdf_tree = xml.fromstring(string)
     xdf_tree = xml.parse(path)
@@ -69,7 +84,6 @@ class Xdf(Base):
       xdf_schema.assertValid(xdf_tree)
     except xml.DocumentInvalid as error:
       print(f"XDF '{path}' not validated against schema '{xdf_schema_path}'.")
-      # propogate error
       raise error
     # ...objectify - bind classes
     parser = objectify.makeparser(schema = xdf_schema)
@@ -78,77 +92,24 @@ class Xdf(Base):
     # ...set python special vars
     xdf._path = Path(path)
     xdf._binfile = open(binpath, 'r+b')
-    # SANITY CHECK - interdependent conversion equations
+    # SANITY CHECK - check cyclical references, ignoring those specified. you may want to ignore acyclic references to open edit-only UI and prompt user to fix it.
     try:
       # this must be fully evaluated to see if it is cyclical
-      order = list(xdf._math_eval_order)
-    except graphlib.CycleError as error:
-      cycle: t.Set[Math.Math] = set(error.args[1])
-      # TODO: trying to construct kwargs of `Math.conversion_func` fails if they are dependent - YOU WILL OVERFLOW STACK. mark them dirty
-      raise MathInterdependence(xdf, *cycle) from error
-    # invalid state taken care of, we can still open
+      math_ok = Math.Math.acyclic(xdf)
+      axes_ok = Axis.AxisLinked.acyclic(xdf)
+    except MathInterdependence as e:
+      # TODO: math cleanup? mark invalid with special state?
+      if MathInterdependence not in ignore:
+        raise(e)
+    except AxisInterdependence as e:
+      if AxisInterdependence not in ignore:
+        raise(e)
     return xdf
 
   @property
   def parameters_by_id(self) -> t.Dict[str, Parameter.Parameter]:
     return {param.id: param for param in self.Parameters}
-
-
-  @functools.cached_property
-  def _math_dependency_graph(self) -> t.Mapping[Math.Math, t.Iterable[Math.Math]]:
-    has_link: t.Iterable[Math.Math] = self.xpath("//MATH[./VAR[@type='link']]")
-    # see `Var.LinkedVar`
-    #graph = {math:  
-    #  list(map(lambda id: self.xpath(f"""
-    #    //XDFTABLE[@uniqueid='{id}']/XDFAXIS[@id='z']/MATH | 
-    #    //XDFCONSTANT[@uniqueid='{id}']/MATH
-    #    """)[0],
-    #    math.linked_ids.values()
-    #  )) for math in has_link
-    #}
-    graph = {
-      # TODO: flatten math 
-      math: list(chain.from_iterable(var.linked.Math for var in math.LinkedVars))
-      for math in has_link
-    }
-    return graph
-
-  #graphlib topsort
-  @property
-  def _math_eval_order(self) -> t.Iterable[Math.Math]:
-    graph = self._math_dependency_graph
-    sorter = graphlib.TopologicalSorter(graph)
-    return sorter.static_order()
-    
-class MathInterdependence(Exception):
-  def __init__(self, root: Xdf, *interdependent_maths: Math.Math):
-    self.cycle = interdependent_maths
-    # fancy printing
-    root_tree: xml.ElementTree = root.getroottree()
-    printouts: t.List[str] = []
-    for math in interdependent_maths:
-      # var.linked.Math may be a list in case of `Table.ZAxis`, when you have many conversion equation masks
-      linked_Maths = set(
-        chain.from_iterable(var.linked.Math for var in math.LinkedVars)
-      )
-      dependent = next(iter(linked_Maths.intersection(interdependent_maths)))
-      dependent_Var = next(filter(
-        lambda var: dependent in var.linked.Math, math.LinkedVars
-      ))
-      # set printout
-      printout = "  "
-      printout += f"{root_tree.getpath(math.getparent())}: {math.attrib['equation']}"
-      printout += f"\n    {dependent_Var.id}: {root_tree.getpath(dependent)}"
-      printouts.append(printout)
-      seperator = ',\n'
-    message = f"""Parameter conversion equations in file `{root._path}`
-    
-{seperator.join(printouts)}
-
-are mutually interdependent.
-    """
-    Exception.__init__(self, message)
- 
+   
 # custom lookup for XDF XML types
 # see https://lxml.de/element_classes.html#setting-up-a-class-lookup-scheme
 class XdfTyper(xml.PythonElementClassLookup):
@@ -174,9 +135,10 @@ class XdfTyper(xml.PythonElementClassLookup):
         klass = Axis.Axis_class_from_element(root)
         return klass
     elif parent == 'XDFFUNCTION':
-      return Axis.EmbeddedAxis
+      return Axis.QuantifiedEmbeddedAxis
     else:
       return Axis.Axis
+    return Axis.Axis
 
   @staticmethod
   def var_polymorphic_dispatch(root, **attrib):

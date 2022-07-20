@@ -1,17 +1,18 @@
 from __future__ import annotations
-from abc import ABC
+from abc import ABC, abstractmethod, abstractproperty
 import typing as t
-from .Base import Base, Quantified, Quantity, ArrayLike, Formatted, ReferenceQuantified, UnitRegistry, XmlAbstractBaseMeta, xml_type_map, Array
+from core.entity import Table, Function
+from .Base import (
+  Base, CyclicReferenceException, Quantity, ArrayLike, Quantified, Formatted, ReferenceQuantified,
+  UnitRegistry, XmlAbstractBaseMeta, xml_type_map, Array, RefersCyclically
+)
+from . import Xdf as xdf
 from .EmbeddedData import Embedded
 from .Math import Math
 import numpy as np
 from collections import ChainMap
 from lxml import etree as xml
-import pint
-
-# to avoid circular import
-if t.TYPE_CHECKING:
-  from .Function import Function
+import graphlib
 
 EmbedFormat: ChainMap[int, str] = xml_type_map(
   'embed_type'
@@ -62,58 +63,106 @@ class XYLabelAxis(Axis, Quantified):
     out = [float(label.attrib['value']) for label in self.labels]
     return Quantity(Array(out), self.unit)
 
-class XYLinkAxis(Axis, Quantified):
+class AxisInterdependence(CyclicReferenceException):
+  axis: XYLinkAxis
+  
+  def __init__(self, xdf: xdf.Xdf, table: Table.Table):
+    self.xdf = xdf
+    self.cycle = table
+    self.axis = next(
+      filter(
+        lambda a: a.linked is table,
+        [table.x, table.y]
+      )
+    )
+  
+  def __str__(self):
+        # fancy printing
+    message = f"""In Xdf "{self.xdf._path}",
+
+Table axis "{self.cycle.title}".{self.axis.id} refers to itself.
+"""
+    return message
+
+class AxisLinked(RefersCyclically[AxisInterdependence], Axis, ABC, metaclass=XmlAbstractBaseMeta):
   '''
   Tables can have X/Y Axis linked to either:
   - Function (normalized, index 2)
-  - Table (normalized, index 2) - depending on if you're defining row/col it will select that row/col from the table
+  - Table (normalized, index 3) - depending on if you're defining row/col it will select that row/col from the table
   '''
-  link_id = Base.xpath_synonym('./embedinfo/@linkobjid')
 
+  @classmethod
   @property
-  # they can be linked multiple times, e.g. 
-  # linked -> linked -> linked -> label | embedded
-  def linked(self) -> t.Union[XYLinkAxis, XYLabelAxis, QuantifiedEmbeddedAxis, Function]:
-    table_query = f"""
-      //XDFTABLE[@uniqueid='{self.link_id}']/XDFAXIS[@id='{self.id}']
-    """
+  def embed_type(self) -> str:
+    '''
+    Used in calculating `Axis` linking interdepenency.
+    '''
+    pass
+
+  exception = AxisInterdependence
+  
+  @classmethod
+  def dependency_graph(cls, xdf: xdf.Xdf):
+    has_link = xdf.xpath(
+      f"./XDFTABLE/XDFAXIS[@id='x' or @id='y'][.//embedinfo[@type='3' or @type='2']]"
+    )
+    graph = {
+      # XML parent will be table, which must not be circular
+      axis.linked: [axis.getparent()]
+      for axis in has_link
+    }
+    return graph
+
+  link_id = Base.xpath_synonym('./embedinfo/@linkobjid')
+  @abstractmethod
+  def linked(self):
+    pass
+
+class XYFunctionLinkAxis(AxisLinked, Quantified):
+  embed_type = EmbedFormat[2]
+  
+  @property
+  def linked(self) -> Function.Function:
     function_query = f"""
       //XDFFUNCTION[@uniqueid='{self.link_id}']
     """
-    # TODO - codify this XML enum somehow, nicer
-    if self.source == EmbedFormat[2]:
-      return self.xpath(function_query)[0]
-    elif self.source == EmbedFormat[3]:
-      return self.xpath(table_query)[0]
-    else:
-      raise NotImplementedError('Axis erroneously classified as linked.')
+    return self.xpath(function_query)[0]
 
   @property
   def value(self) -> Quantity:
     # this should be immutable - you can change the link, but not the value
     # see Var.LinkedVar.linked - this is similar, but no Constant
     # TODO - this needs a dependency tree like `Xdf._math_depedency_graph`
-    if self.source == EmbedFormat[2]:
-    #if self.linked.__class__ is Function:
-      # DO NORMALIZATION...
-      function: Function = self.linked
-      return Quantity(function.interpolated, self.unit)
-    else:
-      # output regular quantity
-      out = self.linked.value
-      return Quantity(out, self.unit)
-      #if issubclass(out.__class__, Quantity):
-      #  if self.unit and not out.unitless:
-      #    return out.to(self.unit)
-      #  else:
-      #    return out
-      #else:
-      #  return Quantity(out, self.unit)
+    return Quantity(self.linked.interpolated, self.unit)
+
+class XYTableLinkAxis(AxisLinked, Quantified):
+  embed_type = EmbedFormat[3]
+
+  @property
+  # they can be linked multiple times, e.g. 
+  # linked -> linked -> linked -> label | embedded
+  def linked(self) -> Table.Table:
+    table_query = f"""
+      //XDFTABLE[@uniqueid='{self.link_id}']
+    """
+    return self.xpath(table_query)[0]
+
+  @property
+  def value(self) -> Quantity:
+    '''
+    With linked `Table`, Tunerpro implementation takes first column of table by default - irresepctive of whether this link is by an X or Axis.
+    '''
+    # take dimensionless, referencing `Axis` overrides unit
+    out = self.linked.value.magnitude
+    # table val may be one dimensional
+    val = out if len(out.shape) == 1 else np.rot90(out)[0]
+    return Quantity(val, self.unit)
 
 # TODO: X/Y Axes can have stock units and data types, but Z axis does not? weird
 class QuantifiedEmbeddedAxis(EmbeddedAxis, ReferenceQuantified):
+  @property
   def value(self) -> Quantity:
-    original = super().fget(self) # type: ignore
+    original = EmbeddedAxis.value.fget(self) # type: ignore
     return Quantity(original, self.unit)
     
 # used in `Xdf.XdfTyper`
@@ -140,6 +189,12 @@ def Axis_class_from_element(axis: xml.Element):
     # implicitly, only used in Table
     elif index == 2 or index == 3:
       # linkAxis, 2 normalized Function, 3 scaled parameter
-      return XYLinkAxis
+      if index == 2:
+        return XYFunctionLinkAxis
+      else:
+        return XYTableLinkAxis
   else:
     raise NotImplementedError('Invalid Axis embed type.')
+
+XYLinkAxis = t.Union[XYFunctionLinkAxis, XYTableLinkAxis]
+XYAxis = t.Union[QuantifiedEmbeddedAxis, XYLabelAxis, XYLinkAxis]

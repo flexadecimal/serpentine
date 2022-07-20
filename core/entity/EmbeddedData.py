@@ -89,16 +89,15 @@ class EmbeddedData(Base):
     else:
       raise ValueError
 
-def print_array(x: ArrayLike) -> npt.NDArray[np.unicode_]:
-  if np.ma.is_masked(x):
-    out = np.vectorize(
-      lambda n: '--' if np.ma.is_masked(n) else str(n),
-    )(x)
-    # fill mask with default
+def print_array(
+  x: ArrayLike, 
+  printer: t.Callable[[t.Any], str] = str
+) -> npt.NDArray[np.unicode_]:
+  out = np.vectorize(printer)(x)
+  # fill mask with default
+  if np.ma.is_masked(out):
     out = out.filled('--')
-    return out
-  else:
-    return np.array(x).astype(np.unicode_)
+  return out
 
 def pad_with(vector, pad_width, iaxis, kwargs):
   '''
@@ -277,12 +276,7 @@ class Embedded(XdfRefMixin):
     if embedded_data.strides:
       map.strides = embedded_data.strides
     return map
-  
-  @staticmethod
-  def print_hex(a: npt.ArrayLike) -> str:
-    with np.printoptions(formatter={'int':hex}):
-      return str(a)
-  
+    
   @property
-  def map_hex(self) -> str:
-    return Embedded.print_hex(self.memory_map)
+  def map_hex(self) -> npt.NDArray[np.unicode_]:
+    return print_array(self.memory_map, hex)

@@ -1,5 +1,8 @@
+from __future__ import annotations
+import typing as t
 from .Base import Base, Array, Quantity, ArrayLike
-from .Axis import EmbeddedAxis
+if t.TYPE_CHECKING:
+  from .Axis import QuantifiedEmbeddedAxis
 from .Parameter import Parameter
 import numpy as np
 import numpy.typing as npt
@@ -134,9 +137,9 @@ class Function(Parameter):
   '''
   XDF Function - an X <-> Y mapping. Very similar to Table, minus a third Z Axis. Apparently common in Ford applications.
   '''
-  x: EmbeddedAxis = Base.xpath_synonym("./XDFAXIS[@id = 'x']")
+  x: QuantifiedEmbeddedAxis = Base.xpath_synonym("./XDFAXIS[@id = 'x']")
   # y index axis is unitless, it's indiices
-  y: EmbeddedAxis = Base.xpath_synonym("./XDFAXIS[@id = 'y']")
+  y: QuantifiedEmbeddedAxis = Base.xpath_synonym("./XDFAXIS[@id = 'y']")
 
   @property
   def value(self) -> ArrayLike:
@@ -147,9 +150,7 @@ class Function(Parameter):
 
   @property
   def interpolated(self):
-    out = monotone_interpolated(self.x.value, self.y.value)
+    out = monotone_interpolated(self.x.value.magnitude, self.y.value.magnitude)
     return out
 
-__all__= [
-  'Function'
-]
+__all__ = ['Function']
