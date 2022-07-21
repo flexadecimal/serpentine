@@ -62,8 +62,8 @@ class TypeTransformer(Transformer):
         else:
           # original only calls with children, not entirely sure why
           return func([tree.data, children])
-      except (GrammarError, Discard):
-        raise
+      except GrammarError as e:
+        raise e
       except Exception as e:
         raise VisitError(tree.data, tree, e)
 
@@ -86,8 +86,8 @@ class TypeInterpreter(Interpreter):
           return func.visit_wrapper(func, tree.data, tree.children, tree.meta)
         else:
           return func(tree)
-      except (GrammarError, Discard):
-        raise
+      except GrammarError as e:
+        raise e
       except Exception as e:
         raise VisitError(tree.data, tree, e)
 

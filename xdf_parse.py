@@ -23,7 +23,7 @@ if __name__ == '__main__':
     # TODO: actually parse adx
     files_by_type = {ext[1:]: list(files) for ext, files in groupby(files, lambda file: os.path.splitext(file)[1])}
     # apply xdf parsing to bin file to render scalars and tables
-    for xdf_path, bin_path, adx_path in zip(files_by_type['xdf'], files_by_type['bin'], files_by_type['adx']):
+    for xdf_path, bin_path in zip(files_by_type['xdf'], files_by_type['bin']    ):
       print(f"Opening '{os.path.join(root, xdf_path)}'...")
       try:
         tune = xdf.Xdf.from_path(
@@ -31,7 +31,7 @@ if __name__ == '__main__':
           os.path.join(root, bin_path),
           # ignore invalid
           xdf.MathInterdependence,
-          xdf.AxisInterdependence
+          #xdf.AxisInterdependence
         )
       except Exception as e:
         raise(e)
@@ -49,6 +49,6 @@ if __name__ == '__main__':
       ve = tune.xpath('./XDFTABLE[2]')[0]
       #ve_val = ve.value
       # test setters
-      zwb.value = 12.24 + 5
-      pass
-      #ignition_map.value = [2]
+      #zwb.value = 12.24 + 5
+      ignition_map = tune.Tables[0]
+      ignition_map.value += 5

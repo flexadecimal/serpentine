@@ -135,6 +135,8 @@ class XYFunctionLinkAxis(AxisLinked, Quantified):
     # TODO - this needs a dependency tree like `Xdf._math_depedency_graph`
     return Quantity(self.linked.interpolated, self.unit)
 
+
+
 class XYTableLinkAxis(AxisLinked, Quantified):
   embed_type = EmbedFormat[3]
 
@@ -145,7 +147,8 @@ class XYTableLinkAxis(AxisLinked, Quantified):
     table_query = f"""
       //XDFTABLE[@uniqueid='{self.link_id}']
     """
-    return self.xpath(table_query)[0]
+    out = self.xpath(table_query)
+    return out
 
   @property
   def value(self) -> Quantity:
