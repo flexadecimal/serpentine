@@ -1,8 +1,10 @@
 from __future__ import annotations
 import typing as t
-from .Base import Base, Array, Quantity, ArrayLike
+from .Base import Base, Array, Quantity, ArrayLike, UnitRegistry
+import pint
 if t.TYPE_CHECKING:
-  from .Axis import QuantifiedEmbeddedAxis
+  from . import Axis
+
 from .Parameter import Parameter
 import numpy as np
 import numpy.typing as npt
@@ -137,9 +139,9 @@ class Function(Parameter):
   '''
   XDF Function - an X <-> Y mapping. Very similar to Table, minus a third Z Axis. Apparently common in Ford applications.
   '''
-  x: QuantifiedEmbeddedAxis = Base.xpath_synonym("./XDFAXIS[@id = 'x']")
+  x: Axis.FunctionAxis = Base.xpath_synonym("./XDFAXIS[@id = 'x']")
   # y index axis is unitless, it's indiices
-  y: QuantifiedEmbeddedAxis = Base.xpath_synonym("./XDFAXIS[@id = 'y']")
+  y: Axis.FunctionAxis = Base.xpath_synonym("./XDFAXIS[@id = 'y']")
 
   @property
   def value(self) -> ArrayLike:

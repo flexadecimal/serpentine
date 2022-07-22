@@ -1,4 +1,4 @@
-<!-- Written 07/21/2022 17:53:31 -->
+<!-- Written 07/21/2022 20:00:40 -->
 <XDFFORMAT version="1.70">
   <XDFHEADER>
     <flags>0x1</flags>
@@ -61,13 +61,6 @@
       <outputtype>1</outputtype>
       <MATH equation="X*.75-22.5">
         <VAR id="X" />
-      </MATH>
-      <MATH col="2" equation="x + a * b - c + d">
-        <VAR id="x" type="link" linkid="0x206F" />
-        <VAR id="a" type="link" linkid="0x3615" />
-        <VAR id="b" type="link" linkid="0x23F0" />
-        <VAR id="c" type="link" linkid="0x3C16" />
-        <VAR id="d" type="link" linkid="0x2FD0" />
       </MATH>
     </XDFAXIS>
   </XDFTABLE>
@@ -5010,4 +5003,29 @@
       <VAR id="X" />
     </MATH>
   </XDFCONSTANT>
+  <XDFFUNCTION uniqueid="0x66F2" flags="0x0">
+    <title>New Function</title>
+    <XDFAXIS id="x" uniqueid="0x0">
+      <EMBEDDEDDATA mmedaddress="0x40" mmedelementsizebits="8" mmedmajorstridebits="-32" mmedminorstridebits="0" />
+      <indexcount>16</indexcount>
+      <embedinfo type="1" />
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="y" uniqueid="0x0">
+      <EMBEDDEDDATA mmedaddress="0x100" mmedelementsizebits="8" mmedmajorstridebits="-32" mmedminorstridebits="0" />
+      <indexcount>16</indexcount>
+      <embedinfo type="1" />
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+  </XDFFUNCTION>
 </XDFFORMAT>

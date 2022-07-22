@@ -1,4 +1,4 @@
-<!-- Written 07/21/2022 17:41:29 -->
+<!-- Written 07/21/2022 18:26:37 -->
 <XDFFORMAT version="1.70">
   <XDFHEADER>
     <flags>0x1</flags>
@@ -44,7 +44,7 @@
       <EMBEDDEDDATA mmedaddress="0xF8CF" mmedelementsizebits="8" mmedcolcount="16" mmedmajorstridebits="8" mmedminorstridebits="0" />
       <units>ms</units>
       <indexcount>16</indexcount>
-      <embedinfo type="1" />
+      <embedinfo type="3" linkobjid="0x3615" />
       <datatype>23</datatype>
       <unittype>85</unittype>
       <DALINK index="0" />

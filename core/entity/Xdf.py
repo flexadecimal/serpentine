@@ -67,9 +67,6 @@ class Xdf(Base):
     out['base_offset'] = base_offset
     return out
 
-
-
-
   @classmethod
   def from_path(
     cls, 

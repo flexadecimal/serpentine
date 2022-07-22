@@ -1,9 +1,9 @@
 from __future__ import annotations
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
 import typing as t
 from core.entity import Table, Function
 from .Base import (
-  Base, CyclicReferenceException, Quantity, ArrayLike, Quantified, Formatted, ReferenceQuantified,
+  Base, CyclicReferenceException, Quantity, ArrayLike, Quantified, Formatted,
   UnitRegistry, XmlAbstractBaseMeta, xml_type_map, Array, RefersCyclically
 )
 from . import Xdf as xdf
@@ -12,7 +12,7 @@ from .Math import Math
 import numpy as np
 from collections import ChainMap
 from lxml import etree as xml
-import graphlib
+import pint
 
 EmbedFormat: ChainMap[int, str] = xml_type_map(
   'embed_type'
@@ -71,7 +71,7 @@ class AxisInterdependence(CyclicReferenceException):
     self.cycle = table
     self.axis = next(
       filter(
-        lambda a: a.linked is table,
+        lambda a: isinstance(a, XYLinkAxis) and a.linked is table,
         [table.x, table.y]
       )
     )
@@ -135,8 +135,6 @@ class XYFunctionLinkAxis(AxisLinked, Quantified):
     # TODO - this needs a dependency tree like `Xdf._math_depedency_graph`
     return Quantity(self.linked.interpolated, self.unit)
 
-
-
 class XYTableLinkAxis(AxisLinked, Quantified):
   embed_type = EmbedFormat[3]
 
@@ -148,7 +146,7 @@ class XYTableLinkAxis(AxisLinked, Quantified):
       //XDFTABLE[@uniqueid='{self.link_id}']
     """
     out = self.xpath(table_query)
-    return out
+    return out[0]
 
   @property
   def value(self) -> Quantity:
@@ -162,12 +160,25 @@ class XYTableLinkAxis(AxisLinked, Quantified):
     return Quantity(val, self.unit)
 
 # TODO: X/Y Axes can have stock units and data types, but Z axis does not? weird
-class QuantifiedEmbeddedAxis(EmbeddedAxis, ReferenceQuantified):
+class QuantifiedEmbeddedAxis(EmbeddedAxis, Quantified):
   @property
   def value(self) -> Quantity:
     original = EmbeddedAxis.value.fget(self) # type: ignore
     return Quantity(original, self.unit)
-    
+
+class FunctionAxis(QuantifiedEmbeddedAxis):
+  @property
+  def unit(self) -> t.Optional[pint.Unit]:
+    '''
+    E.g. RPM, Quarts, Seconds, Percent, etc.
+    '''
+    units: t.List[str] = self.xpath('./units/text()')
+    key = units[0] if len(units)  > 0 else None
+    invalid = UnitRegistry[None]
+    # TODO: throw invalid unit error?
+    out = UnitRegistry[key] if key and key in UnitRegistry else invalid
+    return out
+
 # used in `Xdf.XdfTyper`
 def Axis_class_from_element(axis: xml.Element):
   children = axis.getchildren()

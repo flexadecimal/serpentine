@@ -271,23 +271,6 @@ class Quantified(Base):
     else:
       return None
 
-class ReferenceQuantified(Quantified):
-  '''
-  `XDFTABLE/XDFAXIS[id = z]` and `XDFFUNCTION` have this key-reference unit, overriding `Quantified.unit`
-  '''
-  @property
-  def data_type(self) -> t.Optional[str]:
-    return None
-
-  @property
-  def unit(self) -> t.Optional[pint.Unit]:
-    '''
-    E.g. RPM, Quarts, Seconds, Percent, etc.
-    '''
-    units: t.List[str] = self.xpath('./units/text()')
-    key = units[0] if len(units) else None
-    return UnitRegistry[key] if key and key in UnitRegistry else None
-
 FormatOutput: ChainMap[int, str] = xml_type_map(
   'formatting_output'
 )
