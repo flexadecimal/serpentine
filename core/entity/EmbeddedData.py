@@ -1,8 +1,9 @@
+from abc import abstractmethod
 from re import M
 import typing as t
 import numpy.typing as npt
 # for entities
-from .Base import ArrayLike, Base, XdfRefMixin, Array, Quantity
+from .Base import ArrayLike, Base, XdfRefMixin, XmlAbstractBaseMeta
 # general stuff
 import functools as ft
 import numpy as np
@@ -89,16 +90,6 @@ class EmbeddedData(Base):
     else:
       raise ValueError
 
-def print_array(
-  x: ArrayLike, 
-  printer: t.Callable[[t.Any], str] = str
-) -> npt.NDArray[np.unicode_]:
-  out = np.vectorize(printer)(x)
-  # fill mask with default
-  if np.ma.is_masked(out):
-    out = out.filled('--')
-  return out
-
 def pad_with(vector, pad_width, iaxis, kwargs):
   '''
   Numpy padding utility function. See https://numpy.org/doc/stable/reference/generated/numpy.pad.html.
@@ -107,25 +98,45 @@ def pad_with(vector, pad_width, iaxis, kwargs):
   vector[:pad_width[0]] = pad_value
   vector[-pad_width[1]:] = pad_value
 
+def print_array(
+  x: ArrayLike, 
+  max_height: int,
+  printer: t.Callable[[t.Any], str] = str,
+) -> npt.NDArray[np.unicode_]:
+  out = np.vectorize(printer)(x)
+  # fill mask with default
+  if np.ma.is_masked(x):
+    out = out.filled('--')
+  
+  if len(out.shape) == 0:
+    out = out.reshape((1, ))
+
+  if out.shape[0] < 2:
+    middle = np.ceil(max_height / 2).astype(np.integer)
+    if middle == max_height:
+      row = out
+      return row
+    else:
+      row = np.pad(out, middle, pad_with)[1:]
+      padded = np.concatenate((np.full(row.shape, '  '), row, np.full(row.shape, '  ')))
+      return np.rot90(padded.reshape((3, max_height)))
+  else: 
+    return out
+
+def numeric_printer(n: npt.ArrayLike | str):
+  if isinstance(n, str):
+    return f"{n} "
+  else:
+    out = np.array2string(np.array(n), precision=1)
+    return f"{out} "
+
 def print_cols(kwargs: t.Mapping[str, ArrayLike]) -> str:  
   vals = kwargs.values()
   max_height = max(map(lambda x: np.array(x).shape[-1:], vals))[0]
-  middle = max_height // 2
   as_char_arrays = {
-    key: print_array(arr) for key, arr in kwargs.items()
+    key: print_array(arr, max_height, numeric_printer) for key, arr in kwargs.items()
   }
-  def padder(key, arr):
-    out = np.empty(arr.shape, dtype=np.unicode_)
-    edge = max(middle, max_height)
-    if len(arr.shape) == 1:
-      out = np.pad([arr], (edge, edge), pad_with)[1: edge + 1]
-    else:
-      out = arr
-    return out
-  padded = {
-    key: padder(key, arr) for key, arr in as_char_arrays.items()
-  }
-  combined = np.hstack(padded.values()) # type: ignore
+  combined = np.hstack(list(as_char_arrays.values()))
   lines = list(map(
     lambda row: ''.join(row),
     combined
@@ -196,7 +207,7 @@ class EmbeddedValueError(ValueError):
     """
     return formatted
 
-class Embedded(XdfRefMixin):
+class Embedded(XdfRefMixin, metaclass=XmlAbstractBaseMeta):
   '''
   Mixin for objects exposing a value using both `<MATH>` and `<EMBEDDEDDATA>`.
   `Constant` and `Table.Axis` do this. `Table` has a value itself, but its value is constructed from "real" `Embedded` memory maps.
@@ -204,29 +215,35 @@ class Embedded(XdfRefMixin):
   EmbeddedData: EmbeddedData = Base.xpath_synonym('./EMBEDDEDDATA')
   Math: Math = Base.xpath_synonym('./MATH')
 
+  @abstractmethod
+  def from_embedded(self, x: npt.NDArray) -> ArrayLike:
+    '''
+    Embedded values subclassing this class need to provide conversion 
+    to and from binary data. For `Constant` this will be a single `Math` conversion,
+    for `Table.ZAxis` there will be multiple conversion equatons.
+    '''
+    pass
+
+  @abstractmethod
+  def to_embedded(self, x: npt.NDArray) -> ArrayLike:
+    '''
+    Inverse conversion function to `from_embedded`, usually 
+    `pynverse.inversefunc(conversion_func)`.
+    '''
+    pass
+
   @property
   def value(self) -> ArrayLike:
-    unitless = self.Math.conversion_func(
+    unitless = self.from_embedded(
       self.memory_map.astype(np.float_, copy=False)
     )
     return unitless
 
-  @property
-  def logical_bounds(self):
-    '''
-    Logical bounds of this value by its `numpy` data type, to raise `EmbeddedValueError` with and draw UI with
-    '''
-    min, max = map(
-      self.Math.conversion_func,
-      self.memmap_bounds
-    )
-    return min, max
-
-  @value.setter # type: ignore
+  @value.setter
   def value(self, value): 
-    matrix = np.array([value])
+    matrix = value
     min, max = self.logical_bounds
-    out = self.Math.inverse_conversion_func(matrix)
+    out = self.to_embedded(matrix)
     if Embedded.out_of_bounds(matrix, min, max):
       e = EmbeddedValueError(min, max, matrix)
       raise e
@@ -237,6 +254,17 @@ class Embedded(XdfRefMixin):
       self.memory_map[:] = np.array([out])[:]
       # flush ? 
       #self.memory_map.flush()
+
+  @property
+  def logical_bounds(self):
+    '''
+    Logical bounds of this value by its `numpy` data type, to raise `EmbeddedValueError` with and draw UI with
+    '''
+    min, max = map(
+      self.to_embedded,
+      self.memmap_bounds
+    )
+    return min, max
 
   def clip_to_memmap_bounds(self, x: ArrayLike):
     min, max = self.memmap_bounds
@@ -261,11 +289,11 @@ class Embedded(XdfRefMixin):
   @ft.cached_property
   def memory_map(self) -> np.memmap:
     embedded_data = self.EmbeddedData
-    map: np.memmap = np.memmap(
+    map = np.memmap(
       self._xdf._binfile,
       shape = embedded_data.shape,
       # see TunerPro docs - base offset not applied here
-      offset = embedded_data.address,
+      offset = embedded_data.address if embedded_data.address else 0,
       dtype = embedded_data.data_type,
       # 'C' for C-style row-major, 'F' for Fortran-style col major 
       order = 'F' if TypeFlags.COLUMN_MAJOR in embedded_data.type_flags else 'C',

@@ -1,9 +1,10 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 import typing as t
+import numpy.typing as npt
 from core.entity import Table, Function
 from .Base import (
-  Base, CyclicReferenceException, Quantity, ArrayLike, Quantified, Formatted,
+  Base, CyclicReferenceException, ArrayLike, Quantified, Formatted,
   UnitRegistry, XmlAbstractBaseMeta, xml_type_map, Array, RefersCyclically
 )
 from . import Xdf as xdf
@@ -47,11 +48,16 @@ class AxisFormatted(Formatted):
 # DIFFERENT TYPES OF AXIS
 # `Function` gets only an `EmbeddedAxis`, but `Table`` can be a LabelAxis (a.k.a 'External (Manual)'), `LinkedAxis`, or `EmbeddedAxis`. Each exposes a different value access.
 class Axis(AxisFormatted, Base, ABC, metaclass=XmlAbstractBaseMeta):
-  Math: _math = Base.xpath_synonym('./MATH')
   id = Base.xpath_synonym('./@id')
 
 class EmbeddedAxis(Axis, Embedded):
-  pass
+  Math: _math = Base.xpath_synonym('./MATH')
+
+  def to_embedded(self, x: npt.NDArray) -> ArrayLike:
+    return self.Math.conversion_func(x)
+  
+  def from_embedded(self, x: npt.NDArray) -> ArrayLike:
+    return self.Math.inverse_conversion_func(x)
 
 class XYLabelAxis(Axis, Quantified):
   labels: t.List[xml.ElementTree]= Base.xpath_synonym('./LABEL', many=True)
@@ -59,9 +65,9 @@ class XYLabelAxis(Axis, Quantified):
 
   # provide value from labels, setter modifies XML
   @property
-  def value(self) -> Quantity:
+  def value(self) -> pint.Quantity:
     out = [float(label.attrib['value']) for label in self.labels]
-    return Quantity(Array(out), self.unit)
+    return pint.Quantity(Array(out), self.unit)
 
 class AxisInterdependence(CyclicReferenceException):
   axis: XYLinkAxis
@@ -71,7 +77,7 @@ class AxisInterdependence(CyclicReferenceException):
     self.cycle = table
     self.axis = next(
       filter(
-        lambda a: isinstance(a, XYLinkAxis) and a.linked is table,
+        lambda a: hasattr(a, "linked") and a.linked is table,
         [table.x, table.y]
       )
     )
@@ -84,7 +90,7 @@ Table axis "{self.cycle.title}".{self.axis.id} refers to itself.
 """
     return message
 
-class AxisLinked(RefersCyclically[AxisInterdependence], Axis, ABC, metaclass=XmlAbstractBaseMeta):
+class AxisLinked(RefersCyclically[AxisInterdependence, Axis, Axis], Axis, ABC, metaclass=XmlAbstractBaseMeta):
   '''
   Tables can have X/Y Axis linked to either:
   - Function (normalized, index 2)
@@ -102,7 +108,7 @@ class AxisLinked(RefersCyclically[AxisInterdependence], Axis, ABC, metaclass=Xml
   exception = AxisInterdependence
   
   @classmethod
-  def dependency_graph(cls, xdf: xdf.Xdf):
+  def dependency_graph(cls, xdf):
     has_link = xdf.xpath(
       f"./XDFTABLE/XDFAXIS[@id='x' or @id='y'][.//embedinfo[@type='3' or @type='2']]"
     )
@@ -114,6 +120,8 @@ class AxisLinked(RefersCyclically[AxisInterdependence], Axis, ABC, metaclass=Xml
     return graph
 
   link_id = Base.xpath_synonym('./embedinfo/@linkobjid')
+  
+  @property
   @abstractmethod
   def linked(self):
     pass
@@ -129,11 +137,11 @@ class XYFunctionLinkAxis(AxisLinked, Quantified):
     return self.xpath(function_query)[0]
 
   @property
-  def value(self) -> Quantity:
+  def value(self) -> pint.Quantity:
     # this should be immutable - you can change the link, but not the value
     # see Var.LinkedVar.linked - this is similar, but no Constant
     # TODO - this needs a dependency tree like `Xdf._math_depedency_graph`
-    return Quantity(self.linked.interpolated, self.unit)
+    return pint.Quantity(self.linked.interpolated, self.unit)
 
 class XYTableLinkAxis(AxisLinked, Quantified):
   embed_type = EmbedFormat[3]
@@ -149,7 +157,7 @@ class XYTableLinkAxis(AxisLinked, Quantified):
     return out[0]
 
   @property
-  def value(self) -> Quantity:
+  def value(self) -> pint.Quantity:
     '''
     With linked `Table`, Tunerpro implementation takes first column of table by default - irresepctive of whether this link is by an X or Axis.
     '''
@@ -157,14 +165,19 @@ class XYTableLinkAxis(AxisLinked, Quantified):
     out = self.linked.value.magnitude
     # table val may be one dimensional
     val = out if len(out.shape) == 1 else np.rot90(out)[0]
-    return Quantity(val, self.unit)
+    return pint.Quantity(val, self.unit)
 
 # TODO: X/Y Axes can have stock units and data types, but Z axis does not? weird
 class QuantifiedEmbeddedAxis(EmbeddedAxis, Quantified):
   @property
-  def value(self) -> Quantity:
-    original = EmbeddedAxis.value.fget(self) # type: ignore
-    return Quantity(original, self.unit)
+  def value(self) -> pint.Quantity:
+    original = EmbeddedAxis.value.fget(self)
+    return pint.Quantity(original, self.unit)
+  
+  @value.setter
+  def value(self, value: pint.Quantity):
+    in_val = value.magnitude
+    return EmbeddedAxis.value.fset(self, in_val)
 
 class FunctionAxis(QuantifiedEmbeddedAxis):
   @property

@@ -1,5 +1,4 @@
 from __future__ import annotations
-from logging import exception
 import typing as t
 import numpy.typing as npt
 # for entities
@@ -66,7 +65,7 @@ are mutually interdependent.
     return message
     #Exception.__init__(self, message)
 
-class Math(RefersCyclically[MathInterdependence], Base):
+class Math(RefersCyclically[MathInterdependence, "Math", t.Iterable["Math"]], Base):
   exception = MathInterdependence
   
   @classmethod
@@ -175,5 +174,5 @@ class Math(RefersCyclically[MathInterdependence], Base):
   def __repr__(self):
     equation_str = self.attrib['equation']
     #return f"{equation_str}"
-    return f'{self.getroottree().getpath(self)}: {equation_str}'
-    #return f"<{self.__class__.__name__} eq='{equation_str}'>\n{eq.ast_print(self.equation)}"
+    #return f'{self.getroottree().getpath(self)}: {equation_str}'
+    return f"<{self.__class__.__name__} eq='{equation_str}'>\n{eq.ast_print(self.equation)}"

@@ -8,7 +8,7 @@ import itertools as it
 import numpy as np
 import numpy.typing as npt
 import pint
-from abc import ABC, ABCMeta, abstractclassmethod, abstractmethod, abstractproperty, abstractstaticmethod
+from abc import ABC, ABCMeta, abstractmethod
 import functools
 from collections import ChainMap
 from pathlib import Path
@@ -244,8 +244,7 @@ Units: ChainMap[int, UnitDef] = xml_type_map(
 )
 
 # TODO - subclass pint.Quantity for custom stuff, like np.putmask?
-Quantity = pint.Quantity
-ArrayLike = t.Union[Quantity, Array, np.memmap]
+ArrayLike = t.Union[pint.Quantity, Array, np.memmap]
 
 class Quantified(Base):
   '''
@@ -270,6 +269,28 @@ class Quantified(Base):
       return Units[index].unit # type: ignore
     else:
       return None
+
+class ReferenceQuantified(Quantified):
+  '''
+  `XDFTABLE/XDFAXIS[id = z]` and `XDFFUNCTION` have this key-reference unit, overriding `Quantified.unit`
+  '''
+  @property
+  def data_type(self) -> t.Optional[str]:
+    return None
+
+  @property
+  def unit(self) -> t.Optional[pint.Unit]:
+    '''
+    E.g. RPM, Quarts, Seconds, Percent, etc.
+    '''
+    units: t.List[str] = self.xpath('./units/text()')
+    key = units[0] if len(units) else None
+    # default: return 'none' unit
+    # TODO: not allow with strict mode, if unit not found?
+    try:
+      return UnitRegistry[key] if key and key in UnitRegistry else UnitRegistry[None]
+    except pint.DefinitionSyntaxError:
+      return UnitRegistry[None]
 
 FormatOutput: ChainMap[int, str] = xml_type_map(
   'formatting_output'
@@ -323,15 +344,19 @@ class CyclicReferenceException(t.Generic[X], ABC, BaseException):
     pass
 
 E = t.TypeVar('E', bound = CyclicReferenceException, covariant=True)
-class RefersCyclically(t.Generic[E], ABC, XdfRefMixin, metaclass=XmlAbstractBaseMeta):
+K = t.TypeVar('K')
+V = t.TypeVar('V')
+class RefersCyclically(t.Generic[E, K, V], ABC, XdfRefMixin, metaclass=XmlAbstractBaseMeta):
   '''
   Base class for entities like `XDFAXIS` and `XDFMATH` that can refer to other objects cyclically, and so must provide a dependency graph, evaluation order, and exceptions to match.
   '''
-  @abstractclassmethod
-  def dependency_graph(cls, xdf: xdf.Xdf) -> t.Mapping[t.Any, t.Any]:
+  @classmethod
+  @abstractmethod
+  def dependency_graph(cls, xdf: xdf.Xdf) -> t.Mapping[K, V]:
     pass
 
-  @abstractproperty
+  @property
+  @abstractmethod
   def exception(self) -> t.Type[E]:
     '''
     Things that reference cyclically must provide a detail exception.
@@ -353,9 +378,9 @@ class RefersCyclically(t.Generic[E], ABC, XdfRefMixin, metaclass=XmlAbstractBase
       raise cls.exception(xdf, *cycle)
 
   @classmethod
-  def eval_order(cls, xdf: xdf.Xdf) -> t.Iterable[t.Any]:
+  def eval_order(cls, xdf: xdf.Xdf) -> t.Iterable[V]:
     graph = cls.dependency_graph(xdf) # type: ignore
-    sorter = graphlib.TopologicalSorter(graph)
+    sorter: graphlib.TopologicalSorter = graphlib.TopologicalSorter(graph) # type: ignore
     out: t.Iterable = sorter.static_order()
     return out
 

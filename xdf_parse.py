@@ -1,5 +1,6 @@
 import os
 import re
+import typing as t
 from itertools import (
   groupby
 )
@@ -24,7 +25,7 @@ def files_by_type(root, files):
   # apply xdf parsing to bin file to render scalars and tables
   return xdf_path, bin_path
   
-def print_exception(e):
+def print_exception(e, folder):
   print(f"""Caught expected `{type(e).__qualname__}` during opening "{folder}".
       
           {e}
@@ -37,13 +38,13 @@ if __name__ == '__main__':
   car_to_path = {parse_car_path(root): files_by_type(root, files) for root, files in car_files.items()}
 
   # EXCEPTION SANITY TESTS
-  folder_to_exception = {
-    'cyclical-math': (xdf.MathInterdependence, ),
-    'cyclical-axes': (xdf.AxisInterdependence, ),
+  folder_to_exception: t.Mapping[str, xdf.Ignorable] = {
+    'cyclical-math': xdf.MathInterdependence,
+    'cyclical-axes': xdf.AxisInterdependence
   }
 
   print("CYCLICAL REFERENCES")
-  for folder, exceptions in folder_to_exception.items():
+  for folder, exception in folder_to_exception.items():
     try:
       xdf_path, bin_path = car_to_path[folder]
       tune = xdf.Xdf.from_path(
@@ -52,9 +53,9 @@ if __name__ == '__main__':
         # ignore invalid
         #*exceptions
       )
-    except (exceptions) as e:
+    except exception as e:
       # we expected these
-      print_exception(e)
+      print_exception(e, folder)
     except Exception as e:
       raise(e)
 
@@ -65,26 +66,25 @@ if __name__ == '__main__':
     test_bin
   )
   # access tables...
-  for idx, t in enumerate(tune.Tables):
-    print(t.title)
+  end = 40
+  print('Tables: ')
+  for idx, table in enumerate(tune.Tables):
+    print(f"  '{table.title[:end]}'...")
     try:
-      #x = t.x.value,
-      #y = t.y.value
-      z = t.z.value
+      x = table.x.value,
+      y = table.y.value
+      z = table.z.value
+      pass
     except Exception as e:
       pass
       raise(e)
 
   # test constant write
+  print("\nTEST WRITE BOUNDS")
   zwb = tune.xpath('./XDFCONSTANT[1]')[0]
   try:
     zwb.value = 12.24 + 20
+    ignition_map = tune.Tables[0]
+    ignition_map.value += 20
   except xdf.EmbeddedValueError as e:
-    print_exception(e)
-
-    #ve = tune.xpath('./XDFTABLE[2]')[0]
-    #ve_val = ve.value
-    # test setters
-    #zwb.value = 12.24 + 5
-    #ignition_map = tune.Tables[0]
-    #ignition_map.value += 5
+    print_exception(e, "equation-parser")

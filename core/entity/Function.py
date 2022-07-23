@@ -1,6 +1,6 @@
 from __future__ import annotations
 import typing as t
-from .Base import Base, Array, Quantity, ArrayLike, UnitRegistry
+from .Base import Base, Array, ArrayLike, UnitRegistry
 import pint
 if t.TYPE_CHECKING:
   from . import Axis
@@ -144,7 +144,7 @@ class Function(Parameter):
   y: Axis.FunctionAxis = Base.xpath_synonym("./XDFAXIS[@id = 'y']")
 
   @property
-  def value(self) -> ArrayLike:
+  def value(self) -> npt.NDArray:
     '''
     Column-major list of (x, y) coordinate of function, e.g. [(1, 2), (2, 4)]
     '''
