@@ -5,21 +5,17 @@ from pathlib import Path
 # import parameter classes
 from .Base import Base
 from . import (
-  Parameter, Table, Constant, EmbeddedData, Var, Math, Axis, Function, Category
+  Parameter, Table, Constant, EmbeddedData, Var, Math, Axis, Function, Category, Patch
 )
-import graphlib
-import functools
-from itertools import chain
-import contextlib as ctx
 
-Mathable = t.Union[Axis.QuantifiedEmbeddedAxis, Table.ZAxis, Constant.Constant]
+Mathable = Axis.QuantifiedEmbeddedAxis | Table.ZAxis | Constant.Constant
 
 # export these errors for callers
 EmbeddedValueError = EmbeddedData.EmbeddedValueError
 MathInterdependence = Math.MathInterdependence
 AxisInterdependence = Axis.AxisInterdependence
 # ... and allow these to be suppressed
-Ignorable = t.Union[EmbeddedValueError, MathInterdependence, AxisInterdependence]
+Ignorable = EmbeddedValueError | MathInterdependence | AxisInterdependence
 
 # this is import-time
 core_path = Path(__file__).parent.parent
@@ -45,9 +41,10 @@ class Xdf(Base):
   Tables: t.List[Table.Table] = Base.xpath_synonym('./XDFTABLE', many=True)
   Constants: t.List[Constant.Constant] = Base.xpath_synonym('./XDFCONSTANT', many=True)
   Functions: t.List[Function.Function] = Base.xpath_synonym('./XDFFUNCTION', many=True)
+  Patches: t.List[Patch.Patch] = Base.xpath_synonym('./XDFPATCH', many=True)
   # Tables and Constants are both Parameters, but Parameters have more general semantics in functions
   Parameters: t.List[Parameter.Parameter] = Base.xpath_synonym(
-    './XDFTABLE | ./XDFCONSTANT | ./XDFFUNCTION', 
+    './XDFTABLE | ./XDFCONSTANT | ./XDFFUNCTION | ./XDFPATCH', 
     many=True
   )
 
@@ -107,9 +104,11 @@ class Xdf(Base):
   def parameters_by_id(self) -> t.Dict[str, Parameter.Parameter]:
     return {param.id: param for param in self.Parameters}
    
-# custom lookup for XDF XML types
-# see https://lxml.de/element_classes.html#setting-up-a-class-lookup-scheme
 class XdfTyper(xml.PythonElementClassLookup):
+  '''
+  XML-to-XDF class dispatcher.
+  See https://lxml.de/element_classes.html#setting-up-a-class-lookup-scheme.
+  '''
   name_to_class = {
     'XDFFORMAT': Xdf,
     'CATEGORY': Category.Category,
@@ -117,7 +116,9 @@ class XdfTyper(xml.PythonElementClassLookup):
     'XDFCONSTANT': Constant.Constant,
     'XDFTABLE': Table.Table,
     'EMBEDDEDDATA': EmbeddedData.EmbeddedData,
-    'XDFFUNCTION': Function.Function
+    'XDFFUNCTION': Function.Function,
+    'XDFPATCH': Patch.Patch,
+    'XDFPATCHENTRY': Patch.PatchEntry
   }
   
   # polymorphic dispatch by element

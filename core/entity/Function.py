@@ -1,7 +1,6 @@
 from __future__ import annotations
 import typing as t
 from .Base import Base, Array
-import pint
 if t.TYPE_CHECKING:
   from . import Axis
 
@@ -106,7 +105,7 @@ def monotone_interpolated(values: npt.NDArray, indices: npt.NDArray) -> npt.NDAr
   if monotonic_idx[0] != 0:
     first_zero_idx = np.argwhere(indices == 0)[0]
     first_zero_val = values[first_zero_idx]
-    uninterpolated = np.vstack((np.array([0, first_zero_val]), uninterpolated))
+    uninterpolated = np.vstack((np.column_stack((0, first_zero_val)), uninterpolated))
 
   # ...indices paired, e.g. [0, 1, 2] -> [0, 1], [1, 2], [2, 3]
   pairs = np.lib.stride_tricks.sliding_window_view(

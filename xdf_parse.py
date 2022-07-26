@@ -107,8 +107,10 @@ normalized = ignition_map.y.value
 
 print ("\nTEST PATCH PARAMETER")
 patch_tune_xdf, patch_tune_bin = car_to_path['patch-parameter']
-patch = xdf.Xdf.from_path(
+patch_tune = xdf.Xdf.from_path(
   patch_tune_xdf,
   patch_tune_bin
 )
+patch = patch_tune.Patches[0]
+a = patch.entries[0].patch
 pass

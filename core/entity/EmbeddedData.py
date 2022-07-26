@@ -114,7 +114,17 @@ def pad_with(vector, pad_width, iaxis, kwargs):
 
 def print_array(
   x: ArrayLike, 
-  max_height: int,
+  printer: t.Callable[[t.Any], str] = str,
+) -> npt.NDArray[np.unicode_]:
+  out = np.vectorize(printer)(x)
+  # fill mask with default
+  if np.ma.is_masked(x):
+    out = out.filled('--')
+  return out
+
+def print_array_debug(
+  x: ArrayLike, 
+  max_height: int ,
   printer: t.Callable[[t.Any], str] = str,
 ) -> npt.NDArray[np.unicode_]:
   out = np.vectorize(printer)(x)
@@ -137,6 +147,7 @@ def print_array(
   else: 
     return out
 
+
 def numeric_printer(n: npt.ArrayLike | str):
   if isinstance(n, str):
     return f"{n} "
@@ -148,7 +159,7 @@ def print_cols(kwargs: t.Mapping[str, ArrayLike]) -> str:
   vals = kwargs.values()
   max_height = max(map(lambda x: np.array(x).shape[-1:], vals))[0]
   as_char_arrays = {
-    key: print_array(arr, max_height, numeric_printer) for key, arr in kwargs.items()
+    key: print_array_debug(arr, max_height, numeric_printer) for key, arr in kwargs.items()
   }
   combined = np.hstack(list(as_char_arrays.values()))
   lines = list(map(
@@ -334,4 +345,4 @@ class Embedded(XdfRefMixin, metaclass=XmlAbstractBaseMeta):
     
   @property
   def map_hex(self) -> npt.NDArray[np.unicode_]:
-    return print_array(self.memory_map, hex) # type: ignore
+    return print_array(self.memory_map, hex)

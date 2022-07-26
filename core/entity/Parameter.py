@@ -1,5 +1,5 @@
 from .Base import Base, XmlAbstractBaseMeta, XdfRefMixin, ArrayLike
-from abc import ABC, abstractmethod
+from abc import ABC
 import numpy as np
 import numpy.typing as npt
 import typing as T
