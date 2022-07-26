@@ -38,7 +38,7 @@ if __name__ == '__main__':
   car_to_path = {parse_car_path(root): files_by_type(root, files) for root, files in car_files.items()}
 
   # EXCEPTION SANITY TESTS
-  folder_to_exception: t.Mapping[str, xdf.Ignorable] = {
+  folder_to_exception = {
     'cyclical-math': xdf.MathInterdependence,
     'cyclical-axes': xdf.AxisInterdependence
   }
@@ -53,14 +53,15 @@ if __name__ == '__main__':
         # ignore invalid
         #*exceptions
       )
-    except exception as e:
+    except exception as e: # type: ignore
       # we expected these
       print_exception(e, folder)
     except Exception as e:
       raise(e)
 
-  print("VALUE ACCESS")
-  test_xdf, test_bin = car_to_path['equation-parser']
+  print("BOUNDS CHECKING")
+  folder = 'bounds-checking'
+  test_xdf, test_bin = car_to_path[folder]
   tune = xdf.Xdf.from_path(
     test_xdf,
     test_bin
@@ -84,7 +85,30 @@ if __name__ == '__main__':
   zwb = tune.xpath('./XDFCONSTANT[1]')[0]
   try:
     zwb.value = 12.24 + 20
+  except xdf.EmbeddedValueError as e:
+    print_exception(e, folder)
+  try:
+    #zwb.value = 12.24 + 20
     ignition_map = tune.Tables[0]
     ignition_map.value += 20
   except xdf.EmbeddedValueError as e:
-    print_exception(e, "equation-parser")
+    print_exception(e, folder)
+
+print("\nTEST FUNCTION INTERPOLATION")
+func_test_xdf, func_test_bin = car_to_path['function-parameter']
+func_test = xdf.Xdf.from_path(
+  func_test_xdf,
+  func_test_bin
+)
+ignition_map = func_test.Tables[0]
+function = func_test.Functions[0]
+normalized = ignition_map.y.value
+# TODO - verify this against printout
+
+print ("\nTEST PATCH PARAMETER")
+patch_tune_xdf, patch_tune_bin = car_to_path['patch-parameter']
+patch = xdf.Xdf.from_path(
+  patch_tune_xdf,
+  patch_tune_bin
+)
+pass

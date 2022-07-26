@@ -11,6 +11,7 @@ from enum import Flag
 import itertools as it
 from .Math import Math
 import pint
+import functools as ft
 
 class TypeFlags(Flag):
   '''
@@ -42,7 +43,7 @@ class EmbeddedData(Base):
     return int(self.attrib['mmedelementsizebits']) // 8
 
   @property
-  def shape(self) -> t.Union[t.Tuple[int], t.Tuple[int, int]]:
+  def shape(self) -> t.Tuple[int] | t.Tuple[int, int]:
     '''
     Shape tuple following Numpy convention - 2D tables like that of `Table.ZAxis` have shape like `(16, 16)` (or occasionally `(16, )` for a 1D table). Constants have shape `(1, )` - a single number that will be broadcoast to an array length 1.
     '''
@@ -75,18 +76,31 @@ class EmbeddedData(Base):
     type_str = f'{endianness}{type}{self.length}'
     return np.dtype(type_str)
 
-  # table only
+  # used in Table/Axis/Function
   @property
-  def strides(self) -> t.Optional[t.Union[t.Tuple[int], t.Tuple[int, int]]]:
+  def strides(self) -> t.Tuple[int] | t.Tuple[int, int]:
     '''
     Array stride in memory.
+
+    TunerPro allows you to set a negative stride.
+    In NumPy, negative strides do mean something but are generally unused.
+
+    A negative stride in TunerPro is handled as stepping by that many bytes, backwards - essentially, take positive stride
+    and reverse the array.
+
+    See:
+      - https://github.com/numpy/numpy/blob/main/doc/source/reference/arrays.ndarray.rst
+      - https://numpy.org/doc/stable/reference/generated/numpy.ndarray.strides.html
+      - https://numpy.org/doc/stable/reference/generated/numpy.lib.stride_tricks.as_strided.html
     '''
     major = int(self.attrib['mmedmajorstridebits']) // 8
     minor = int(self.attrib['mmedminorstridebits']) // 8
     if len(self.shape) == 2:
-      return None if major == 0 and minor == 0 else (major, minor)
+      #return None if major == 0 and minor == 0 else (major, minor)
+      return (major, minor)
     elif len(self.shape) == 1:
-      return None if major == 0 else (major, )
+      #return None if major == 0 else (major, )
+      return (major, )
     else:
       raise ValueError
 
@@ -255,7 +269,7 @@ class Embedded(XdfRefMixin, metaclass=XmlAbstractBaseMeta):
       # flush ? 
       #self.memory_map.flush()
 
-  @property
+  @ft.cached_property
   def logical_bounds(self):
     '''
     Logical bounds of this value by its `numpy` data type, to raise `EmbeddedValueError` with and draw UI with
@@ -301,10 +315,23 @@ class Embedded(XdfRefMixin, metaclass=XmlAbstractBaseMeta):
       mode='w+'
     )
     # set strides, if they exist - default XML stride of (0,0) is invalid
-    if embedded_data.strides:
+    # TunerPro allows for negative stride, which means positive stride, but backwards,
+    # so essentially a reversed array.
+    # NumPy allows for negative stride, but it does not match up to this meaning.
+    # see `EmbeddedData.strides`
+    
+    # ...normal `Table`
+    if len(embedded_data.strides) == 2:
       map.strides = embedded_data.strides
-    return map
+      return map
+    # ...len 1, normal Axis, Constant, etc.
+    else:
+      # interpret negative as TunerPro "backwards stride"
+      stride = embedded_data.strides[0]
+      map.strides = (abs(stride), )
+      # ...return 'backwards' - ignore because this returns a map, but mypy thinks it returns array
+      return map[::-1] # type: ignore
     
   @property
   def map_hex(self) -> npt.NDArray[np.unicode_]:
-    return print_array(self.memory_map, hex)
+    return print_array(self.memory_map, hex) # type: ignore

@@ -171,13 +171,13 @@ class XYTableLinkAxis(AxisLinked, Quantified):
 class QuantifiedEmbeddedAxis(EmbeddedAxis, Quantified):
   @property
   def value(self) -> pint.Quantity:
-    original = EmbeddedAxis.value.fget(self)
+    original = EmbeddedAxis.value.fget(self) # type: ignore
     return pint.Quantity(original, self.unit)
   
   @value.setter
   def value(self, value: pint.Quantity):
     in_val = value.magnitude
-    return EmbeddedAxis.value.fset(self, in_val)
+    return EmbeddedAxis.value.fset(self, in_val) # type: ignore
 
 class FunctionAxis(QuantifiedEmbeddedAxis):
   @property

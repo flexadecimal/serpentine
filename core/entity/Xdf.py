@@ -132,7 +132,7 @@ class XdfTyper(xml.PythonElementClassLookup):
         klass = Axis.Axis_class_from_element(root)
         return klass
     elif parent == 'XDFFUNCTION':
-      return Axis.QuantifiedEmbeddedAxis
+      return Axis.FunctionAxis
     else:
       return Axis.Axis
     return Axis.Axis
