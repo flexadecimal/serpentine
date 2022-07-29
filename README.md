@@ -11,7 +11,7 @@
 ```
 `ecushark` is a modern, browser-based chiptuning solution that implements the
 binary description XDF/ADX formats used in [TunerPro](https://tunerpro.net/).
-Effectively, this means you can use Serpentine to tune any TunerPro-supported stock
+Effectively, this means you can use `ecushark` to tune any TunerPro-supported stock
 ECU. 
 
 Thanks to:

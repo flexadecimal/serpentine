@@ -14,6 +14,7 @@ Mathable = Axis.QuantifiedEmbeddedAxis | Table.ZAxis | Constant.Constant
 EmbeddedValueError = EmbeddedData.EmbeddedValueError
 MathInterdependence = Math.MathInterdependence
 AxisInterdependence = Axis.AxisInterdependence
+UnpatchableError = Patch.UnpatchableError
 # ... and allow these to be suppressed
 Ignorable = EmbeddedValueError | MathInterdependence | AxisInterdependence
 
@@ -67,8 +68,8 @@ class Xdf(Base):
   @classmethod
   def from_path(
     cls, 
-    path: str, 
-    binpath: str, 
+    path: Path, 
+    binpath: Path, 
     *ignore: t.Iterable[Ignorable]
   ):
     # ...validate

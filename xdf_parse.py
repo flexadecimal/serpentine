@@ -1,11 +1,13 @@
 import os
+from pathlib import Path
 import re
 import typing as t
-from itertools import (
-  groupby
-)
-import sys
+import itertools as it
 import core.entity.Xdf as xdf
+
+class TuneFolder(t.NamedTuple):
+  xdfs: t.List[Path]
+  bins: t.List[Path]
 
 cars_folder = './cars/testing'
 car_name_regex = rf"{cars_folder}/(?P<car>[\w+-_]+)"
@@ -15,21 +17,33 @@ def parse_car_path(car):
   matches = re.search(car_name_regex, car)
   return matches.groups('cars_folder')[0] if matches else None
   
-def files_by_type(root, files):
+def files_by_type(root, files) -> TuneFolder:
   # split by bin, xdf, adx
   # TODO: actually parse adx
-  files_by_type = {ext[1:]: list(files) for ext, files in groupby(files, lambda file: os.path.splitext(file)[1])}
-  # TODO: process multiple bins?
-  xdf_path = os.path.join(root, files_by_type['xdf'][0])
-  bin_path = os.path.join(root, files_by_type['bin'][0])
+  # input to groupby needs to be sorted. see https://stackoverflow.com/a/50198641
+  key = lambda file_ext_tup: file_ext_tup[1]
+  file_ext_tup = sorted(map(lambda f: os.path.splitext(f), files), key=key)
+  grouped_by_extension = it.groupby(file_ext_tup, key)
+  #grouped_by_extension = [(f, list(e)) for f, e in grouped_by_extension]
+  files_by_type = {ext[1:]: list(it.starmap(lambda f, e: f"{f}{e}", tups)) for ext, tups in grouped_by_extension}
+  xdf_paths = list(map(
+    lambda f: Path(os.path.join(root, f)),
+    files_by_type['xdf']
+  ))
+  bin_paths = list(map(
+    lambda f: Path(os.path.join(root, f)),
+    files_by_type['bin']
+  ))
   # apply xdf parsing to bin file to render scalars and tables
-  return xdf_path, bin_path
+  return TuneFolder(
+    xdfs = xdf_paths,
+    bins = bin_paths
+  )
   
 def print_exception(e, folder):
   print(f"""Caught expected `{type(e).__qualname__}` during opening "{folder}".
-      
-          {e}
-      """)
+{e}
+""")
 
 if __name__ == '__main__':
   # car folder name to dict of file handles  
@@ -46,7 +60,7 @@ if __name__ == '__main__':
   print("CYCLICAL REFERENCES")
   for folder, exception in folder_to_exception.items():
     try:
-      xdf_path, bin_path = car_to_path[folder]
+      xdf_path, bin_path = car_to_path[folder].xdfs[0], car_to_path[folder].bins[0]
       tune = xdf.Xdf.from_path(
         xdf_path,
         bin_path,
@@ -61,7 +75,7 @@ if __name__ == '__main__':
 
   print("BOUNDS CHECKING")
   folder = 'bounds-checking'
-  test_xdf, test_bin = car_to_path[folder]
+  test_xdf, test_bin = car_to_path[folder].xdfs[0], car_to_path[folder].bins[0]
   tune = xdf.Xdf.from_path(
     test_xdf,
     test_bin
@@ -95,7 +109,7 @@ if __name__ == '__main__':
     print_exception(e, folder)
 
 print("\nTEST FUNCTION INTERPOLATION")
-func_test_xdf, func_test_bin = car_to_path['function-parameter']
+func_test_xdf, func_test_bin = car_to_path['function-parameter'].xdfs[0], car_to_path['function-parameter'].bins[0]
 func_test = xdf.Xdf.from_path(
   func_test_xdf,
   func_test_bin
@@ -106,11 +120,30 @@ normalized = ignition_map.y.value
 # TODO - verify this against printout
 
 print ("\nTEST PATCH PARAMETER")
-patch_tune_xdf, patch_tune_bin = car_to_path['patch-parameter']
-patch_tune = xdf.Xdf.from_path(
-  patch_tune_xdf,
-  patch_tune_bin
+ours = car_to_path['patch-parameter']
+xdf_by_name = {path.stem: path for path in ours.xdfs}
+bin_by_name = {path.stem: path for path in ours.bins}
+no_basedata_xdf, edited_bin = xdf_by_name['no_basedata'], bin_by_name['edited']
+original_xdf, original_bin = xdf_by_name['rev5b'], bin_by_name['original']
+original = xdf.Xdf.from_path(
+  original_xdf,
+  original_bin
 )
-patch = patch_tune.Patches[0]
-a = patch.entries[0].patch
+cant_unpatch = xdf.Xdf.from_path(
+  no_basedata_xdf,
+  edited_bin
+)
+reversible_patch = original.Patches[0]
+unreversible_patch = cant_unpatch.Patches[0]
+# test functionality...
+# ...this should work
+# TODO: before and after
+reversible_patch.apply_all()
+reversible_patch.remove_all()
+# ...this should break
+unreversible_patch.apply_all()
+try:
+  unreversible_patch.remove_all()
+except xdf.UnpatchableError as e:
+  print_exception(e, "patch-parameter")
 pass

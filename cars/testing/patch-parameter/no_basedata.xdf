@@ -1,4 +1,4 @@
-<!-- Written 07/28/2022 19:46:56 -->
+<!-- Written 07/28/2022 19:47:47 -->
 <XDFFORMAT version="1.70">
   <XDFHEADER>
     <flags>0x1</flags>
@@ -5032,7 +5032,7 @@
     <title>test patch</title>
     <CATEGORYMEM index="0" category="1" />
     <CATEGORYMEM index="1" category="3" />
-    <XDFPATCHENTRY name="entry 2" address="0x2000" datasize="0x4" patchdata="DEADBEEF" basedata="7404C2AF" />
-    <XDFPATCHENTRY name="entry 1" address="0x1234" datasize="0x2" patchdata="FACE" basedata="E5C5" />
+    <XDFPATCHENTRY name="entry 2" address="0x2000" datasize="0x4" patchdata="DEADBEEF" />
+    <XDFPATCHENTRY name="entry 1" address="0x1234" datasize="0x2" patchdata="FACE" />
   </XDFPATCH>
 </XDFFORMAT>
