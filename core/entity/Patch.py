@@ -2,7 +2,7 @@ from __future__ import annotations
 import typing as t
 from .Base import Base, XdfRefMixin
 from .Parameter import Parameter
-from .EmbeddedData import print_array
+from .EmbeddedData import print_array, hex_to_array
 import numpy as np
 import numpy.typing as npt
 import itertools as it
@@ -42,24 +42,6 @@ class PatchEntry(Base, XdfRefMixin):
     '''
     return int(self.attrib['datasize'], 16)
 
-  @staticmethod
-  def hex_to_array(hex_str: str, size: int) -> npt.NDArray[np.uint8]:
-    #. e.g. ['D' 'E' 'A' 'D' 'B' 'E' 'E' 'F']
-    chars = np.array([c for c in hex_str])
-    # e.g. [['D' 'E'], ['A' 'D'], ['B' 'E'], ['E' 'F']]
-    words = np.array_split(chars, size)
-    # ...now combine subgroups, e.g.
-    # ['DE', 'AD', 'BE', 'EF']
-    hex_words = it.starmap(
-      lambda a, b: f"0x{a}{b}",
-      words
-    )
-    bytes = map(
-      lambda w: int(w, 16),
-      hex_words
-    )
-    return np.array(list(bytes), dtype=np.uint8)
-
   @property
   def patch(self) -> npt.NDArray[np.uint8]:
     '''
@@ -71,13 +53,13 @@ class PatchEntry(Base, XdfRefMixin):
     '''
     hex_str = self.xpath('./@patchdata')[0]
     #. e.g. ['D' 'E' 'A' 'D' 'B' 'E' 'E' 'F']
-    return PatchEntry.hex_to_array(hex_str, self.size)
+    return hex_to_array(hex_str, self.size)
 
   @property
   def original(self) -> t.Optional[npt.NDArray[np.uint8]]:
     hex_str_query = self.xpath('./@basedata')
     hex_str = hex_str_query[0] if len(hex_str_query) > 0 else None
-    return PatchEntry.hex_to_array(hex_str, self.size) if hex_str else None
+    return hex_to_array(hex_str, self.size) if hex_str else None
 
   # see `EmbeddedData`.memory_map
   @property

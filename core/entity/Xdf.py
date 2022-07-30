@@ -5,7 +5,7 @@ from pathlib import Path
 # import parameter classes
 from .Base import Base
 from . import (
-  Parameter, Table, Constant, EmbeddedData, Var, Math, Axis, Function, Category, Patch
+  Parameter, Table, Constant, EmbeddedData, Var, Math, Axis, Function, Category, Patch, Flag
 )
 
 Mathable = Axis.QuantifiedEmbeddedAxis | Table.ZAxis | Constant.Constant
@@ -43,9 +43,10 @@ class Xdf(Base):
   Constants: t.List[Constant.Constant] = Base.xpath_synonym('./XDFCONSTANT', many=True)
   Functions: t.List[Function.Function] = Base.xpath_synonym('./XDFFUNCTION', many=True)
   Patches: t.List[Patch.Patch] = Base.xpath_synonym('./XDFPATCH', many=True)
+  Flags: t.List[Flag.Flag] = Base.xpath_synonym('./XDFFLAG', many=True)
   # Tables and Constants are both Parameters, but Parameters have more general semantics in functions
   Parameters: t.List[Parameter.Parameter] = Base.xpath_synonym(
-    './XDFTABLE | ./XDFCONSTANT | ./XDFFUNCTION | ./XDFPATCH', 
+    './XDFTABLE | ./XDFCONSTANT | ./XDFFUNCTION | ./XDFPATCH | ./XDFFLAG', 
     many=True
   )
 
@@ -119,7 +120,8 @@ class XdfTyper(xml.PythonElementClassLookup):
     'EMBEDDEDDATA': EmbeddedData.EmbeddedData,
     'XDFFUNCTION': Function.Function,
     'XDFPATCH': Patch.Patch,
-    'XDFPATCHENTRY': Patch.PatchEntry
+    'XDFPATCHENTRY': Patch.PatchEntry,
+    'XDFFLAG': Flag.Flag
   }
   
   # polymorphic dispatch by element

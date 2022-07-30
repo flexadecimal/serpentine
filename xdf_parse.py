@@ -119,7 +119,7 @@ function = func_test.Functions[0]
 normalized = ignition_map.y.value
 # TODO - verify this against printout
 
-print ("\nTEST PATCH PARAMETER")
+print("\nTEST PATCH PARAMETER")
 ours = car_to_path['patch-parameter']
 xdf_by_name = {path.stem: path for path in ours.xdfs}
 bin_by_name = {path.stem: path for path in ours.bins}
@@ -146,4 +146,17 @@ try:
   unreversible_patch.remove_all()
 except xdf.UnpatchableError as e:
   print_exception(e, "patch-parameter")
+pass
+
+print("\nTEST FLAG PARAMETER")
+flag_xdf, flag_bin = car_to_path['flag-parameter'].xdfs[0], car_to_path['flag-parameter'].bins[0]
+flag_tune = xdf.Xdf.from_path(
+  flag_xdf,
+  flag_bin
+)
+flag = flag_tune.Flags[0]
+print(flag.value)
+# set flag value
+flag.value = not flag.value
+print(flag.value)
 pass

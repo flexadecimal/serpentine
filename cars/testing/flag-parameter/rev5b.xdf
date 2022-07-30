@@ -1,4 +1,4 @@
-<!-- Written 07/21/2022 17:41:29 -->
+<!-- Written 07/29/2022 18:11:15 -->
 <XDFFORMAT version="1.70">
   <XDFHEADER>
     <flags>0x1</flags>
@@ -5003,4 +5003,11 @@
       <VAR id="X" />
     </MATH>
   </XDFCONSTANT>
+  <XDFFLAG uniqueid="0x59C1">
+    <title>New Flag</title>
+    <CATEGORYMEM index="0" category="14" />
+    <CATEGORYMEM index="1" category="15" />
+    <EMBEDDEDDATA mmedaddress="0x5678" mmedelementsizebits="16" mmedmajorstridebits="0" mmedminorstridebits="0" />
+    <mask>0x8000</mask>
+  </XDFFLAG>
 </XDFFORMAT>

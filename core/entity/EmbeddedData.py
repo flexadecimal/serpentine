@@ -1,5 +1,4 @@
 from abc import abstractmethod
-from re import M
 import typing as t
 import numpy.typing as npt
 # for entities
@@ -11,7 +10,30 @@ from enum import Flag
 import itertools as it
 from .Math import Math
 import pint
-import functools as ft
+import re 
+
+hex_regex = r'(0[xX])?(?P<str>[0-9a-fA-F]+)'
+
+def hex_to_array(hex_str: str, size: int) -> npt.NDArray[np.uint8]:
+  match = re.match(hex_regex, hex_str)
+  if match is None:
+    raise ValueError(f"Invalid hex literal '{hex_str}'")
+  without_prefix = match.groupdict()['str']
+  #. e.g. ['D' 'E' 'A' 'D' 'B' 'E' 'E' 'F']
+  chars = np.array([c for c in without_prefix])
+  # e.g. [['D' 'E'], ['A' 'D'], ['B' 'E'], ['E' 'F']]
+  words = np.array_split(chars, size)
+  # ...now combine subgroups, e.g.
+  # ['DE', 'AD', 'BE', 'EF']
+  hex_words = list(it.starmap(
+    lambda a, b: f"0x{a}{b}",
+    words
+  ))
+  bytes = list(map(
+    lambda w: int(w, 16),
+    hex_words
+  ))
+  return np.array(list(bytes), dtype=np.uint8)
 
 class TypeFlags(Flag):
   '''
@@ -241,7 +263,7 @@ class Embedded(XdfRefMixin, metaclass=XmlAbstractBaseMeta):
   Math: Math = Base.xpath_synonym('./MATH')
 
   @abstractmethod
-  def from_embedded(self, x: npt.NDArray) -> ArrayLike:
+  def from_embedded(self, x: npt.NDArray) -> npt.ArrayLike:
     '''
     Embedded values subclassing this class need to provide conversion 
     to and from binary data. For `Constant` this will be a single `Math` conversion,
@@ -250,7 +272,7 @@ class Embedded(XdfRefMixin, metaclass=XmlAbstractBaseMeta):
     pass
 
   @abstractmethod
-  def to_embedded(self, x: npt.NDArray) -> ArrayLike:
+  def to_embedded(self, x: npt.NDArray) -> npt.ArrayLike:
     '''
     Inverse conversion function to `from_embedded`, usually 
     `pynverse.inversefunc(conversion_func)`.
