@@ -6,9 +6,9 @@ from .Base import Base, RefersCyclically, CyclicReferenceException, ArrayLike
 # for Math equation parsing
 from .. import equation_parser as eq
 from ..equation_parser.transformations import (
-  FunctionCallTransformer,
   Replacer,
-  Evaluator
+  Evaluator,
+  FunctionCallTransformer
 )
 from .Var import Var, BoundVar, FreeVar, LinkedVar, AddressVar
 # general stuff
@@ -17,20 +17,6 @@ from pynverse import inversefunc
 from itertools import chain
 from . import Xdf as xdf
 import lxml as xml
-
-class ConversionFuncType(t.Protocol):
-  '''
-  Type signature for binary conversion functions, e.g.:
-  
-  ```
-  converter(x: npt.ArrayLike, **kwargs: Dict[str, npt.ArrayLike]) -> Array
-  ```
-
-  See [this StackOverflow answer](https://stackoverflow.com/a/64106593) for details on using `typing.Protocol`.
-  '''
-  def __call__(self, x: npt.ArrayLike, **kwargs: t.Dict[str, npt.ArrayLike]) -> ArrayLike:
-    ...
-
 
 class MathInterdependence(CyclicReferenceException):
   def __init__(self, xdf: xdf.Xdf, *interdependent_maths: Math):
@@ -95,7 +81,7 @@ class Math(RefersCyclically[MathInterdependence, "Math", t.Iterable["Math"]], Ba
   DataLink = Base.xpath_synonym('./preceding-sibling::DALINK')
 
   @property
-  def conversion_func(self) -> ConversionFuncType:
+  def conversion_func(self) -> FunctionCallTransformer.ConversionFunc:
     '''
     Univariate version of `conversion_func` that takes only the binary data as input - internal evaluation order and Vars are used to retreive the arguments.
     '''
@@ -105,10 +91,10 @@ class Math(RefersCyclically[MathInterdependence, "Math", t.Iterable["Math"]], Ba
     parameterized = self.conversion_func_parameterized
     curried = functools.partial(parameterized, **kwargs)
     curried.__doc__ = parameterized.__doc__
-    return curried
+    return curried # type: ignore
 
   @property
-  def inverse_conversion_func(self) -> ConversionFuncType:
+  def inverse_conversion_func(self) -> FunctionCallTransformer.ConversionFunc:
     '''
     Inverse conversion func, such that inverse(conversion(bin)) = bin.
     This is used to save values to the binary.
@@ -116,7 +102,7 @@ class Math(RefersCyclically[MathInterdependence, "Math", t.Iterable["Math"]], Ba
     return inversefunc(self.conversion_func)
 
   @property
-  def conversion_func_parameterized(self) -> ConversionFuncType:
+  def conversion_func_parameterized(self) -> FunctionCallTransformer.ConversionFunc:
     '''
     Binary conversion function with `**kwargs` of declared Linked/Address Vars. Python is nicer with circular references, and TunerPro itself warns of circular references - but to be explicit, evaluation order uses acyclic dependency order to pass Vars as kwargs.
     
@@ -130,30 +116,33 @@ class Math(RefersCyclically[MathInterdependence, "Math", t.Iterable["Math"]], Ba
     bound = list(filter(lambda var: type(var) == BoundVar, self.Vars))
     # free vars are the Linked or Raw Address vars, provided as kwargs
     free = list(filter(lambda var: issubclass(type(var), FreeVar), self.Vars))
-    first_bound, *duplicate_bound = bound
     # now provide namespace so replacement and evaluation can happen later, e.g. 'x*a+b' -> f(x, a=2, b=3)
     kwargs_signature_str = ', '.join(
       f"{var.id}: {var.__class__.__qualname__}" for var in free
     )
-    def converter(x: npt.ArrayLike, **kwargs) -> ArrayLike:
+    def converter(x: npt.ArrayLike, **kwargs) -> npt.ArrayLike:
       # assert arguments provided by keyword - 
       # TODO: set named args in typed function signature at runtime?
       if not set(var.id for var in free) == set(kwargs.keys()):
         raise ValueError('Invalid variables provided to conversion function.')
       # update namespace with boundvars
       kwargs.update({var.id: x for var in bound})
-      a = 2
       # and do full replacement before evaluating
-      evaluated = eq.apply_pipeline(
-        self.equation,
-        Replacer.Replacer(kwargs),
-        Evaluator.Evaluator()
-      )
-      # implicit `statement` root in tree, take eval'd child
-      final: ArrayLike = evaluated.children[0] # type: ignore
-      return final
+      replaced = Replacer.Replacer(kwargs).transform(self.equation)
+      evaluated = Evaluator.Evaluator().transform(replaced)
+      # ReturnType<Evaluator.Evaluator()>
+      #evaluated: npt.ArrayLike = eq.apply_pipeline(
+      #  self.equation,
+      #  Replacer.Replacer(kwargs),
+      #  Evaluator.Evaluator()
+      #)
+      return evaluated
     # set docstring
-    signature = f'{first_bound.id}: BoundVar, {kwargs_signature_str}' if free else f'{first_bound.id}: BoundVar'
+    if bound:
+      first_bound, *duplicate_bound = bound
+      signature = f'{first_bound.id}: BoundVar, {kwargs_signature_str}' if free else f'{first_bound.id}: BoundVar'
+    else:
+      signature = f'{kwargs_signature_str}'
     # TODO: set ___attributes___
     body = self.attrib['equation']
     #converter.__doc__ = f'converter({signature}) -> np.ndarray: \n  {body}'
@@ -162,12 +151,11 @@ class Math(RefersCyclically[MathInterdependence, "Math", t.Iterable["Math"]], Ba
     
   #@functools.cached_property
   @property
-  def equation(self) -> eq.SyntaxTree:
+  def equation(self) -> FunctionCallTransformer.FunctionTree:
     equation_str = self.attrib['equation']
     # apply parser and function call transformation in one fell swoop
-    equation_ast = eq.apply_pipeline(
-      eq.parser(equation_str),
-      FunctionCallTransformer.FunctionCallTransformer()
+    equation_ast = FunctionCallTransformer.FunctionCallTransformer().transform(
+      eq.parser(equation_str)
     )
     return equation_ast
 
@@ -175,4 +163,4 @@ class Math(RefersCyclically[MathInterdependence, "Math", t.Iterable["Math"]], Ba
     equation_str = self.attrib['equation']
     #return f"{equation_str}"
     #return f'{self.getroottree().getpath(self)}: {equation_str}'
-    return f"<{self.__class__.__name__} eq='{equation_str}'>\n{eq.ast_print(self.equation)}"
+    return f"<{self.__class__.__name__} eq='{equation_str}'>\n{repr(self.equation)}"

@@ -100,7 +100,7 @@ class EmbeddedData(Base):
 
   # used in Table/Axis/Function
   @property
-  def strides(self) -> t.Tuple[int] | t.Tuple[int, int]:
+  def strides(self) -> t.Optional[t.Tuple[int] | t.Tuple[int, int]]:
     '''
     Array stride in memory.
 
@@ -117,12 +117,15 @@ class EmbeddedData(Base):
     '''
     major = int(self.attrib['mmedmajorstridebits']) // 8
     minor = int(self.attrib['mmedminorstridebits']) // 8
+    default = None
     if len(self.shape) == 2:
-      #return None if major == 0 and minor == 0 else (major, minor)
-      return (major, minor)
+      #default = (1, 1)
+      return default if major == 0 and minor == 0 else (major, minor)
+      #return (major, minor)
     elif len(self.shape) == 1:
-      #return None if major == 0 else (major, )
-      return (major, )
+      #default = (1, )
+      return default if major == 0 else (major, )
+      #return (major, )
     else:
       raise ValueError
 
@@ -280,7 +283,7 @@ class Embedded(XdfRefMixin, metaclass=XmlAbstractBaseMeta):
     pass
 
   @property
-  def value(self) -> ArrayLike:
+  def value(self):
     unitless = self.from_embedded(
       self.memory_map.astype(np.float_, copy=False)
     )
@@ -353,8 +356,9 @@ class Embedded(XdfRefMixin, metaclass=XmlAbstractBaseMeta):
     # NumPy allows for negative stride, but it does not match up to this meaning.
     # see `EmbeddedData.strides`
     
-    # ...normal `Table`
-    if len(embedded_data.strides) == 2:
+    if (embedded_data.strides is None):
+      return map
+    elif len(embedded_data.strides) == 2:
       map.strides = embedded_data.strides
       return map
     # ...len 1, normal Axis, Constant, etc.

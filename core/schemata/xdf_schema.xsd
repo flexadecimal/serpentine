@@ -50,7 +50,7 @@ e.g. XDFTABLE/XDFAXIS/MATH/@maxOccurs = @rows * @cols
   <!-- ...MATH type - EQUATION with VARs -->
   <xs:complexType name='math'>
     <xs:sequence>
-      <xs:element name='VAR' maxOccurs='unbounded'>
+      <xs:element name='VAR' maxOccurs='unbounded' minOccurs="0">
         <xs:complexType>
           <!-- source var - has no attributes -->
           <!-- link attributes -->

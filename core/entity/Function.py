@@ -49,6 +49,8 @@ def gaps(indices: np.ma.masked_array, vals: np.ma.masked_array) -> np.ma.masked_
   gaps = boundsAndDiff[boundsAndDiff[:, 2] > 1]
   return gaps
 
+# TODO: rewrite using `np.ma.flatnonmasked_contiguous?` 
+# see https://numpy.org/doc/stable/reference/generated/numpy.ma.flatnotmasked_contiguous.html
 def monotone_interpolated(values: npt.NDArray, indices: npt.NDArray) -> npt.NDArray:
   '''
   TunerPro uses a unique interpolation strategy when using `Function` as an axis. 

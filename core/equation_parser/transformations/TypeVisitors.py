@@ -1,18 +1,12 @@
-import typing as T
-from lark import (
-  Tree
-)
-from lark.visitors import (
-  Transformer, Interpreter, Discard
-)
-from lark.exceptions import (
-  VisitError, GrammarError
-)
+from abc import abstractmethod, ABC
+import typing as t
+import lark
 import functools
+#from .. import GenericTree
 
 # ...because functools.partial object has func as member, need polymorphic
 # logic to print 'f(g(h(x)))'
-def func_printer(func_like: T.Callable) -> str:
+def func_printer(func_like: t.Callable) -> str:
   if type(func_like) == functools.partial:
     return func_like.func.__name__
   else:
@@ -27,7 +21,10 @@ def type_disambiguator(data) -> str:
     else:
       return type(data).__name__  
 
-class TypeTransformer(Transformer):
+# from lark
+TreeT = t.TypeVar('TreeT')
+ReturnT = t.TypeVar('ReturnT')
+class TypeTransformer(lark.Transformer, t.Generic[TreeT, ReturnT]):
   '''
   Custom subclass of Lark's Transformer that allows for traversal of typed data.
   In this application, we render a function call tree from the Lark AST, e.g.
@@ -45,7 +42,7 @@ class TypeTransformer(Transformer):
   where TypeTransformer will use the type of the data element.
   '''
   # see https://github.com/lark-parser/lark/blob/master/lark/visitors.py
-  def _call_userfunc(self, tree: Tree, new_children = None):
+  def _call_userfunc(self, tree, new_children = None):
     children = new_children if new_children is not None else tree.children
     try:
       func = getattr(
@@ -56,40 +53,24 @@ class TypeTransformer(Transformer):
       return self.__default__(tree.data, children, tree.meta) # type: ignore
     else:
       try:
-        wrapper: T.Optional[T.Callable] = getattr(func, 'visit_wrapper', None)
+        wrapper = getattr(func, 'visit_wrapper', None)
         if wrapper is not None:
           return func.visit_wrapper(func, tree.data, children, tree.meta)
         else:
           # original only calls with children, not entirely sure why
           return func([tree.data, children])
-      except GrammarError as e:
+      except lark.exceptions.GrammarError as e:
         raise e
       except Exception as e:
-        raise VisitError(tree.data, tree, e)
+        raise lark.exceptions.VisitError(tree.data, tree, e)
 
-  #def _call_userfunc_token(self, token):
-  #  pass
+  #def transform(self, tree: GenericTree[LeafT, LeafT]) -> ReturnT:
+  #  return self._transform_tree(tree)
 
-class TypeInterpreter(Interpreter):
-  '''
-  Type-dispatch Visitor. See ``TypeTransformer``.
-  '''
-  def visit(self, tree):
-    try:
-      func: T.Callable = getattr(self, type_disambiguator(tree.data))
-    except AttributeError:
-      return self.__default__(tree)
-    else:
-      try:
-        wrapper = getattr(func, 'visit_wrapper', None)
-        if wrapper is not None:
-          return func.visit_wrapper(func, tree.data, tree.children, tree.meta)
-        else:
-          return func(tree)
-      except GrammarError as e:
-        raise e
-      except Exception as e:
-        raise VisitError(tree.data, tree, e)
+  @abstractmethod
+  def __default__(self, data, children, meta):
+    pass
 
-    #def _call_userfunc_token(self, token):
-    #  pass
+  # this is an ignore because lark Transformers always take Tree as input, not GenericTree
+  def transform(self, tree: TreeT) -> ReturnT: # type: ignore
+    return self._transform_tree(tree)
