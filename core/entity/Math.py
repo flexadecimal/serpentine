@@ -154,7 +154,7 @@ class Math(RefersCyclically[MathInterdependence, "Math", t.Iterable["Math"]], Ba
   def equation(self) -> FunctionCallTransformer.FunctionTree:
     equation_str = self.attrib['equation']
     # apply parser and function call transformation in one fell swoop
-    equation_ast = FunctionCallTransformer.FunctionCallTransformer().transform(
+    equation_ast = FunctionCallTransformer.FunctionCallTransformer(suppress_rounding=True).transform(
       eq.parser(equation_str)
     )
     return equation_ast

@@ -34,23 +34,6 @@ def sum_args(*args) -> npt.ArrayLike:
 class RoundingError(ValueError):
   pass
 
-def int_or_raise(n: NumericArg):
-  as_array = np.array(n)
-  # see https://stackoverflow.com/a/7236784
-  is_int = np.all(np.equal(np.mod(as_array, 1), 0))
-  #if not is_int:
-  #  raise RoundingError("WARNING: Float values being truncated for bitwise operation.")
-  return as_array.astype(np.integer)
-
-def int_truncate(*ns: NumericArg):
-  return map(int_or_raise, ns)
-
-def int_truncated(bitwise: np.ufunc | t.Callable[[NumericArg, NumericArg], npt.NDArray]):
-  def inner(a: NumericArg, b: NumericArg) -> npt.NDArray:
-    a, b = int_truncate(a, b)
-    return bitwise(a, b)
-  return inner
-
 class FunctionCallTransformer(Transformer[lark.Token, FunctionTree]):
   '''
   Transforms an equation AST (abstract syntax tree) to one with vectorized numpy functions. This is an intermediate syntactical form - the arguments must still processed as functions by calling along the tree.
@@ -98,12 +81,32 @@ class FunctionCallTransformer(Transformer[lark.Token, FunctionTree]):
     # ...table
     # ROW, COL, ROWS, COLS, CELL
   }
+  _suppress_rounding = False
+
+  def _int_or_raise(self, n: NumericArg):
+    as_array = np.array(n)
+    # see https://stackoverflow.com/a/7236784
+    is_int = np.all(np.equal(np.mod(as_array, 1), 0))
+    if not is_int and not self._suppress_rounding:
+      raise RoundingError("WARNING: Float values being truncated for bitwise operation.")
+    return as_array.astype(np.integer)
+
+  def _int_truncate(self, *ns: NumericArg):
+    return map(self._int_or_raise, ns)
+
+  def int_truncated(self, bitwise: np.ufunc | t.Callable[[NumericArg, NumericArg], npt.NDArray]):
+    def inner(a: NumericArg, b: NumericArg) -> npt.NDArray:
+      a, b = self._int_truncate(a, b)
+      return bitwise(a, b)
+    return inner
   
-  def statement(self, args):
+  def __init__(self, suppress_rounding = False):
+    self._suppress_rounding = suppress_rounding
+    super().__init__(visit_tokens = True)
+
+  def statement(self, args: t.List[FunctionTree]):
     # statement is terminal part of grammar, because we don't have multiple statements in TunerPro equations
-    # ...but we have to return a `Tree` at the end of the day
     return args[0]
-    #return args[0]
 
   @staticmethod
   def operation_call_tree(func: ConversionFunc, args: t.List[FunctionTreeNode]) -> FunctionTree:
@@ -120,7 +123,7 @@ class FunctionCallTransformer(Transformer[lark.Token, FunctionTree]):
   
   def bitwise_nand(self, args: t.List[FunctionTreeNode]) -> FunctionTreeNode:
     return FunctionCallTransformer.left_to_right_tree_single(
-      int_truncated(
+      self.int_truncated(
         lambda a, b: np.bitwise_not(np.bitwise_and(a, b))
       ),
       args
@@ -128,7 +131,7 @@ class FunctionCallTransformer(Transformer[lark.Token, FunctionTree]):
   
   def bitwise_nor(self, args: t.List[FunctionTreeNode]) -> FunctionTree:
     return FunctionCallTransformer.left_to_right_tree_single(
-      int_truncated(
+      self.int_truncated(
         lambda a, b: np.bitwise_not(np.bitwise_or(a, b))
       ),
       args
@@ -136,19 +139,19 @@ class FunctionCallTransformer(Transformer[lark.Token, FunctionTree]):
   
   def bitwise_or(self, args: t.List[FunctionTreeNode]) -> FunctionTree:
     return FunctionCallTransformer.left_to_right_tree_single(
-      int_truncated(np.bitwise_or),
+      self.int_truncated(np.bitwise_or),
       args
     )
   
   def bitwise_xor(self, args: t.List[FunctionTreeNode]) -> FunctionTree:
     return FunctionCallTransformer.left_to_right_tree_single(
-      int_truncated(np.bitwise_xor),
+      self.int_truncated(np.bitwise_xor),
       args
     )
     
   def bitwise_and(self, args: t.List[FunctionTreeNode]) -> FunctionTree:
     return FunctionCallTransformer.left_to_right_tree_single(
-      int_truncated(np.bitwise_and),
+      self.int_truncated(np.bitwise_and),
       args
     )
   
