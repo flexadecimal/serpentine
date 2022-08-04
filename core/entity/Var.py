@@ -51,7 +51,8 @@ class LinkedVar(FreeVar):
   def value(self) -> ArrayLike:
     # TODO: this does NOT guard against circular references, neither does TunerPro. We need to guard against circular references when saving.
     # only Z-axis of Table used for value
-    return self.linked.value
+    out = self.linked.value
+    return out
   
 class AddressVar(FreeVar):
   '''

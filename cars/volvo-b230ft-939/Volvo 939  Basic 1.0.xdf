@@ -1,0 +1,1704 @@
+<!-- Written 02/03/2012 22:07:37 -->
+<XDFFORMAT version="1.50">
+  <XDFHEADER>
+    <flags>0x1</flags>
+    <fileversion>1.0</fileversion>
+    <deftitle>937 ECU Volvo Turbo  BASIC</deftitle>
+    <description>THx to IpDown &amp; Beepee&#013;&#010;&#013;&#010;www.jetronic.info&#013;&#010;&#013;&#010;&#013;&#010;</description>
+    <author>mrjaybeeze@hotmail.com</author>
+    <baseoffset>0</baseoffset>
+    <DEFAULTS datasizeinbits="8" sigdigits="1" outputtype="2" signed="0" lsbfirst="0" float="0" />
+    <REGION type="0xFFFFFFFF" startaddress="0x0" size="0x8000" regionflags="0x0" name="Binary File" desc="This region describes the bin file edited by this XDF" />
+    <CATEGORY index="0x0" name="Normally used with this BIN" />
+    <CATEGORY index="0x1" name="Untested or Unknown" />
+    <CATEGORY index="0x2" name="Swithches or Flags" />
+    <CATEGORY index="0x3" name="Scales that can be modified" />
+    <CATEGORY index="0x4" name="Probably UNUSED in this BIN" />
+    <CATEGORY index="0x5" name="Special functions not fuel related" />
+    <CATEGORY index="0x6" name="Acceleration modifiers" />
+    <CATEGORY index="0x7" name="MISC" />
+    <CATEGORY index="0x8" name="Fillers    to make stuff look better" />
+    <CATEGORY index="0x9" name="DO NOT EDIT THESE" />
+    <CATEGORY index="0xA" name="Main Fuelmap" />
+    <CATEGORY index="0xB" name="Start and Warmup" />
+    <CATEGORY index="0xC" name="Idle regulation" />
+    <CATEGORY index="0xD" name="Lambda Control" />
+    <CATEGORY index="0xE" name="FUELCUTS" />
+    <CATEGORY index="0xF" name="Injector constants" />
+    <CATEGORY index="0x10" name="MAF AMM Parameters" />
+    <CATEGORY index="0x11" name="Checksum" />
+    <CATEGORY index="0x12" name="Constants" />
+    <CATEGORY index="0x18" name="ECU map position pointers" />
+    <CATEGORY index="0x22" name=" " />
+    <CATEGORY index="0x23" name=" " />
+    <CATEGORY index="0x24" name=" " />
+    <CATEGORY index="0x25" name=" " />
+    <CATEGORY index="0x26" name=" " />
+  </XDFHEADER>
+  <XDFCONSTANT uniqueid="0x53C1">
+    <title>Feedback can be mailed  to mrjaybeeze@hotmail.com</title>
+    <description>Big thanks to Ipdown &amp; Beepee</description>
+    <EMBEDDEDDATA mmedaddress="0xFFFF" mmedelementsizebits="8" />
+    <outputtype>4</outputtype>
+    <datatype>0</datatype>
+    <unittype>0</unittype>
+    <DALINK index="0" />
+    <MATH equation="X">
+      <VAR id="X" />
+    </MATH>
+  </XDFCONSTANT>
+  <XDFCONSTANT uniqueid="0x5002">
+    <title>3808   RPM Limiter (rpm fuelcut threshold)</title>
+    <description>39 is original value this gives appx 6350 off and 6200 back on&#013;&#010;38 = 6490 &#013;&#010;37 = 6640         Do remember that some EZKs have a low RPM&#013;&#010;36 = 6780         limit too...just above the 6350 of the LH&#013;&#010;35 = 6920&#013;&#010;34 = 7070&#013;&#010;33 = 7230&#013;&#010;32 = 7390&#013;&#010;31 = 7550</description>
+    <CATEGORYMEM index="0" category="1" />
+    <CATEGORYMEM index="1" category="15" />
+    <CATEGORYMEM index="2" category="19" />
+    <EMBEDDEDDATA mmedaddress="0x3808" mmedelementsizebits="8" />
+    <datatype>0</datatype>
+    <unittype>0</unittype>
+    <DALINK index="0" />
+    <MATH equation="X">
+      <VAR id="X" />
+    </MATH>
+  </XDFCONSTANT>
+  <XDFCONSTANT uniqueid="0x4BB3">
+    <title>3845   Injector Constant 1 (Map multiplier 8 bit)</title>
+    <description>Used together with constant 4</description>
+    <CATEGORYMEM index="0" category="1" />
+    <CATEGORYMEM index="1" category="16" />
+    <EMBEDDEDDATA mmedaddress="0x3845" mmedelementsizebits="8" />
+    <datatype>0</datatype>
+    <unittype>0</unittype>
+    <DALINK index="0" />
+    <MATH equation="X">
+      <VAR id="X" />
+    </MATH>
+  </XDFCONSTANT>
+  <XDFCONSTANT uniqueid="0x101B">
+    <title>388F   Injector Constant 4  Main injector constant  (16bit)</title>
+    <description>This is main injector constant wich informs LH math about Injector size in gr/min of fuel&#013;&#010;Original Dec value in this bin is 2443&#013;&#010;math is based on 1/x so higher constant is lower flow from injector</description>
+    <CATEGORYMEM index="0" category="1" />
+    <CATEGORYMEM index="1" category="16" />
+    <EMBEDDEDDATA mmedtypeflags="0x01" mmedaddress="0x388F" mmedelementsizebits="16" />
+    <datatype>0</datatype>
+    <unittype>0</unittype>
+    <DALINK index="0" />
+    <MATH equation="X">
+      <VAR id="X" />
+    </MATH>
+  </XDFCONSTANT>
+  <XDFFLAG uniqueid="0x4D8E">
+    <title>3870   Lambda Feedback enable</title>
+    <description>box checked  = on</description>
+    <CATEGORYMEM index="0" category="1" />
+    <CATEGORYMEM index="1" category="14" />
+    <CATEGORYMEM index="2" category="3" />
+    <EMBEDDEDDATA mmedaddress="0x3870" mmedelementsizebits="8" />
+    <mask>0xFF</mask>
+  </XDFFLAG>
+  <XDFTABLE uniqueid="0x5283" flags="0x0">
+    <title>---------------------------------------------------------------------------------</title>
+    <CATEGORYMEM index="0" category="8" />
+    <CATEGORYMEM index="1" category="9" />
+    <XDFAXIS id="x" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="8" mmedmajorstridebits="-32" />
+      <indexcount>1</indexcount>
+      <decimalpl>1</decimalpl>
+      <outputtype>2</outputtype>
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="0" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="y" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="8" mmedmajorstridebits="-32" />
+      <indexcount>1</indexcount>
+      <decimalpl>1</decimalpl>
+      <outputtype>2</outputtype>
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="0" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="z">
+      <EMBEDDEDDATA mmedaddress="0xFFFF" mmedelementsizebits="8" mmedrowcount="1" />
+      <decimalpl>1</decimalpl>
+      <min>0.000000</min>
+      <max>255.000000</max>
+      <outputtype>2</outputtype>
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+  </XDFTABLE>
+  <XDFTABLE uniqueid="0x7ECC" flags="0x30">
+    <title>                            EDIT        LOAD scale</title>
+    <description>Modify this to strech the working area of the AMM/Scale&#013;&#010;As is each step of 8 equals more or less 0.1 bar in manifold pressure&#013;&#010;Resulting in a scale that spans form -0.8  -   0.8 bar&#013;&#010;Normally the scale is maxed out easily at medium rpm and max load&#013;&#010;Changes should show up automatically upon save and open map again&#013;&#010;this is calculated by calculating backwards&#013;&#010;256-128=128&#013;&#010;128-8    =120&#013;&#010;120-8    =112&#013;&#010;higher number is equal to higher load</description>
+    <CATEGORYMEM index="0" category="1" />
+    <CATEGORYMEM index="1" category="11" />
+    <CATEGORYMEM index="2" category="4" />
+    <XDFAXIS id="x" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="16" mmedmajorstridebits="-32" />
+      <indexcount>1</indexcount>
+      <min>1000.000000</min>
+      <outputtype>4</outputtype>
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="type" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="y" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="16" mmedmajorstridebits="-32" />
+      <units>dec</units>
+      <indexcount>18</indexcount>
+      <min>1000.000000</min>
+      <outputtype>4</outputtype>
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="Type" />
+      <LABEL index="1" value="Size" />
+      <LABEL index="2" value="Final value" />
+      <LABEL index="3" value="" />
+      <LABEL index="4" value="" />
+      <LABEL index="5" value="" />
+      <LABEL index="6" value="" />
+      <LABEL index="7" value="" />
+      <LABEL index="8" value="" />
+      <LABEL index="9" value="" />
+      <LABEL index="10" value="" />
+      <LABEL index="11" value="" />
+      <LABEL index="12" value="" />
+      <LABEL index="13" value="" />
+      <LABEL index="14" value="" />
+      <LABEL index="15" value="" />
+      <LABEL index="16" value="" />
+      <LABEL index="17" value="Primary value" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="z">
+      <EMBEDDEDDATA mmedtypeflags="0x04" mmedaddress="0x3B40" mmedelementsizebits="8" mmedrowcount="18" />
+      <decimalpl>2</decimalpl>
+      <min>0.000000</min>
+      <max>255.000000</max>
+      <outputtype>2</outputtype>
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+  </XDFTABLE>
+  <XDFTABLE uniqueid="0x478C" flags="0x30">
+    <title>                            EDIT        RPM   scale</title>
+    <description>Modify this to extend the working area of the map&#013;&#010;Remember to increase rpm limiter too&#013;&#010;Changes should show up automatically upon save and open map again&#013;&#010;this calculated from a table/map in the LH&#013;&#010;256-100 gives 156 wich is the starting point&#013;&#010;Theoretically if you put 156 as the rpm limiter value it would give you the rpm of the first scaling point.&#013;&#010;&#013;&#010;Then 156 - 16 = 140 is the next &#013;&#010;and so on&#013;&#010;Lower number is equal to higher rpm </description>
+    <CATEGORYMEM index="0" category="1" />
+    <CATEGORYMEM index="1" category="11" />
+    <CATEGORYMEM index="2" category="4" />
+    <XDFAXIS id="x" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="16" mmedmajorstridebits="-32" />
+      <units>RPM</units>
+      <indexcount>18</indexcount>
+      <min>1000.000000</min>
+      <outputtype>4</outputtype>
+      <datatype>6</datatype>
+      <unittype>4</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="Type" />
+      <LABEL index="1" value="Size" />
+      <LABEL index="2" value="16" />
+      <LABEL index="3" value="15" />
+      <LABEL index="4" value="14" />
+      <LABEL index="5" value="13" />
+      <LABEL index="6" value="12" />
+      <LABEL index="7" value="11" />
+      <LABEL index="8" value="10" />
+      <LABEL index="9" value="9" />
+      <LABEL index="10" value="8" />
+      <LABEL index="11" value="7" />
+      <LABEL index="12" value="6" />
+      <LABEL index="13" value="5" />
+      <LABEL index="14" value="4" />
+      <LABEL index="15" value="3" />
+      <LABEL index="16" value="2" />
+      <LABEL index="17" value="Primary" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="y" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="16" mmedmajorstridebits="-32" />
+      <units>dec</units>
+      <indexcount>1</indexcount>
+      <min>1000.000000</min>
+      <outputtype>4</outputtype>
+      <embedinfo type="3" />
+      <datatype>6</datatype>
+      <unittype>4</unittype>
+      <DALINK index="0" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="z">
+      <EMBEDDEDDATA mmedtypeflags="0x04" mmedaddress="0x3B52" mmedelementsizebits="8" mmedrowcount="1" mmedcolcount="18" />
+      <units>rpm</units>
+      <decimalpl>2</decimalpl>
+      <min>0.000000</min>
+      <max>255.000000</max>
+      <outputtype>2</outputtype>
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+  </XDFTABLE>
+  <XDFTABLE uniqueid="0x2C37" flags="0x30">
+    <title>3B64     16x16     Main Fuel map       (main corrections after AMM )</title>
+    <description>Main corrections fuel table before additional corrections are done</description>
+    <CATEGORYMEM index="0" category="1" />
+    <CATEGORYMEM index="1" category="11" />
+    <XDFAXIS id="x" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="16" mmedmajorstridebits="-32" />
+      <units>1</units>
+      <indexcount>16</indexcount>
+      <min>1000.000000</min>
+      <outputtype>4</outputtype>
+      <embedinfo type="3" linkobjid="0x2521" />
+      <datatype>6</datatype>
+      <unittype>4</unittype>
+      <DALINK index="0" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="y" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="16" mmedmajorstridebits="-32" />
+      <indexcount>16</indexcount>
+      <min>1000.000000</min>
+      <outputtype>4</outputtype>
+      <embedinfo type="3" linkobjid="0x519E" />
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="z">
+      <EMBEDDEDDATA mmedaddress="0x3B64" mmedelementsizebits="8" mmedrowcount="16" mmedcolcount="16" />
+      <decimalpl>2</decimalpl>
+      <min>0.000000</min>
+      <max>255.000000</max>
+      <outputtype>2</outputtype>
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+  </XDFTABLE>
+  <XDFTABLE uniqueid="0x4AA8" flags="0x0">
+    <title>---------------------------------------------------------------------------------</title>
+    <CATEGORYMEM index="0" category="8" />
+    <CATEGORYMEM index="1" category="9" />
+    <XDFAXIS id="x" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="8" mmedmajorstridebits="-32" />
+      <indexcount>1</indexcount>
+      <decimalpl>1</decimalpl>
+      <outputtype>2</outputtype>
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="0" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="y" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="8" mmedmajorstridebits="-32" />
+      <indexcount>1</indexcount>
+      <decimalpl>1</decimalpl>
+      <outputtype>2</outputtype>
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="0" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="z">
+      <EMBEDDEDDATA mmedaddress="0xFFFF" mmedelementsizebits="8" mmedrowcount="1" />
+      <decimalpl>1</decimalpl>
+      <min>0.000000</min>
+      <max>255.000000</max>
+      <outputtype>2</outputtype>
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+  </XDFTABLE>
+  <XDFTABLE uniqueid="0x45CE" flags="0x30">
+    <title>3C6E     8x1      Lambda /RPM Threshold Upper</title>
+    <description>this set the high load threshold for lambda correction cutoff in respect to rpm&#013;&#010;Over this load the open loop will commence</description>
+    <CATEGORYMEM index="0" category="1" />
+    <CATEGORYMEM index="1" category="14" />
+    <XDFAXIS id="x" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="8" mmedmajorstridebits="-32" />
+      <units>RPM</units>
+      <indexcount>8</indexcount>
+      <outputtype>4</outputtype>
+      <embedinfo type="3" linkobjid="0x52B3" />
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="y" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="8" mmedmajorstridebits="-32" />
+      <units>Load</units>
+      <indexcount>1</indexcount>
+      <outputtype>4</outputtype>
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="z">
+      <EMBEDDEDDATA mmedaddress="0x3C6E" mmedelementsizebits="8" mmedrowcount="1" mmedcolcount="8" />
+      <decimalpl>2</decimalpl>
+      <min>0.000000</min>
+      <max>255.000000</max>
+      <outputtype>2</outputtype>
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+  </XDFTABLE>
+  <XDFTABLE uniqueid="0x410C" flags="0x0">
+    <title>---------------------------------------------------------------------------------</title>
+    <CATEGORYMEM index="0" category="8" />
+    <CATEGORYMEM index="1" category="9" />
+    <XDFAXIS id="x" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="8" mmedmajorstridebits="-32" />
+      <indexcount>1</indexcount>
+      <decimalpl>1</decimalpl>
+      <outputtype>2</outputtype>
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="0" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="y" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="8" mmedmajorstridebits="-32" />
+      <indexcount>1</indexcount>
+      <decimalpl>1</decimalpl>
+      <outputtype>2</outputtype>
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="0" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="z">
+      <EMBEDDEDDATA mmedaddress="0xFFFF" mmedelementsizebits="8" mmedrowcount="1" />
+      <decimalpl>1</decimalpl>
+      <min>0.000000</min>
+      <max>255.000000</max>
+      <outputtype>2</outputtype>
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+  </XDFTABLE>
+  <XDFTABLE uniqueid="0x2CC" flags="0x30">
+    <title>3C99     15x1     TEMP   Warmup enrich (AFTERSTART)   normal mode </title>
+    <description>Post start sequence&#013;&#010;Tested on manual transmission and no AC&#013;&#010;Normally used when no CEL&#013;&#010;Is normally active until 60-70 degrees C is reached</description>
+    <CATEGORYMEM index="0" category="1" />
+    <CATEGORYMEM index="1" category="12" />
+    <XDFAXIS id="x" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="16" mmedmajorstridebits="-32" />
+      <units>celcius</units>
+      <indexcount>15</indexcount>
+      <min>1000.000000</min>
+      <outputtype>4</outputtype>
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="104" />
+      <LABEL index="1" value="101" />
+      <LABEL index="2" value="70" />
+      <LABEL index="3" value="54" />
+      <LABEL index="4" value="45" />
+      <LABEL index="5" value="38" />
+      <LABEL index="6" value="31" />
+      <LABEL index="7" value="24" />
+      <LABEL index="8" value="15" />
+      <LABEL index="9" value="8" />
+      <LABEL index="10" value="1" />
+      <LABEL index="11" value="-5" />
+      <LABEL index="12" value="-11" />
+      <LABEL index="13" value="-21" />
+      <LABEL index="14" value="-36" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="y" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="16" mmedmajorstridebits="-32" />
+      <indexcount>1</indexcount>
+      <min>1000.000000</min>
+      <outputtype>4</outputtype>
+      <datatype>13</datatype>
+      <unittype>15</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="enrich" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="z">
+      <EMBEDDEDDATA mmedaddress="0x3C99" mmedelementsizebits="8" mmedrowcount="1" mmedcolcount="15" />
+      <decimalpl>2</decimalpl>
+      <min>0.000000</min>
+      <max>120.000000</max>
+      <outputtype>2</outputtype>
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+  </XDFTABLE>
+  <XDFTABLE uniqueid="0x1F49" flags="0x0">
+    <title>---------------------------------------------------------------------------------</title>
+    <CATEGORYMEM index="0" category="8" />
+    <CATEGORYMEM index="1" category="9" />
+    <XDFAXIS id="x" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="8" mmedmajorstridebits="-32" />
+      <indexcount>1</indexcount>
+      <decimalpl>1</decimalpl>
+      <outputtype>2</outputtype>
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="0" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="y" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="8" mmedmajorstridebits="-32" />
+      <indexcount>1</indexcount>
+      <decimalpl>1</decimalpl>
+      <outputtype>2</outputtype>
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="0" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="z">
+      <EMBEDDEDDATA mmedaddress="0xFFFF" mmedelementsizebits="8" mmedrowcount="1" />
+      <decimalpl>1</decimalpl>
+      <min>0.000000</min>
+      <max>255.000000</max>
+      <outputtype>2</outputtype>
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+  </XDFTABLE>
+  <XDFTABLE uniqueid="0x759B" flags="0x30">
+    <title>3CB9     15x1     TEMP   Warmup enrich(AFTERSTART)    limp  mode </title>
+    <description>Normally used only when lit CEL lamp</description>
+    <CATEGORYMEM index="0" category="1" />
+    <CATEGORYMEM index="1" category="12" />
+    <XDFAXIS id="x" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="16" mmedmajorstridebits="-32" />
+      <units>celcius</units>
+      <indexcount>15</indexcount>
+      <min>1000.000000</min>
+      <outputtype>4</outputtype>
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="104" />
+      <LABEL index="1" value="101" />
+      <LABEL index="2" value="70" />
+      <LABEL index="3" value="54" />
+      <LABEL index="4" value="45" />
+      <LABEL index="5" value="38" />
+      <LABEL index="6" value="31" />
+      <LABEL index="7" value="24" />
+      <LABEL index="8" value="15" />
+      <LABEL index="9" value="8" />
+      <LABEL index="10" value="1" />
+      <LABEL index="11" value="-5" />
+      <LABEL index="12" value="-11" />
+      <LABEL index="13" value="-21" />
+      <LABEL index="14" value="-36" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="y" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="16" mmedmajorstridebits="-32" />
+      <indexcount>1</indexcount>
+      <min>1000.000000</min>
+      <outputtype>4</outputtype>
+      <datatype>13</datatype>
+      <unittype>15</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="enrich" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="z">
+      <EMBEDDEDDATA mmedaddress="0x3CB9" mmedelementsizebits="8" mmedrowcount="1" mmedcolcount="15" />
+      <decimalpl>2</decimalpl>
+      <min>0.000000</min>
+      <max>120.000000</max>
+      <outputtype>2</outputtype>
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+  </XDFTABLE>
+  <XDFTABLE uniqueid="0x6E6A" flags="0x0">
+    <title>---------------------------------------------------------------------------------</title>
+    <CATEGORYMEM index="0" category="8" />
+    <CATEGORYMEM index="1" category="9" />
+    <XDFAXIS id="x" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="8" mmedmajorstridebits="-32" />
+      <indexcount>1</indexcount>
+      <decimalpl>1</decimalpl>
+      <outputtype>2</outputtype>
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="0" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="y" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="8" mmedmajorstridebits="-32" />
+      <indexcount>1</indexcount>
+      <decimalpl>1</decimalpl>
+      <outputtype>2</outputtype>
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="0" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="z">
+      <EMBEDDEDDATA mmedaddress="0xFFFF" mmedelementsizebits="8" mmedrowcount="1" />
+      <decimalpl>1</decimalpl>
+      <min>0.000000</min>
+      <max>255.000000</max>
+      <outputtype>2</outputtype>
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+  </XDFTABLE>
+  <XDFTABLE uniqueid="0x3235" flags="0x30">
+    <title>3F33   10x1    RPM-- AMM Engine Load Limit Map(FUELCUT)</title>
+    <description>adjust all to 255  TO DISABLE</description>
+    <CATEGORYMEM index="0" category="1" />
+    <CATEGORYMEM index="1" category="15" />
+    <XDFAXIS id="x" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="16" mmedmajorstridebits="-32" />
+      <units>RPM</units>
+      <indexcount>10</indexcount>
+      <outputtype>2</outputtype>
+      <embedinfo type="3" linkobjid="0x1FB8" />
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="y" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="16" mmedmajorstridebits="-32" />
+      <units>Limit</units>
+      <indexcount>1</indexcount>
+      <outputtype>2</outputtype>
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="00" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="z">
+      <EMBEDDEDDATA mmedaddress="0x3F33" mmedelementsizebits="8" mmedrowcount="1" mmedcolcount="10" />
+      <decimalpl>2</decimalpl>
+      <min>100.000000</min>
+      <max>255.000000</max>
+      <outputtype>2</outputtype>
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+  </XDFTABLE>
+  <XDFTABLE uniqueid="0x7280" flags="0x0">
+    <title>---------------------------------------------------------------------------------</title>
+    <CATEGORYMEM index="0" category="8" />
+    <CATEGORYMEM index="1" category="9" />
+    <XDFAXIS id="x" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="8" mmedmajorstridebits="-32" />
+      <indexcount>1</indexcount>
+      <decimalpl>1</decimalpl>
+      <outputtype>2</outputtype>
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="0" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="y" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="8" mmedmajorstridebits="-32" />
+      <indexcount>1</indexcount>
+      <decimalpl>1</decimalpl>
+      <outputtype>2</outputtype>
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="0" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="z">
+      <EMBEDDEDDATA mmedaddress="0xFFFF" mmedelementsizebits="8" mmedrowcount="1" />
+      <decimalpl>1</decimalpl>
+      <min>0.000000</min>
+      <max>255.000000</max>
+      <outputtype>2</outputtype>
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+  </XDFTABLE>
+  <XDFTABLE uniqueid="0x17F9" flags="0x30">
+    <title>3F51  7x1 TEMP  Idle speed w/manual transmission (Auto P/N)</title>
+    <description>Higher value gives higher rpm on idle&#013;&#010;tested on manual transmission no ac or CEL&#013;&#010;Also active on auto box position P/N&#013;&#010;RPM is equal to 25x value&#013;&#010;</description>
+    <CATEGORYMEM index="0" category="1" />
+    <CATEGORYMEM index="1" category="13" />
+    <XDFAXIS id="x" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="8" mmedmajorstridebits="-32" />
+      <units>celcius</units>
+      <indexcount>7</indexcount>
+      <outputtype>2</outputtype>
+      <embedinfo type="3" linkobjid="0x1D36" />
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="y" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="8" mmedmajorstridebits="-32" />
+      <units>value</units>
+      <indexcount>1</indexcount>
+      <outputtype>2</outputtype>
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="00" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="z">
+      <EMBEDDEDDATA mmedaddress="0x3F51" mmedelementsizebits="8" mmedrowcount="1" mmedcolcount="7" />
+      <decimalpl>2</decimalpl>
+      <min>0.000000</min>
+      <max>255.000000</max>
+      <outputtype>2</outputtype>
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+  </XDFTABLE>
+  <XDFTABLE uniqueid="0x1EFF" flags="0x30">
+    <title>3F58  7x1 TEMP Idle speed w/Auto ( D 3 2 1 )</title>
+    <description>Higher value gives higher rpm on idle&#013;&#010;RPM is equal to 25x value&#013;&#010;</description>
+    <CATEGORYMEM index="0" category="1" />
+    <CATEGORYMEM index="1" category="13" />
+    <XDFAXIS id="x" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="8" mmedmajorstridebits="-32" />
+      <units>celcius</units>
+      <indexcount>7</indexcount>
+      <outputtype>2</outputtype>
+      <embedinfo type="3" linkobjid="0x1D36" />
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="y" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="8" mmedmajorstridebits="-32" />
+      <units>value</units>
+      <indexcount>1</indexcount>
+      <outputtype>2</outputtype>
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="00" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="z">
+      <EMBEDDEDDATA mmedaddress="0x3F58" mmedelementsizebits="8" mmedrowcount="1" mmedcolcount="7" />
+      <decimalpl>2</decimalpl>
+      <min>0.000000</min>
+      <max>255.000000</max>
+      <outputtype>2</outputtype>
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+  </XDFTABLE>
+  <XDFTABLE uniqueid="0x5C54" flags="0x0">
+    <title>3FF6 Checksum and compliment</title>
+    <description>2 first bytes are calculated CRC for whole of file&#013;&#010;2 last bytes is compliment&#013;&#010;Compliment is 255 - first byte = first compliment&#013;&#010;                       255 - last byte = last compliment&#013;&#010;In LH the order of the two bytes of the checksum is reversed&#013;&#010;this also happens with the compliments :-)&#013;&#010;example :&#013;&#010;if calculated sum is AA BB and compliment is CA CB&#013;&#010;then bin stacking will be like BB AA CB CA</description>
+    <CATEGORYMEM index="0" category="1" />
+    <CATEGORYMEM index="1" category="18" />
+    <XDFAXIS id="x" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="16" mmedmajorstridebits="-32" />
+      <indexcount>4</indexcount>
+      <min>1000.000000</min>
+      <outputtype>4</outputtype>
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="BB" />
+      <LABEL index="1" value="AA" />
+      <LABEL index="2" value="CB" />
+      <LABEL index="3" value="CA" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="y" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="16" mmedmajorstridebits="-32" />
+      <indexcount>1</indexcount>
+      <min>1000.000000</min>
+      <outputtype>4</outputtype>
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="checksum" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="z">
+      <EMBEDDEDDATA mmedaddress="0x3FF6" mmedelementsizebits="8" mmedrowcount="1" mmedcolcount="4" />
+      <decimalpl>2</decimalpl>
+      <min>0.000000</min>
+      <max>255.000000</max>
+      <outputtype>3</outputtype>
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+      <MATH col="1" equation="X">
+        <VAR id="X" />
+      </MATH>
+      <MATH col="2" equation="Y">
+        <VAR id="Y" />
+      </MATH>
+    </XDFAXIS>
+  </XDFTABLE>
+  <XDFTABLE uniqueid="0x7906" flags="0x0">
+    <title>---------------------------------------------------------------------------------</title>
+    <CATEGORYMEM index="0" category="8" />
+    <CATEGORYMEM index="1" category="9" />
+    <XDFAXIS id="x" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="8" mmedmajorstridebits="-32" />
+      <indexcount>1</indexcount>
+      <decimalpl>1</decimalpl>
+      <outputtype>2</outputtype>
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="0" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="y" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="8" mmedmajorstridebits="-32" />
+      <indexcount>1</indexcount>
+      <decimalpl>1</decimalpl>
+      <outputtype>2</outputtype>
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="0" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="z">
+      <EMBEDDEDDATA mmedaddress="0xFFFF" mmedelementsizebits="8" mmedrowcount="1" />
+      <decimalpl>1</decimalpl>
+      <min>0.000000</min>
+      <max>255.000000</max>
+      <outputtype>2</outputtype>
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+  </XDFTABLE>
+  <XDFTABLE uniqueid="0x218A" flags="0x0">
+    <title>DO NOT MODIFY BELOW THIS LINE !!!!</title>
+    <XDFAXIS id="x" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="8" mmedmajorstridebits="-32" />
+      <indexcount>1</indexcount>
+      <decimalpl>1</decimalpl>
+      <outputtype>2</outputtype>
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="0" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="y" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="8" mmedmajorstridebits="-32" />
+      <indexcount>1</indexcount>
+      <decimalpl>1</decimalpl>
+      <outputtype>2</outputtype>
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="0" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="z">
+      <EMBEDDEDDATA mmedaddress="0xFFFF" mmedelementsizebits="8" mmedrowcount="1" />
+      <decimalpl>1</decimalpl>
+      <min>0.000000</min>
+      <max>255.000000</max>
+      <outputtype>2</outputtype>
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+  </XDFTABLE>
+  <XDFTABLE uniqueid="0x44A7" flags="0x0">
+    <title>---------------------------------------------------------------------------------</title>
+    <CATEGORYMEM index="0" category="8" />
+    <CATEGORYMEM index="1" category="9" />
+    <XDFAXIS id="x" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="8" mmedmajorstridebits="-32" />
+      <indexcount>1</indexcount>
+      <decimalpl>1</decimalpl>
+      <outputtype>2</outputtype>
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="0" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="y" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="8" mmedmajorstridebits="-32" />
+      <indexcount>1</indexcount>
+      <decimalpl>1</decimalpl>
+      <outputtype>2</outputtype>
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="0" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="z">
+      <EMBEDDEDDATA mmedaddress="0xFFFF" mmedelementsizebits="8" mmedrowcount="1" />
+      <decimalpl>1</decimalpl>
+      <min>0.000000</min>
+      <max>255.000000</max>
+      <outputtype>2</outputtype>
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+  </XDFTABLE>
+  <XDFTABLE uniqueid="0x1D36" flags="0x30">
+    <title>                         Cheater Scale</title>
+    <CATEGORYMEM index="0" category="8" />
+    <CATEGORYMEM index="1" category="10" />
+    <XDFAXIS id="x" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="8" mmedmajorstridebits="-32" />
+      <indexcount>7</indexcount>
+      <outputtype>4</outputtype>
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="7" />
+      <LABEL index="1" value="6" />
+      <LABEL index="2" value="5" />
+      <LABEL index="3" value="4" />
+      <LABEL index="4" value="3" />
+      <LABEL index="5" value="2" />
+      <LABEL index="6" value="1" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="y" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="8" mmedmajorstridebits="-32" />
+      <indexcount>1</indexcount>
+      <outputtype>2</outputtype>
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="00" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="z">
+      <EMBEDDEDDATA mmedaddress="0xFFFF" mmedelementsizebits="8" mmedrowcount="1" mmedcolcount="7" />
+      <decimalpl>2</decimalpl>
+      <min>0.000000</min>
+      <max>255.000000</max>
+      <outputtype>2</outputtype>
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+      <MATH col="1" equation="x+128">
+        <VAR id="x" />
+      </MATH>
+      <MATH col="2" equation="x+115">
+        <VAR id="x" />
+      </MATH>
+      <MATH col="3" equation="x+54">
+        <VAR id="x" />
+      </MATH>
+      <MATH col="4" equation="x+31">
+        <VAR id="x" />
+      </MATH>
+      <MATH col="5" equation="x+8">
+        <VAR id="x" />
+      </MATH>
+      <MATH col="6" equation="x-11">
+        <VAR id="x" />
+      </MATH>
+      <MATH col="7" equation="x-30">
+        <VAR id="x" />
+      </MATH>
+    </XDFAXIS>
+  </XDFTABLE>
+  <XDFTABLE uniqueid="0x1FB8" vislevel="10" flags="0x30">
+    <title>                           Autocalculated 3F33</title>
+    <CATEGORYMEM index="0" category="12" />
+    <XDFAXIS id="x" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="8" mmedmajorstridebits="-32" />
+      <indexcount>10</indexcount>
+      <outputtype>2</outputtype>
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="00" />
+      <LABEL index="1" value="00" />
+      <LABEL index="2" value="00" />
+      <LABEL index="3" value="00" />
+      <LABEL index="4" value="00" />
+      <LABEL index="5" value="00" />
+      <LABEL index="6" value="00" />
+      <LABEL index="7" value="00" />
+      <LABEL index="8" value="00" />
+      <LABEL index="9" value="00" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="y" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="8" mmedmajorstridebits="-32" />
+      <indexcount>1</indexcount>
+      <outputtype>2</outputtype>
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="00" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="z">
+      <EMBEDDEDDATA mmedaddress="0x3F29" mmedelementsizebits="8" mmedrowcount="1" mmedcolcount="10" />
+      <decimalpl>2</decimalpl>
+      <min>100.000000</min>
+      <max>7500.000000</max>
+      <outputtype>2</outputtype>
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+      <MATH row="1" col="1" equation="MROUND(6*EXP(0.0215834714*(A+B+C+D+E+F+G+H+I+X));5)*10">
+        <VAR id="A" type="address" address="0x3F32" />
+        <VAR id="B" type="address" address="0x3F31" />
+        <VAR id="C" type="address" address="0x3F30" />
+        <VAR id="D" type="address" address="0x3F2F" />
+        <VAR id="E" type="address" address="0x3F2E" />
+        <VAR id="F" type="address" address="0x3F2D" />
+        <VAR id="G" type="address" address="0x3F2C" />
+        <VAR id="H" type="address" address="0x3F2B" />
+        <VAR id="I" type="address" address="0x3F2A" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="1" col="2" equation="MROUND(6*EXP(0.0215834714*(A+B+C+D+E+F+G+H+X));5)*10">
+        <VAR id="A" type="address" address="0x3F32" />
+        <VAR id="B" type="address" address="0x3F31" />
+        <VAR id="C" type="address" address="0x3F30" />
+        <VAR id="D" type="address" address="0x3F2F" />
+        <VAR id="E" type="address" address="0x3F2E" />
+        <VAR id="F" type="address" address="0x3F2D" />
+        <VAR id="G" type="address" address="0x3F2C" />
+        <VAR id="H" type="address" address="0x3F2B" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="1" col="3" equation="MROUND(6*EXP(0.0215834714*(A+B+C+D+E+F+G+X));5)*10">
+        <VAR id="A" type="address" address="0x3F32" />
+        <VAR id="B" type="address" address="0x3F31" />
+        <VAR id="C" type="address" address="0x3F30" />
+        <VAR id="D" type="address" address="0x3F2F" />
+        <VAR id="E" type="address" address="0x3F2E" />
+        <VAR id="F" type="address" address="0x3F2D" />
+        <VAR id="G" type="address" address="0x3F2C" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="1" col="4" equation="MROUND(6*EXP(0.0215834714*(A+B+C+D+E+F+X));5)*10">
+        <VAR id="A" type="address" address="0x3F32" />
+        <VAR id="B" type="address" address="0x3F31" />
+        <VAR id="C" type="address" address="0x3F30" />
+        <VAR id="D" type="address" address="0x3F2F" />
+        <VAR id="E" type="address" address="0x3F2E" />
+        <VAR id="F" type="address" address="0x3F2D" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="1" col="5" equation="MROUND(6*EXP(0.0215834714*(A+B+C+D+E+X));5)*10">
+        <VAR id="A" type="address" address="0x3F32" />
+        <VAR id="B" type="address" address="0x3F31" />
+        <VAR id="C" type="address" address="0x3F30" />
+        <VAR id="D" type="address" address="0x3F2F" />
+        <VAR id="E" type="address" address="0x3F2E" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="1" col="6" equation="MROUND(6*EXP(0.0215834714*(A+B+C+D+X));5)*10">
+        <VAR id="A" type="address" address="0x3F32" />
+        <VAR id="B" type="address" address="0x3F31" />
+        <VAR id="C" type="address" address="0x3F30" />
+        <VAR id="D" type="address" address="0x3F2F" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="1" col="7" equation="MROUND(6*EXP(0.0215834714*(A+B+C+X));5)*10">
+        <VAR id="A" type="address" address="0x3F32" />
+        <VAR id="B" type="address" address="0x3F31" />
+        <VAR id="C" type="address" address="0x3F30" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="1" col="8" equation="MROUND(6*EXP(0.0215834714*(A+B+X));5)*10">
+        <VAR id="A" type="address" address="0x3F32" />
+        <VAR id="B" type="address" address="0x3F31" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="1" col="9" equation="MROUND(6*EXP(0.0215834714*(A+X));5)*10">
+        <VAR id="A" type="address" address="0x3F32" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="1" col="10" equation="MROUND(6*EXP(0.0215834714*(X));5)*10">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+  </XDFTABLE>
+  <XDFTABLE uniqueid="0x52B3" flags="0x30">
+    <title>                            Autocalculated 3C6E</title>
+    <CATEGORYMEM index="0" category="8" />
+    <CATEGORYMEM index="1" category="10" />
+    <XDFAXIS id="x" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="8" mmedmajorstridebits="-32" />
+      <indexcount>8</indexcount>
+      <decimalpl>1</decimalpl>
+      <outputtype>4</outputtype>
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="" />
+      <LABEL index="1" value="" />
+      <LABEL index="2" value="" />
+      <LABEL index="3" value="" />
+      <LABEL index="4" value="" />
+      <LABEL index="5" value="" />
+      <LABEL index="6" value="" />
+      <LABEL index="7" value="" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="y" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="8" mmedmajorstridebits="-32" />
+      <indexcount>1</indexcount>
+      <decimalpl>1</decimalpl>
+      <outputtype>2</outputtype>
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="0" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="z">
+      <EMBEDDEDDATA mmedaddress="0x3C66" mmedelementsizebits="8" mmedrowcount="1" mmedcolcount="8" />
+      <decimalpl>1</decimalpl>
+      <min>0.000000</min>
+      <max>9000.000000</max>
+      <outputtype>2</outputtype>
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+      <MATH row="1" col="1" equation="15000000 / (POW(2;((255-(A+B+C+D+E+F+G+X)+128)/32)) * 64) ">
+        <VAR id="A" type="address" address="0x3C6D" />
+        <VAR id="B" type="address" address="0x3C6C" />
+        <VAR id="C" type="address" address="0x3C6B" />
+        <VAR id="D" type="address" address="0x3C6A" />
+        <VAR id="E" type="address" address="0x3C69" />
+        <VAR id="F" type="address" address="0x3C68" />
+        <VAR id="G" type="address" address="0x3C67" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="1" col="2" equation="15000000 / (POW(2;((255-(A+B+C+D+E+F+X)+128)/32)) * 64) ">
+        <VAR id="A" type="address" address="0x3C6D" />
+        <VAR id="B" type="address" address="0x3C6C" />
+        <VAR id="C" type="address" address="0x3C6B" />
+        <VAR id="D" type="address" address="0x3C6A" />
+        <VAR id="E" type="address" address="0x3C69" />
+        <VAR id="F" type="address" address="0x3C68" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="1" col="3" equation="15000000 / (POW(2;((255-(A+B+C+D+E+X)+128)/32)) * 64) ">
+        <VAR id="A" type="address" address="0x3C6D" />
+        <VAR id="B" type="address" address="0x3C6C" />
+        <VAR id="C" type="address" address="0x3C6B" />
+        <VAR id="D" type="address" address="0x3C6A" />
+        <VAR id="E" type="address" address="0x3C69" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="1" col="4" equation="15000000 / (POW(2;((255-(A+B+C+D+X)+128)/32)) * 64) ">
+        <VAR id="A" type="address" address="0x3C6D" />
+        <VAR id="B" type="address" address="0x3C6C" />
+        <VAR id="C" type="address" address="0x3C6B" />
+        <VAR id="D" type="address" address="0x3C6A" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="1" col="5" equation="15000000 / (POW(2;((255-(A+B+C+X)+128)/32)) * 64) ">
+        <VAR id="A" type="address" address="0x3C6D" />
+        <VAR id="B" type="address" address="0x3C6C" />
+        <VAR id="C" type="address" address="0x3C6B" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="1" col="6" equation="15000000 / (POW(2;((255-(A+B+X)+128)/32)) * 64) ">
+        <VAR id="A" type="address" address="0x3C6D" />
+        <VAR id="B" type="address" address="0x3C6C" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="1" col="7" equation="15000000 / (POW(2;((255-(A+X)+128)/32)) * 64) ">
+        <VAR id="A" type="address" address="0x3C6D" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="1" col="8" equation="15000000 / (POW(2;((255-X)+128)/32) * 64) ">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+  </XDFTABLE>
+  <XDFTABLE uniqueid="0x519E" vislevel="10" flags="0x30">
+    <title>                            Autocalculated 3B42</title>
+    <CATEGORYMEM index="0" category="12" />
+    <XDFAXIS id="x" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="16" mmedmajorstridebits="-32" />
+      <indexcount>1</indexcount>
+      <min>1000.000000</min>
+      <outputtype>4</outputtype>
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="AMM" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="y" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="16" mmedmajorstridebits="-32" />
+      <indexcount>16</indexcount>
+      <min>1000.000000</min>
+      <outputtype>4</outputtype>
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="MIN" />
+      <LABEL index="1" value="2" />
+      <LABEL index="2" value="3" />
+      <LABEL index="3" value="4" />
+      <LABEL index="4" value="5" />
+      <LABEL index="5" value="6" />
+      <LABEL index="6" value="7" />
+      <LABEL index="7" value="MID" />
+      <LABEL index="8" value="9" />
+      <LABEL index="9" value="10" />
+      <LABEL index="10" value="11" />
+      <LABEL index="11" value="12" />
+      <LABEL index="12" value="13" />
+      <LABEL index="13" value="14" />
+      <LABEL index="14" value="15" />
+      <LABEL index="15" value="MAX" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="z">
+      <EMBEDDEDDATA mmedaddress="0x3B42" mmedelementsizebits="8" mmedrowcount="16" />
+      <decimalpl>2</decimalpl>
+      <min>0.000000</min>
+      <max>255.000000</max>
+      <outputtype>2</outputtype>
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+      <MATH row="1" col="1" equation="256-A-B-C-D-E-F-G-H-I-J-K-L-M-N-O-X">
+        <VAR id="A" type="address" address="0x3B51" />
+        <VAR id="B" type="address" address="0x3B50" />
+        <VAR id="C" type="address" address="0x3B4F" />
+        <VAR id="D" type="address" address="0x3B4E" />
+        <VAR id="E" type="address" address="0x3B4D" />
+        <VAR id="F" type="address" address="0x3B4C" />
+        <VAR id="G" type="address" address="0x3B4B" />
+        <VAR id="H" type="address" address="0x3B4A" />
+        <VAR id="I" type="address" address="0x3B49" />
+        <VAR id="J" type="address" address="0x3B48" />
+        <VAR id="K" type="address" address="0x3B47" />
+        <VAR id="L" type="address" address="0x3B46" />
+        <VAR id="M" type="address" address="0x3B45" />
+        <VAR id="N" type="address" address="0x3B44" />
+        <VAR id="O" type="address" address="0x3B43" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="2" col="1" equation="256-A-B-C-D-E-F-G-H-I-J-K-L-M-N-X">
+        <VAR id="A" type="address" address="0x3B51" />
+        <VAR id="B" type="address" address="0x3B50" />
+        <VAR id="C" type="address" address="0x3B4F" />
+        <VAR id="D" type="address" address="0x3B4E" />
+        <VAR id="E" type="address" address="0x3B4D" />
+        <VAR id="F" type="address" address="0x3B4C" />
+        <VAR id="G" type="address" address="0x3B4B" />
+        <VAR id="H" type="address" address="0x3B4A" />
+        <VAR id="I" type="address" address="0x3B49" />
+        <VAR id="J" type="address" address="0x3B48" />
+        <VAR id="K" type="address" address="0x3B47" />
+        <VAR id="L" type="address" address="0x3B46" />
+        <VAR id="M" type="address" address="0x3B45" />
+        <VAR id="N" type="address" address="0x3B44" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="3" col="1" equation="256-A-B-C-D-E-F-G-H-I-J-K-L-M-X">
+        <VAR id="A" type="address" address="0x3B51" />
+        <VAR id="B" type="address" address="0x3B50" />
+        <VAR id="C" type="address" address="0x3B4F" />
+        <VAR id="D" type="address" address="0x3B4E" />
+        <VAR id="E" type="address" address="0x3B4D" />
+        <VAR id="F" type="address" address="0x3B4C" />
+        <VAR id="G" type="address" address="0x3B4B" />
+        <VAR id="H" type="address" address="0x3B4A" />
+        <VAR id="I" type="address" address="0x3B49" />
+        <VAR id="J" type="address" address="0x3B48" />
+        <VAR id="K" type="address" address="0x3B47" />
+        <VAR id="L" type="address" address="0x3B46" />
+        <VAR id="M" type="address" address="0x3B45" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="4" col="1" equation="256-A-B-C-D-E-F-G-H-I-J-K-L-X">
+        <VAR id="A" type="address" address="0x3B51" />
+        <VAR id="B" type="address" address="0x3B50" />
+        <VAR id="C" type="address" address="0x3B4F" />
+        <VAR id="D" type="address" address="0x3B4E" />
+        <VAR id="E" type="address" address="0x3B4D" />
+        <VAR id="F" type="address" address="0x3B4C" />
+        <VAR id="G" type="address" address="0x3B4B" />
+        <VAR id="H" type="address" address="0x3B4A" />
+        <VAR id="I" type="address" address="0x3B49" />
+        <VAR id="J" type="address" address="0x3B48" />
+        <VAR id="K" type="address" address="0x3B47" />
+        <VAR id="L" type="address" address="0x3B46" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="5" col="1" equation="256-A-B-C-D-E-F-G-H-I-J-K-X">
+        <VAR id="A" type="address" address="0x3B51" />
+        <VAR id="B" type="address" address="0x3B50" />
+        <VAR id="C" type="address" address="0x3B4F" />
+        <VAR id="D" type="address" address="0x3B4E" />
+        <VAR id="E" type="address" address="0x3B4D" />
+        <VAR id="F" type="address" address="0x3B4C" />
+        <VAR id="G" type="address" address="0x3B4B" />
+        <VAR id="H" type="address" address="0x3B4A" />
+        <VAR id="I" type="address" address="0x3B49" />
+        <VAR id="J" type="address" address="0x3B48" />
+        <VAR id="K" type="address" address="0x3B47" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="6" col="1" equation="256-A-B-C-D-E-F-G-H-I-J-X">
+        <VAR id="A" type="address" address="0x3B51" />
+        <VAR id="B" type="address" address="0x3B50" />
+        <VAR id="C" type="address" address="0x3B4F" />
+        <VAR id="D" type="address" address="0x3B4E" />
+        <VAR id="E" type="address" address="0x3B4D" />
+        <VAR id="F" type="address" address="0x3B4C" />
+        <VAR id="G" type="address" address="0x3B4B" />
+        <VAR id="H" type="address" address="0x3B4A" />
+        <VAR id="I" type="address" address="0x3B49" />
+        <VAR id="J" type="address" address="0x3B48" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="7" col="1" equation="256-A-B-C-D-E-F-G-H-I-X">
+        <VAR id="A" type="address" address="0x3B51" />
+        <VAR id="B" type="address" address="0x3B50" />
+        <VAR id="C" type="address" address="0x3B4F" />
+        <VAR id="D" type="address" address="0x3B4E" />
+        <VAR id="E" type="address" address="0x3B4D" />
+        <VAR id="F" type="address" address="0x3B4C" />
+        <VAR id="G" type="address" address="0x3B4B" />
+        <VAR id="H" type="address" address="0x3B4A" />
+        <VAR id="I" type="address" address="0x3B49" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="8" col="1" equation="256-A-B-C-D-E-F-G-H-X">
+        <VAR id="A" type="address" address="0x3B51" />
+        <VAR id="B" type="address" address="0x3B50" />
+        <VAR id="C" type="address" address="0x3B4F" />
+        <VAR id="D" type="address" address="0x3B4E" />
+        <VAR id="E" type="address" address="0x3B4D" />
+        <VAR id="F" type="address" address="0x3B4C" />
+        <VAR id="G" type="address" address="0x3B4B" />
+        <VAR id="H" type="address" address="0x3B4A" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="9" col="1" equation="256-A-B-C-D-E-F-G-X">
+        <VAR id="A" type="address" address="0x3B51" />
+        <VAR id="B" type="address" address="0x3B50" />
+        <VAR id="C" type="address" address="0x3B4F" />
+        <VAR id="D" type="address" address="0x3B4E" />
+        <VAR id="E" type="address" address="0x3B4D" />
+        <VAR id="F" type="address" address="0x3B4C" />
+        <VAR id="G" type="address" address="0x3B4B" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="10" col="1" equation="256-A-B-C-D-E-F-X">
+        <VAR id="A" type="address" address="0x3B51" />
+        <VAR id="B" type="address" address="0x3B50" />
+        <VAR id="C" type="address" address="0x3B4F" />
+        <VAR id="D" type="address" address="0x3B4E" />
+        <VAR id="E" type="address" address="0x3B4D" />
+        <VAR id="F" type="address" address="0x3B4C" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="11" col="1" equation="256-A-B-C-D-E-X">
+        <VAR id="A" type="address" address="0x3B51" />
+        <VAR id="B" type="address" address="0x3B50" />
+        <VAR id="C" type="address" address="0x3B4F" />
+        <VAR id="D" type="address" address="0x3B4E" />
+        <VAR id="E" type="address" address="0x3B4D" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="12" col="1" equation="256-A-B-C-D-X">
+        <VAR id="A" type="address" address="0x3B51" />
+        <VAR id="B" type="address" address="0x3B50" />
+        <VAR id="C" type="address" address="0x3B4F" />
+        <VAR id="D" type="address" address="0x3B4E" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="13" col="1" equation="256-A-B-C-X">
+        <VAR id="A" type="address" address="0x3B51" />
+        <VAR id="B" type="address" address="0x3B50" />
+        <VAR id="C" type="address" address="0x3B4F" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="14" col="1" equation="256-A-B-X">
+        <VAR id="A" type="address" address="0x3B51" />
+        <VAR id="B" type="address" address="0x3B50" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="15" col="1" equation="256-A-X">
+        <VAR id="A" type="address" address="0x3B51" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="16" col="1" equation="256-X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+  </XDFTABLE>
+  <XDFTABLE uniqueid="0x2521" vislevel="10" flags="0x30">
+    <title>                            Autocalculated 3B54</title>
+    <description>X axis of fuel map&#013;&#010;RPM = 60*e^(0.0215834714*(255-x))&#013;&#010;</description>
+    <CATEGORYMEM index="0" category="12" />
+    <XDFAXIS id="x" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="16" mmedmajorstridebits="-32" />
+      <units>rpm</units>
+      <indexcount>16</indexcount>
+      <min>1000.000000</min>
+      <outputtype>4</outputtype>
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="MAX" />
+      <LABEL index="1" value="15" />
+      <LABEL index="2" value="14" />
+      <LABEL index="3" value="13" />
+      <LABEL index="4" value="12" />
+      <LABEL index="5" value="11" />
+      <LABEL index="6" value="10" />
+      <LABEL index="7" value="9" />
+      <LABEL index="8" value="MID" />
+      <LABEL index="9" value="7" />
+      <LABEL index="10" value="6" />
+      <LABEL index="11" value="5" />
+      <LABEL index="12" value="4" />
+      <LABEL index="13" value="3" />
+      <LABEL index="14" value="2" />
+      <LABEL index="15" value="MIN" />
+      <MATH equation="A-X">
+        <VAR id="A" type="address" address="0x3B4A" />
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="y" uniqueid="0x0">
+      <EMBEDDEDDATA mmedelementsizebits="16" mmedmajorstridebits="-32" />
+      <indexcount>1</indexcount>
+      <min>1000.000000</min>
+      <outputtype>4</outputtype>
+      <datatype>0</datatype>
+      <unittype>0</unittype>
+      <DALINK index="0" />
+      <LABEL index="0" value="RPM" />
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+    <XDFAXIS id="z">
+      <EMBEDDEDDATA mmedtypeflags="0x04" mmedaddress="0x3B54" mmedelementsizebits="8" mmedrowcount="1" mmedcolcount="16" />
+      <units>rpm</units>
+      <decimalpl>2</decimalpl>
+      <min>0.000000</min>
+      <max>7500.000000</max>
+      <outputtype>2</outputtype>
+      <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+      <MATH row="1" col="1" equation="MROUND(6*EXP(0.0215834714*(A+B+C+D+E+F+G+H+I+J+K+L+M+N+O+X));5)*10">
+        <VAR id="A" type="address" address="0x3B63" />
+        <VAR id="B" type="address" address="0x3B62" />
+        <VAR id="C" type="address" address="0x3B61" />
+        <VAR id="D" type="address" address="0x3B60" />
+        <VAR id="E" type="address" address="0x3B5F" />
+        <VAR id="F" type="address" address="0x3B5E" />
+        <VAR id="G" type="address" address="0x3B5D" />
+        <VAR id="H" type="address" address="0x3B5C" />
+        <VAR id="I" type="address" address="0x3B5B" />
+        <VAR id="J" type="address" address="0x3B5A" />
+        <VAR id="K" type="address" address="0x3B59" />
+        <VAR id="L" type="address" address="0x3B58" />
+        <VAR id="M" type="address" address="0x3B57" />
+        <VAR id="N" type="address" address="0x3B56" />
+        <VAR id="O" type="address" address="0x3B55" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="1" col="2" equation="MROUND(6*EXP(0.0215834714*(A+B+C+D+E+F+G+H+I+J+K+L+M+N+X));5)*10">
+        <VAR id="A" type="address" address="0x3B63" />
+        <VAR id="B" type="address" address="0x3B62" />
+        <VAR id="C" type="address" address="0x3B61" />
+        <VAR id="D" type="address" address="0x3B60" />
+        <VAR id="E" type="address" address="0x3B5F" />
+        <VAR id="F" type="address" address="0x3B5E" />
+        <VAR id="G" type="address" address="0x3B5D" />
+        <VAR id="H" type="address" address="0x3B5C" />
+        <VAR id="I" type="address" address="0x3B5B" />
+        <VAR id="J" type="address" address="0x3B5A" />
+        <VAR id="K" type="address" address="0x3B59" />
+        <VAR id="L" type="address" address="0x3B58" />
+        <VAR id="M" type="address" address="0x3B57" />
+        <VAR id="N" type="address" address="0x3B56" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="1" col="3" equation="MROUND(6*EXP(0.0215834714*(A+B+C+D+E+F+G+H+I+J+K+L+M+X));5)*10">
+        <VAR id="A" type="address" address="0x3B63" />
+        <VAR id="B" type="address" address="0x3B62" />
+        <VAR id="C" type="address" address="0x3B61" />
+        <VAR id="D" type="address" address="0x3B60" />
+        <VAR id="E" type="address" address="0x3B5F" />
+        <VAR id="F" type="address" address="0x3B5E" />
+        <VAR id="G" type="address" address="0x3B5D" />
+        <VAR id="H" type="address" address="0x3B5C" />
+        <VAR id="I" type="address" address="0x3B5B" />
+        <VAR id="J" type="address" address="0x3B5A" />
+        <VAR id="K" type="address" address="0x3B59" />
+        <VAR id="L" type="address" address="0x3B58" />
+        <VAR id="M" type="address" address="0x3B57" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="1" col="4" equation="MROUND(6*EXP(0.0215834714*(A+B+C+D+E+F+G+H+I+J+K+L+X));5)*10">
+        <VAR id="A" type="address" address="0x3B63" />
+        <VAR id="B" type="address" address="0x3B62" />
+        <VAR id="C" type="address" address="0x3B61" />
+        <VAR id="D" type="address" address="0x3B60" />
+        <VAR id="E" type="address" address="0x3B5F" />
+        <VAR id="F" type="address" address="0x3B5E" />
+        <VAR id="G" type="address" address="0x3B5D" />
+        <VAR id="H" type="address" address="0x3B5C" />
+        <VAR id="I" type="address" address="0x3B5B" />
+        <VAR id="J" type="address" address="0x3B5A" />
+        <VAR id="K" type="address" address="0x3B59" />
+        <VAR id="L" type="address" address="0x3B58" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="1" col="5" equation="MROUND(6*EXP(0.0215834714*(A+B+C+D+E+F+G+H+I+J+K+X));5)*10">
+        <VAR id="A" type="address" address="0x3B63" />
+        <VAR id="B" type="address" address="0x3B62" />
+        <VAR id="C" type="address" address="0x3B61" />
+        <VAR id="D" type="address" address="0x3B60" />
+        <VAR id="E" type="address" address="0x3B5F" />
+        <VAR id="F" type="address" address="0x3B5E" />
+        <VAR id="G" type="address" address="0x3B5D" />
+        <VAR id="H" type="address" address="0x3B5C" />
+        <VAR id="I" type="address" address="0x3B5B" />
+        <VAR id="J" type="address" address="0x3B5A" />
+        <VAR id="K" type="address" address="0x3B59" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="1" col="6" equation="MROUND(6*EXP(0.0215834714*(A+B+C+D+E+F+G+H+I+J+X));5)*10">
+        <VAR id="A" type="address" address="0x3B63" />
+        <VAR id="B" type="address" address="0x3B62" />
+        <VAR id="C" type="address" address="0x3B61" />
+        <VAR id="D" type="address" address="0x3B60" />
+        <VAR id="E" type="address" address="0x3B5F" />
+        <VAR id="F" type="address" address="0x3B5E" />
+        <VAR id="G" type="address" address="0x3B5D" />
+        <VAR id="H" type="address" address="0x3B5C" />
+        <VAR id="I" type="address" address="0x3B5B" />
+        <VAR id="J" type="address" address="0x3B5A" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="1" col="7" equation="MROUND(6*EXP(0.0215834714*(A+B+C+D+E+F+G+H+I+X));5)*10">
+        <VAR id="A" type="address" address="0x3B63" />
+        <VAR id="B" type="address" address="0x3B62" />
+        <VAR id="C" type="address" address="0x3B61" />
+        <VAR id="D" type="address" address="0x3B60" />
+        <VAR id="E" type="address" address="0x3B5F" />
+        <VAR id="F" type="address" address="0x3B5E" />
+        <VAR id="G" type="address" address="0x3B5D" />
+        <VAR id="H" type="address" address="0x3B5C" />
+        <VAR id="I" type="address" address="0x3B5B" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="1" col="8" equation="MROUND(6*EXP(0.0215834714*(A+B+C+D+E+F+G+H+X));5)*10">
+        <VAR id="A" type="address" address="0x3B63" />
+        <VAR id="B" type="address" address="0x3B62" />
+        <VAR id="C" type="address" address="0x3B61" />
+        <VAR id="D" type="address" address="0x3B60" />
+        <VAR id="E" type="address" address="0x3B5F" />
+        <VAR id="F" type="address" address="0x3B5E" />
+        <VAR id="G" type="address" address="0x3B5D" />
+        <VAR id="H" type="address" address="0x3B5C" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="1" col="9" equation="MROUND(6*EXP(0.0215834714*(A+B+C+D+E+F+G+X));5)*10">
+        <VAR id="A" type="address" address="0x3B63" />
+        <VAR id="B" type="address" address="0x3B62" />
+        <VAR id="C" type="address" address="0x3B61" />
+        <VAR id="D" type="address" address="0x3B60" />
+        <VAR id="E" type="address" address="0x3B5F" />
+        <VAR id="F" type="address" address="0x3B5E" />
+        <VAR id="G" type="address" address="0x3B5D" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="1" col="10" equation="MROUND(6*EXP(0.0215834714*(A+B+C+D+E+F+X));5)*10">
+        <VAR id="A" type="address" address="0x3B63" />
+        <VAR id="B" type="address" address="0x3B62" />
+        <VAR id="C" type="address" address="0x3B61" />
+        <VAR id="D" type="address" address="0x3B60" />
+        <VAR id="E" type="address" address="0x3B5F" />
+        <VAR id="F" type="address" address="0x3B5E" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="1" col="11" equation="MROUND(6*EXP(0.0215834714*(A+B+C+D+E+X));5)*10">
+        <VAR id="A" type="address" address="0x3B63" />
+        <VAR id="B" type="address" address="0x3B62" />
+        <VAR id="C" type="address" address="0x3B61" />
+        <VAR id="D" type="address" address="0x3B60" />
+        <VAR id="E" type="address" address="0x3B5F" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="1" col="12" equation="MROUND(6*EXP(0.0215834714*(A+B+C+D+X));5)*10">
+        <VAR id="A" type="address" address="0x3B63" />
+        <VAR id="B" type="address" address="0x3B62" />
+        <VAR id="C" type="address" address="0x3B61" />
+        <VAR id="D" type="address" address="0x3B60" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="1" col="13" equation="MROUND(6*EXP(0.0215834714*(A+B+C+X));5)*10">
+        <VAR id="A" type="address" address="0x3B63" />
+        <VAR id="B" type="address" address="0x3B62" />
+        <VAR id="C" type="address" address="0x3B61" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="1" col="14" equation="MROUND(6*EXP(0.0215834714*(A+B+X));5)*10">
+        <VAR id="A" type="address" address="0x3B63" />
+        <VAR id="B" type="address" address="0x3B62" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="1" col="15" equation="MROUND(6*EXP(0.0215834714*(A+X));5)*10">
+        <VAR id="A" type="address" address="0x3B63" />
+        <VAR id="X" />
+      </MATH>
+      <MATH row="1" col="16" equation="MROUND(6*EXP(0.0215834714*X);5)*10">
+        <VAR id="X" />
+      </MATH>
+    </XDFAXIS>
+  </XDFTABLE>
+</XDFFORMAT>

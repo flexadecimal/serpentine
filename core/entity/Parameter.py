@@ -1,5 +1,5 @@
 from .Base import Base, XmlAbstractBaseMeta, XdfRefMixin, ArrayLike
-from abc import ABC, abstractmethod
+from abc import ABC
 import numpy as np
 import numpy.typing as npt
 import typing as T
@@ -24,7 +24,8 @@ class Parameter(Categorized, Base, XdfRefMixin, ABC, metaclass=XmlAbstractBaseMe
     return int(out[0]) if out else None
 
   def __repr__(self):
-      return f"<{self.__class__.__qualname__} '{self.title}'>: {Base.__repr__(self)}"
+    #return f"<{self.__class__.__qualname__} '{self.title}'>: {Base.__repr__(self)}"
+    return f"<{self.__class__.__qualname__} '{self.title}'>"
       
  # def __repr__(self):
   #  filtered_vars = dict(filter(

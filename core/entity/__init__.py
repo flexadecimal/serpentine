@@ -6,5 +6,6 @@ __all__ = [
   'Constant',
   'Axis',
   'Table',
+  'Function',
   'Xdf',
 ]

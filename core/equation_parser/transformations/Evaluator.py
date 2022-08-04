@@ -1,10 +1,10 @@
-import typing as T
-from lark import Lark, Tree
-from lark.lexer import Token
-from lark.visitors import Interpreter, Transformer, v_args
-from .TypeVisitors import TypeInterpreter, TypeTransformer, func_printer
-import functools
-from numbers import Number
+
+from . import GenericTree
+import typing as t
+from .Replacer import NumericFunctionTreeNode
+from .TypeVisitors import TypeTransformer
+from .FunctionCallTransformer import NumericArg, ConversionFunc
+import numpy.typing as npt
 
 # function composition, see:
 # https://stackoverflow.com/questions/16739290/composing-functions-in-python/16739663#16739663
@@ -23,8 +23,7 @@ from numbers import Number
  # # set doc to dev-friendly composition expression
  # composed.__name__ = nested_call_str
  # return composed
-
-class Evaluator(TypeTransformer):
+class Evaluator(TypeTransformer[NumericFunctionTreeNode, npt.ArrayLike]):
   '''
   Intended to be called after `FunctionCallTransformer`, which will have rendered
   a tree like:
@@ -47,11 +46,12 @@ class Evaluator(TypeTransformer):
   vars with literals and combining using function composition and 
   functools.partial, or a more general combinator pattern. Currently, the AST must be walked for each calculation.
   '''
-  def __init__(self):
-    super().__init__()
-  
-  def function(self, args: T.List):
-    func: T.Callable = args[0]
-    func_args: T.List = args[1]
+  # this 'function` dispatch is magic from `TypeVisitors`
+  def function(self, args):
+    func: ConversionFunc = args[0]
+    func_args: t.List[NumericArg] = args[1]
     # KISS - everything shouldve been replaced by now
     return func(*func_args)
+  
+  def __default__(self, data, children, meta):
+    return GenericTree(data, children, meta)

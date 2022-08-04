@@ -8,8 +8,8 @@ e.g. XDFTABLE/XDFAXIS/MATH/@maxOccurs = @rows * @cols
   <xs:import namespace="tunerpro" schemaLocation="tunerpro_types.xsd" />
   <!-- ...base offset-->
   <xs:attributeGroup name='base_offset_attributes'>
-    <xs:attribute name='offset' type='xs:string' use="required" />
-    <xs:attribute name='subtract' type='xs:integer' use="required" />
+    <xs:attribute name='offset' type='xs:string' use="optional" />
+    <xs:attribute name='subtract' type='xs:integer' use="optional" />
   </xs:attributeGroup>
   <xs:complexType name='base_offset'>
     <xs:simpleContent>
@@ -50,7 +50,7 @@ e.g. XDFTABLE/XDFAXIS/MATH/@maxOccurs = @rows * @cols
   <!-- ...MATH type - EQUATION with VARs -->
   <xs:complexType name='math'>
     <xs:sequence>
-      <xs:element name='VAR' maxOccurs='unbounded'>
+      <xs:element name='VAR' maxOccurs='unbounded' minOccurs="0">
         <xs:complexType>
           <!-- source var - has no attributes -->
           <!-- link attributes -->

@@ -1,5 +1,9 @@
-from .Base import Base, Array, Quantity, ArrayLike
-from .Axis import EmbeddedAxis
+from __future__ import annotations
+import typing as t
+from .Base import Base, Array
+if t.TYPE_CHECKING:
+  from . import Axis
+
 from .Parameter import Parameter
 import numpy as np
 import numpy.typing as npt
@@ -45,6 +49,8 @@ def gaps(indices: np.ma.masked_array, vals: np.ma.masked_array) -> np.ma.masked_
   gaps = boundsAndDiff[boundsAndDiff[:, 2] > 1]
   return gaps
 
+# TODO: rewrite using `np.ma.flatnonmasked_contiguous?` 
+# see https://numpy.org/doc/stable/reference/generated/numpy.ma.flatnotmasked_contiguous.html
 def monotone_interpolated(values: npt.NDArray, indices: npt.NDArray) -> npt.NDArray:
   '''
   TunerPro uses a unique interpolation strategy when using `Function` as an axis. 
@@ -90,6 +96,19 @@ def monotone_interpolated(values: npt.NDArray, indices: npt.NDArray) -> npt.NDAr
     ),
     axis = 1
   )
+  # WEIRD TUNERPRO EDGE CASE
+  # if 0 is in indices, but not in the leading non-monotonic segment, fill in the first value with index 0.
+  # e.g:
+  # idx:  [ 1  1  3  1  1  3  5  6  0  0   0   8   8  10   0  14]
+  # val:  [10 20 30 40 50 60 70  80  90 100 110 120 130  140  150 160]
+  # out:  [ 0 10 20 30 60 70 80 118 120 130 140 157 158 158.6 159 160]
+  # done: [90 10 20 30 60 70 80 118 120 130 140 157 158 158.6 159 160]
+  # the "90" was filled in, because it was the first index-0 val
+  if monotonic_idx[0] != 0:
+    first_zero_idx = np.argwhere(indices == 0)[0]
+    first_zero_val = values[first_zero_idx]
+    uninterpolated = np.vstack((np.column_stack((0, first_zero_val)), uninterpolated))
+
   # ...indices paired, e.g. [0, 1, 2] -> [0, 1], [1, 2], [2, 3]
   pairs = np.lib.stride_tricks.sliding_window_view(
     np.rot90(uninterpolated)[1],
@@ -134,12 +153,12 @@ class Function(Parameter):
   '''
   XDF Function - an X <-> Y mapping. Very similar to Table, minus a third Z Axis. Apparently common in Ford applications.
   '''
-  x: EmbeddedAxis = Base.xpath_synonym("./XDFAXIS[@id = 'x']")
+  x: Axis.FunctionAxis = Base.xpath_synonym("./XDFAXIS[@id = 'x']")
   # y index axis is unitless, it's indiices
-  y: EmbeddedAxis = Base.xpath_synonym("./XDFAXIS[@id = 'y']")
+  y: Axis.FunctionAxis = Base.xpath_synonym("./XDFAXIS[@id = 'y']")
 
   @property
-  def value(self) -> ArrayLike:
+  def value(self) -> npt.NDArray:
     '''
     Column-major list of (x, y) coordinate of function, e.g. [(1, 2), (2, 4)]
     '''
@@ -147,9 +166,8 @@ class Function(Parameter):
 
   @property
   def interpolated(self):
-    out = monotone_interpolated(self.x.value, self.y.value)
+    out = monotone_interpolated(self.x.value.magnitude, self.y.value.magnitude)
+    # extremely annoying "feature" of tunerpro - 
     return out
 
-__all__= [
-  'Function'
-]
+__all__ = ['Function']  

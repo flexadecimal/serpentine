@@ -1,9 +1,6 @@
 {
-  "python.linting.mypyPath": "${workspaceFolder}/.venv/bin/mypy",
+  "python.linting.mypyPath": "/home/david/.local/share/virtualenvs/serpentine--Nr2rHu9/bin/mypy",
   "python.linting.mypyArgs": [
-    "--follow-imports=silent",
-    "--ignore-missing-imports",
-    "--show-column-numbers",
     "--config-file=${workspaceFolder}/mypy.ini"
   ],
   "python.analysis.diagnosticMode": "workspace",

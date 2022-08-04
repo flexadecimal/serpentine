@@ -1,27 +1,26 @@
 ```
------------------------------------------------------------------------------------
-  ██████ ▓█████  ██▀███   ██▓███  ▓█████  ███▄    █ ▄▄▄█████▓ ██▓ ███▄    █ ▓█████ 
-▒██    ▒ ▓█   ▀ ▓██ ▒ ██▒▓██░  ██▒▓█   ▀  ██ ▀█   █ ▓  ██▒ ▓▒▓██▒ ██ ▀█   █ ▓█   ▀ 
-░ ▓██▄   ▒███   ▓██ ░▄█ ▒▓██░ ██▓▒▒███   ▓██  ▀█ ██▒▒ ▓██░ ▒░▒██▒▓██  ▀█ ██▒▒███   
-  ▒   ██▒▒▓█  ▄ ▒██▀▀█▄  ▒██▄█▓▒ ▒▒▓█  ▄ ▓██▒  ▐▌██▒░ ▓██▓ ░ ░██░▓██▒  ▐▌██▒▒▓█  ▄ 
-▒██████▒▒░▒████▒░██▓ ▒██▒▒██▒ ░  ░░▒████▒▒██░   ▓██░  ▒██▒ ░ ░██░▒██░   ▓██░░▒████▒
-▒ ▒▓▒ ▒ ░░░ ▒░ ░░ ▒▓ ░▒▓░▒▓▒░ ░  ░░░ ▒░ ░░ ▒░   ▒ ▒   ▒ ░░   ░▓  ░ ▒░   ▒ ▒ ░░ ▒░ ░
-░ ░▒  ░ ░ ░ ░  ░  ░▒ ░ ▒░░▒ ░      ░ ░  ░░ ░░   ░ ▒░    ░     ▒ ░░ ░░   ░ ▒░ ░ ░  ░
-░  ░  ░     ░     ░░   ░ ░░          ░      ░   ░ ░   ░       ▒ ░   ░   ░ ░    ░   
-------░-----░--░---░-----------------░--░---------░-----------░-----------░----░--░
-                e f i      c h i p t u n i n g      s o l u t i o n
------------------------------------------------------------------------------------
+====================================================================
+▓█████  ▄████▄   █    ██   ██████  ██░ ██  ▄▄▄       ██▀███   ██ ▄█▀
+▓█   ▀ ▒██▀ ▀█   ██  ▓██▒▒██    ▒ ▓██░ ██▒▒████▄    ▓██ ▒ ██▒ ██▄█▒ 
+▒███   ▒▓█    ▄ ▓██  ▒██░░ ▓██▄   ▒██▀▀██░▒██  ▀█▄  ▓██ ░▄█ ▒▓███▄░ 
+▒▓█  ▄ ▒▓▓▄ ▄██▒▓▓█  ░██░  ▒   ██▒░▓█ ░██ ░██▄▄▄▄██ ▒██▀▀█▄  ▓██ █▄ 
+░▒████▒▒ ▓███▀ ░▒▒█████▓ ▒██████▒▒░▓█▒░██▓ ▓█   ▓██▒░██▓ ▒██▒▒██▒ █▄
+=░=▒░=░░=░▒=▒==░░▒▓▒=▒=▒=▒=▒▓▒=▒=░=▒=░░▒░▒=▒▒===▓▒█░░=▒▓=░▒▓░▒=▒▒=▓▒
+            e f i  c h i p t u n i n g  s o l u t i o n            
+====================================================================
 ```
-Serpentine is a modern, browser-based chiptuning solution that implements the
+`ecushark` is a modern, browser-based chiptuning solution that implements the
 binary description XDF/ADX formats used in [TunerPro](https://tunerpro.net/).
-Effectively, this means you can use Serpentine to tune any TunerPro-supported stock
+Effectively, this means you can use `ecushark` to tune any TunerPro-supported stock
 ECU. 
 
-Testing and development was done using the author's car, a 1998 Volvo V70R using
-Bosch Motronic 4.4 fuel injection - many thanks to the [M44 Wiki](https://m44.fandom.com/wiki/M44_Wiki) for example XDF/ADX/BIN files.
+Thanks to:
+- Mark Mansur's [TunerPro](https://tunerpro.net/) for creating the XDF/ADX format
+- [M44 Wiki](https://m44.fandom.com/wiki/M44_Wiki) for example XDF/ADX/BIN files
+- [OpenEEC](https://github.com/OpenEEC-Project) for reverse-engineering Ford EEC
 
 ## Requirements
-Built for Python 3.9 and later.
+Built for Python 3.10 and later.
 
 ## Supported Features
 - XDF parameter editing

@@ -1,8 +1,8 @@
-from re import M
+from abc import abstractmethod
 import typing as t
 import numpy.typing as npt
 # for entities
-from .Base import ArrayLike, Base, XdfRefMixin, Array, Quantity
+from .Base import ArrayLike, Base, XdfRefMixin, XmlAbstractBaseMeta
 # general stuff
 import functools as ft
 import numpy as np
@@ -10,6 +10,30 @@ from enum import Flag
 import itertools as it
 from .Math import Math
 import pint
+import re 
+
+hex_regex = r'(0[xX])?(?P<str>[0-9a-fA-F]+)'
+
+def hex_to_array(hex_str: str, size: int) -> npt.NDArray[np.uint8]:
+  match = re.match(hex_regex, hex_str)
+  if match is None:
+    raise ValueError(f"Invalid hex literal '{hex_str}'")
+  without_prefix = match.groupdict()['str']
+  #. e.g. ['D' 'E' 'A' 'D' 'B' 'E' 'E' 'F']
+  chars = np.array([c for c in without_prefix])
+  # e.g. [['D' 'E'], ['A' 'D'], ['B' 'E'], ['E' 'F']]
+  words = np.array_split(chars, size)
+  # ...now combine subgroups, e.g.
+  # ['DE', 'AD', 'BE', 'EF']
+  hex_words = list(it.starmap(
+    lambda a, b: f"0x{a}{b}",
+    words
+  ))
+  bytes = list(map(
+    lambda w: int(w, 16),
+    hex_words
+  ))
+  return np.array(list(bytes), dtype=np.uint8)
 
 class TypeFlags(Flag):
   '''
@@ -41,7 +65,7 @@ class EmbeddedData(Base):
     return int(self.attrib['mmedelementsizebits']) // 8
 
   @property
-  def shape(self) -> t.Union[t.Tuple[int], t.Tuple[int, int]]:
+  def shape(self) -> t.Tuple[int] | t.Tuple[int, int]:
     '''
     Shape tuple following Numpy convention - 2D tables like that of `Table.ZAxis` have shape like `(16, 16)` (or occasionally `(16, )` for a 1D table). Constants have shape `(1, )` - a single number that will be broadcoast to an array length 1.
     '''
@@ -74,31 +98,36 @@ class EmbeddedData(Base):
     type_str = f'{endianness}{type}{self.length}'
     return np.dtype(type_str)
 
-  # table only
+  # used in Table/Axis/Function
   @property
-  def strides(self) -> t.Optional[t.Union[t.Tuple[int], t.Tuple[int, int]]]:
+  def strides(self) -> t.Optional[t.Tuple[int] | t.Tuple[int, int]]:
     '''
     Array stride in memory.
+
+    TunerPro allows you to set a negative stride.
+    In NumPy, negative strides do mean something but are generally unused.
+
+    A negative stride in TunerPro is handled as stepping by that many bytes, backwards - essentially, take positive stride
+    and reverse the array.
+
+    See:
+      - https://github.com/numpy/numpy/blob/main/doc/source/reference/arrays.ndarray.rst
+      - https://numpy.org/doc/stable/reference/generated/numpy.ndarray.strides.html
+      - https://numpy.org/doc/stable/reference/generated/numpy.lib.stride_tricks.as_strided.html
     '''
     major = int(self.attrib['mmedmajorstridebits']) // 8
     minor = int(self.attrib['mmedminorstridebits']) // 8
+    default = None
     if len(self.shape) == 2:
-      return None if major == 0 and minor == 0 else (major, minor)
+      #default = (1, 1)
+      return default if major == 0 and minor == 0 else (major, minor)
+      #return (major, minor)
     elif len(self.shape) == 1:
-      return None if major == 0 else (major, )
+      #default = (1, )
+      return default if major == 0 else (major, )
+      #return (major, )
     else:
       raise ValueError
-
-def print_array(x: ArrayLike) -> npt.NDArray[np.unicode_]:
-  if np.ma.is_masked(x):
-    out = np.vectorize(
-      lambda n: '--' if np.ma.is_masked(n) else str(n),
-    )(x)
-    # fill mask with default
-    out = out.filled('--')
-    return out
-  else:
-    return np.array(x).astype(np.unicode_)
 
 def pad_with(vector, pad_width, iaxis, kwargs):
   '''
@@ -108,25 +137,56 @@ def pad_with(vector, pad_width, iaxis, kwargs):
   vector[:pad_width[0]] = pad_value
   vector[-pad_width[1]:] = pad_value
 
+def print_array(
+  x: ArrayLike, 
+  printer: t.Callable[[t.Any], str] = str,
+) -> npt.NDArray[np.unicode_]:
+  out = np.vectorize(printer)(x)
+  # fill mask with default
+  if np.ma.is_masked(x):
+    out = out.filled('--')
+  return out
+
+def print_array_debug(
+  x: ArrayLike, 
+  max_height: int ,
+  printer: t.Callable[[t.Any], str] = str,
+) -> npt.NDArray[np.unicode_]:
+  out = np.vectorize(printer)(x)
+  # fill mask with default
+  if np.ma.is_masked(x):
+    out = out.filled('--')
+  
+  if len(out.shape) == 0:
+    out = out.reshape((1, ))
+
+  if out.shape[0] < 2:
+    middle = np.ceil(max_height / 2).astype(np.integer)
+    if middle == max_height:
+      row = out
+      return row
+    else:
+      row = np.pad(out, middle, pad_with)[1:]
+      padded = np.concatenate((np.full(row.shape, '  '), row, np.full(row.shape, '  ')))
+      return np.rot90(padded.reshape((3, max_height)))
+  else: 
+    return out
+
+
+def numeric_printer(n: npt.ArrayLike | str):
+  if isinstance(n, str):
+    return f"{n} "
+  else:
+    out = np.array2string(np.array(n), precision=1)
+    return f"{out} "
+
 def print_cols(kwargs: t.Mapping[str, ArrayLike]) -> str:  
   vals = kwargs.values()
   max_height = max(map(lambda x: np.array(x).shape[-1:], vals))[0]
-  middle = max_height // 2
   as_char_arrays = {
-    key: print_array(arr) for key, arr in kwargs.items()
+    key: print_array_debug(arr, max_height, numeric_printer) for key, arr in kwargs.items()
   }
-  def padder(key, arr):
-    out = np.empty(arr.shape, dtype=np.unicode_)
-    edge = max(middle, max_height)
-    if len(arr.shape) == 1:
-      out = np.pad([arr], (edge, edge), pad_with)[1: edge + 1]
-    else:
-      out = arr
-    return out
-  padded = {
-    key: padder(key, arr) for key, arr in as_char_arrays.items()
-  }
-  combined = np.hstack(padded.values()) # type: ignore
+  combined = np.hstack(list(as_char_arrays.values()))
   lines = list(map(
     lambda row: ''.join(row),
     combined
@@ -197,7 +257,7 @@ class EmbeddedValueError(ValueError):
     """
     return formatted
 
-class Embedded(XdfRefMixin):
+class Embedded(XdfRefMixin, metaclass=XmlAbstractBaseMeta):
   '''
   Mixin for objects exposing a value using both `<MATH>` and `<EMBEDDEDDATA>`.
   `Constant` and `Table.Axis` do this. `Table` has a value itself, but its value is constructed from "real" `Embedded` memory maps.
@@ -205,29 +265,35 @@ class Embedded(XdfRefMixin):
   EmbeddedData: EmbeddedData = Base.xpath_synonym('./EMBEDDEDDATA')
   Math: Math = Base.xpath_synonym('./MATH')
 
+  @abstractmethod
+  def from_embedded(self, x: npt.NDArray) -> npt.ArrayLike:
+    '''
+    Embedded values subclassing this class need to provide conversion 
+    to and from binary data. For `Constant` this will be a single `Math` conversion,
+    for `Table.ZAxis` there will be multiple conversion equatons.
+    '''
+    pass
+
+  @abstractmethod
+  def to_embedded(self, x: npt.NDArray) -> npt.ArrayLike:
+    '''
+    Inverse conversion function to `from_embedded`, usually 
+    `pynverse.inversefunc(conversion_func)`.
+    '''
+    pass
+
   @property
-  def value(self) -> ArrayLike:
-    unitless = self.Math.conversion_func(
+  def value(self):
+    unitless = self.from_embedded(
       self.memory_map.astype(np.float_, copy=False)
     )
     return unitless
 
-  @property
-  def logical_bounds(self):
-    '''
-    Logical bounds of this value by its `numpy` data type, to raise `EmbeddedValueError` with and draw UI with
-    '''
-    min, max = map(
-      self.Math.conversion_func,
-      self.memmap_bounds
-    )
-    return min, max
-
-  @value.setter # type: ignore
+  @value.setter
   def value(self, value): 
-    matrix = np.array([value])
+    matrix = value
     min, max = self.logical_bounds
-    out = self.Math.inverse_conversion_func(matrix)
+    out = self.to_embedded(matrix)
     if Embedded.out_of_bounds(matrix, min, max):
       e = EmbeddedValueError(min, max, matrix)
       raise e
@@ -238,6 +304,17 @@ class Embedded(XdfRefMixin):
       self.memory_map[:] = np.array([out])[:]
       # flush ? 
       #self.memory_map.flush()
+
+  @ft.cached_property
+  def logical_bounds(self):
+    '''
+    Logical bounds of this value by its `numpy` data type, to raise `EmbeddedValueError` with and draw UI with
+    '''
+    min, max = map(
+      self.to_embedded,
+      self.memmap_bounds
+    )
+    return min, max
 
   def clip_to_memmap_bounds(self, x: ArrayLike):
     min, max = self.memmap_bounds
@@ -262,11 +339,11 @@ class Embedded(XdfRefMixin):
   @ft.cached_property
   def memory_map(self) -> np.memmap:
     embedded_data = self.EmbeddedData
-    map: np.memmap = np.memmap(
+    map = np.memmap(
       self._xdf._binfile,
       shape = embedded_data.shape,
       # see TunerPro docs - base offset not applied here
-      offset = embedded_data.address,
+      offset = embedded_data.address if embedded_data.address else 0,
       dtype = embedded_data.data_type,
       # 'C' for C-style row-major, 'F' for Fortran-style col major 
       order = 'F' if TypeFlags.COLUMN_MAJOR in embedded_data.type_flags else 'C',
@@ -274,15 +351,24 @@ class Embedded(XdfRefMixin):
       mode='w+'
     )
     # set strides, if they exist - default XML stride of (0,0) is invalid
-    if embedded_data.strides:
+    # TunerPro allows for negative stride, which means positive stride, but backwards,
+    # so essentially a reversed array.
+    # NumPy allows for negative stride, but it does not match up to this meaning.
+    # see `EmbeddedData.strides`
+    
+    if (embedded_data.strides is None):
+      return map
+    elif len(embedded_data.strides) == 2:
       map.strides = embedded_data.strides
-    return map
-  
-  @staticmethod
-  def print_hex(a: npt.ArrayLike) -> str:
-    with np.printoptions(formatter={'int':hex}):
-      return str(a)
-  
+      return map
+    # ...len 1, normal Axis, Constant, etc.
+    else:
+      # interpret negative as TunerPro "backwards stride"
+      stride = embedded_data.strides[0]
+      map.strides = (abs(stride), )
+      # ...return 'backwards' - ignore because this returns a map, but mypy thinks it returns array
+      return map[::-1] # type: ignore
+    
   @property
-  def map_hex(self) -> str:
-    return Embedded.print_hex(self.memory_map)
+  def map_hex(self) -> npt.NDArray[np.unicode_]:
+    return print_array(self.memory_map, hex)

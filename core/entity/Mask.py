@@ -6,7 +6,7 @@ from .Math import Math
 import numpy as np
 
 # custom math subclasses for ZAxis with row/col
-class Mask(Array[np.ma.MaskType]):
+class Mask(np.ma.MaskType):
   def __repr__(self):
     # interpret masks as binary for space-saving printing
     return Array.__repr__(self.astype(np.int))
