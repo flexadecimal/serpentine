@@ -1,8 +1,10 @@
 from __future__ import annotations
+from abc import abstractmethod
 import typing as t
 import numpy.typing as npt
+import numpy as np
 # for entities
-from .Base import Base, RefersCyclically, CyclicReferenceException, ArrayLike
+from .Base import Base, RefersCyclically, CyclicReferenceException, ExtendsParser
 # for Math equation parsing
 from .. import equation_parser as eq
 from ..equation_parser.transformations import (
@@ -51,9 +53,34 @@ are mutually interdependent.
     return message
     #Exception.__init__(self, message)
 
-class Math(RefersCyclically[MathInterdependence, "Math", t.Iterable["Math"]], Base):
+DefaultParser = FunctionCallTransformer.FunctionCallTransformer()
+
+# typeof np.nan
+NanType = np.float_
+NullArray = npt.NDArray[NanType]
+
+def null_accumulator(shape: np._ShapeType, null = np.nan):
+  return np.full(shape, null, dtype=NanType)
+
+class Math(ExtendsParser, RefersCyclically[MathInterdependence, "Math", t.Iterable["Math"]], Base):
   exception = MathInterdependence
-  
+
+  # conversion accumulator, provided as context in special conversion funcs like
+  # `CELL`, `THIS`, `THAT`
+  @abstractmethod
+  def accumulate(self, accumulator: npt.NDArray) -> npt.NDArray:
+    '''
+    Intermediate value used in conversion calculation.
+    - For `Table.ZAxis`, this is the in-progress calculation going through each `Math` equation.
+    - For `XYEmbeddedAxis` and `Constant`, equation conversion is "one-shot" - 
+      only one vectorized (numpy array in/out) function.
+      This means that the accumulator can be the underlying memory map (newer, more consistent behavior), or 
+      an all-zero array (default TunerPro behavior).
+    '''
+    pass
+
+  _accumulator = null_accumulator((1), )
+
   @classmethod
   def dependency_graph(cls, xdf) -> t.Mapping[Math, t.Iterable[Math]]:
     has_link: t.Iterable[Math] = xdf.xpath("//MATH[./VAR[@type='link']]")
@@ -75,6 +102,9 @@ class Math(RefersCyclically[MathInterdependence, "Math", t.Iterable["Math"]], Ba
 
   Vars: t.List[Var] = Base.xpath_synonym('./VAR', many=True)
 
+  # TODO: PROBLEM WITH LINKED VARS
+  # In TunerPro Table/ZAxis, references are broken because TunerPro's logic
+  # does not mask the linked value and use it - it just enters 0s.
   LinkedVars: t.List[LinkedVar] = Base.xpath_synonym("./VAR[@type='link']", many=True)
 
   # TODO: maybe link should be removed from math?
@@ -120,7 +150,7 @@ class Math(RefersCyclically[MathInterdependence, "Math", t.Iterable["Math"]], Ba
     kwargs_signature_str = ', '.join(
       f"{var.id}: {var.__class__.__qualname__}" for var in free
     )
-    def converter(x: npt.ArrayLike, **kwargs) -> npt.ArrayLike:
+    def converter(x: npt.NDArray, **kwargs) -> npt.ArrayLike:
       # assert arguments provided by keyword - 
       # TODO: set named args in typed function signature at runtime?
       if not set(var.id for var in free) == set(kwargs.keys()):
@@ -128,7 +158,11 @@ class Math(RefersCyclically[MathInterdependence, "Math", t.Iterable["Math"]], Ba
       # update namespace with boundvars
       kwargs.update({var.id: x for var in bound})
       # and do full replacement before evaluating
+      # ...set accumulator, so parser will be constructed correctly.
+      # TODO: move accumulator/parser logic?
+      self.accumulate(x)
       replaced = Replacer.Replacer(kwargs).transform(self.equation)
+      # provide implicit context - when in table (and acyclic), this is last accumulation in the full conversion
       evaluated = Evaluator.Evaluator().transform(replaced)
       # ReturnType<Evaluator.Evaluator()>
       #evaluated: npt.ArrayLike = eq.apply_pipeline(
@@ -145,16 +179,18 @@ class Math(RefersCyclically[MathInterdependence, "Math", t.Iterable["Math"]], Ba
       signature = f'{kwargs_signature_str}'
     # TODO: set ___attributes___
     body = self.attrib['equation']
-    #converter.__doc__ = f'converter({signature}) -> np.ndarray: \n  {body}'
-    converter.__doc__ = f'{body}'
+    converter.__doc__ = f"""converter(x: np.array{ f", {signature}" if signature else ''}) -> np.ndarray:
+  {body}
+"""
+    #converter.__doc__ = f'{signature}\n  {body}'
     return converter
     
   #@functools.cached_property
   @property
   def equation(self) -> FunctionCallTransformer.FunctionTree:
     equation_str = self.attrib['equation']
-    # apply parser and function call transformation in one fell swoop
-    equation_ast = FunctionCallTransformer.FunctionCallTransformer(suppress_rounding=True).transform(
+    # transform into function-call AST
+    equation_ast = self._parser.transform(
       eq.parser(equation_str)
     )
     return equation_ast

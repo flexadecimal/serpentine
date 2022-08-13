@@ -1,12 +1,15 @@
+from collections import ChainMap
 from . import Base, Math
-from .EmbeddedData import Embedded, EmbeddedValueError
+from .EmbeddedData import Embedded
 from .Parameter import Parameter, Clamped
 import numpy as np
 import numpy.typing as npt
 import pint
 import typing as t
 
-_math = Math.Math
+class ConstantMath(Math.Math):
+  def _namespace(self):
+    return ChainMap()
 
 # weird TunerPro bullshit - only Constant needs to override min/max with rangehigh/rangelow
 class ConstantClamped(Clamped):
@@ -24,7 +27,7 @@ class Constant(Parameter, Embedded, Base.Formatted, Base.Quantified, ConstantCla
   '''
   XDF Constant, a.k.a. Scalar.
   '''
-  Math: _math = Base.Base.xpath_synonym('./MATH')
+  Math: ConstantMath = Base.Base.xpath_synonym('./MATH')
 
   @property
   def value(self) -> pint.Quantity:
@@ -34,8 +37,8 @@ class Constant(Parameter, Embedded, Base.Formatted, Base.Quantified, ConstantCla
   def value(self, value: pint.Quantity):
     return Embedded.value.fset(self, value)
   
-  def to_embedded(self, x: npt.NDArray) -> Base.ArrayLike:
+  def to_embedded(self, x: npt.NDArray):
     return self.Math.conversion_func(x)
   
-  def from_embedded(self, x: npt.NDArray) -> Base.ArrayLike:
+  def from_embedded(self, x: npt.NDArray):
     return self.Math.inverse_conversion_func(x)

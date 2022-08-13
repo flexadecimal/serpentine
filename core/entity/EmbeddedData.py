@@ -367,7 +367,7 @@ class Embedded(XdfRefMixin, metaclass=XmlAbstractBaseMeta):
       stride = embedded_data.strides[0]
       map.strides = (abs(stride), )
       # ...return 'backwards' - ignore because this returns a map, but mypy thinks it returns array
-      return map[::-1] # type: ignore
+      return map[::-1] if stride < 0 else map # type: ignore
     
   @property
   def map_hex(self) -> npt.NDArray[np.unicode_]:

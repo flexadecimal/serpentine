@@ -40,7 +40,7 @@ arguments: (argument ";")* (argument [";"])
 ?argument: test
 
 number: DEC_NUMBER | HEX_NUMBER | FLOAT
-DEC_NUMBER: /[1-9]\d*l?/i
+DEC_NUMBER: /[0-9]\d*l?/i
 HEX_NUMBER: /0x[\da-f]*l?/i
 
 %import common.FLOAT -> FLOAT

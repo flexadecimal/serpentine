@@ -1,4 +1,4 @@
-<!-- Written 07/31/2022 19:44:22 -->
+<!-- Written 08/07/2022 21:59:02 -->
 <XDFFORMAT version="1.70">
   <XDFHEADER>
     <flags>0x1</flags>
@@ -62,13 +62,24 @@
       <MATH equation="X*.75-22.5">
         <VAR id="X" />
       </MATH>
+      <MATH col="2" equation="ROW()" />
+      <MATH col="5" equation="ROWS()" />
       <MATH row="1" equation="20 &lt;&lt; 2 &gt;&gt; 5" />
       <MATH row="2" equation="X &amp; 2 &amp; 5">
         <VAR id="X" />
       </MATH>
+      <MATH row="2" col="2" equation="ROW()" />
+      <MATH row="2" col="3" equation="COL()" />
+      <MATH row="2" col="4" equation="ROWS()" />
+      <MATH row="2" col="5" equation="COLS()" />
       <MATH row="3" equation="X | 5 | ABS(-20)">
         <VAR id="X" />
       </MATH>
+      <MATH row="4" col="1" equation="Y">
+        <VAR id="Y" type="link" linkid="0x23F0" />
+      </MATH>
+      <MATH row="6" equation="COL() - 20" />
+      <MATH row="6" col="1" equation="CELL(2; 0; FALSE)" />
     </XDFAXIS>
   </XDFTABLE>
   <XDFTABLE uniqueid="0x3C16" flags="0x0">
@@ -96,7 +107,7 @@
       <datatype>23</datatype>
       <unittype>85</unittype>
       <DALINK index="0" />
-      <MATH equation="X*.048">
+      <MATH equation="X + INDEX() + INDEXES()">
         <VAR id="X" />
       </MATH>
     </XDFAXIS>
@@ -135,9 +146,7 @@
       <datatype>0</datatype>
       <unittype>0</unittype>
       <DALINK index="0" />
-      <MATH equation="X*.416667+13.3333">
-        <VAR id="X" />
-      </MATH>
+      <MATH equation="CELL(1; FALSE) + CELL(3; FALSE)" />
     </XDFAXIS>
     <XDFAXIS id="z">
       <EMBEDDEDDATA mmedtypeflags="0x04" mmedaddress="0x13F77" mmedelementsizebits="8" mmedrowcount="16" mmedcolcount="16" mmedmajorstridebits="0" mmedminorstridebits="0" />

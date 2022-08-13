@@ -159,14 +159,24 @@ class XdfTyper(xml.PythonElementClassLookup):
 
   @staticmethod
   def math_polymorphic_dispatch(root, **attrib) -> t.Type[Table.MaskedMath]:
-    if 'row' in attrib and 'col' in attrib:
-      return Table.CellMath
-    elif 'row' in attrib:
-      return Table.RowMath
-    elif 'col' in attrib:
-      return Table.ColumnMath
+    parent = root.getparent()
+    if parent.tag == "XDFAXIS":
+      if parent.attrib['id'] == 'z':
+        if 'row' in attrib and 'col' in attrib:
+          return Table.CellMath
+        elif 'row' in attrib:
+          return Table.RowMath
+        elif 'col' in attrib:
+          return Table.ColumnMath
+        else:
+          return Table.GlobalMath
+      else:
+        return Axis.EmbeddedAxisMath
+    # constant has different Math, with no accumulator namespacing
+    elif parent.tag == 'XDFCONSTANT':
+      return Constant.ConstantMath
     else:
-      return Table.GlobalMath
+      raise NotImplementedError("Invalid parent for `<MATH>` element.")
 
   # dispatch attributes as arguments to functions. __func__ DOES exist on staticmethod, mypy doesn't know about this
   name_to_attrib_func = {

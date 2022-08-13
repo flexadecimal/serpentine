@@ -169,8 +169,14 @@ def test_equation_parser(folder: TuneFolder):
     test_xdf,
     test_bin
   )
-  ignition_map = tune.Tables[0]
-  val = ignition_map.value
+  #ignition_map = tune.Tables[0]
+ #val = ignition_map.value
+  #ve = tune.Tables[1]
+  #ve_x = ve.x.value
+  #ve_y = ve.y.value
+  #ve_z = ve.z.value
+  tlw = tune.Tables[2]
+  tlw_y = tlw.y.value
   pass
 
 

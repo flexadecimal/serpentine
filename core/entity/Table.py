@@ -1,65 +1,152 @@
 import typing as t
-from .Base import Base, ArrayLike, ReferenceQuantified
+from core.equation_parser.transformations.Evaluator import Evaluator
+from core.equation_parser.transformations.FunctionCallTransformer import FunctionCallTransformer, NumericArg
+from .Base import Base, ArrayLike, ExtendsParser, ReferenceQuantified
 from .Math import Math
-from .Axis import EmbeddedAxis, QuantifiedEmbeddedAxis
+from .Axis import QuantifiedEmbeddedAxis
 # to avoid circular import
 from .Axis import XYAxis
 from .Parameter import Parameter, Clamped
 import numpy as np
 import numpy.typing as npt
 import functools
-from itertools import (
-  chain
-)
+from itertools import chain
+from collections import ChainMap
 from .Mask import Mask, MaskedMath
 import pint
-from pynverse import inversefunc
 
 _math = Math
 
-class GlobalMath(MaskedMath):
+class ZAxisMath(MaskedMath):
+
+  def accumulate(self, x: npt.NDArray):
+    '''
+    `Table.ZAxis` accumulation happens over all of the `Math` conversion funcs defined.
+    Tables of shape `(n, n)` have a grid editor and can have
+    - 1 `GlobalMath`,
+    - n `RowMath`, n `ColumnMath`
+    - n*n `CellMath`
+    ...performed with mask exclusion. See `ZAxis.table_convert`, `ZAxis._mask_reduction`.
+    '''
+    self._accumulator = x
+
+  @property
+  def _ZAxis(self) -> 'ZAxis':
+    return self.getparent()
+
+  # ZAxis version of namespace provides a closure for the accumulator, 
+  # used in `cell`
+  @property
+  def _namespace(self):
+    # add ZAxis namespace
+    return ChainMap(
+      self._ZAxis._cell_namespace(self._accumulator),
+      {
+        'ROW': self.row,
+        'COL': self.col,
+        'ROWS': self.rows,
+        'COLS': self.cols,
+      }
+    )
+
+  # not different in table
+  def row(self):
+    return np.arange(self.shape[0])
+
+  def col(self):
+    return np.arange(self.shape[1])
+
+  def rows(self):
+    return self.shape[0]
+
+  def cols(self):
+    return self.shape[1]
+
+class GlobalMath(ZAxisMath):
   @property
   def mask(self) -> Mask:
     return Mask(np.zeros(self.shape).astype(np.ma.MaskType))
 
-class RowMath(MaskedMath):
-  @property
+class RowMath(ZAxisMath):
   def row(self):
+    out = np.zeros(self.shape)
+    out[self.row_idx] = ZAxisMath.row(self)
+    return out
+
+  def col(self):
+    out = np.zeros(self.shape)
+    out[self.row_idx] = ZAxisMath.col(self)
+    return out
+
+  @property
+  def row_idx(self):
     return int(self.attrib['row']) - 1
 
   @property
   def mask(self) -> Mask:
     out = np.zeros(self.shape)
-    out[self.row] = np.ones(self.shape[0])
+    out[self.row_idx] = np.ones(self.shape[0])
     return Mask(np.logical_not(out))
 
-class ColumnMath(MaskedMath):
+class ColumnMath(ZAxisMath):
+  
+  def row(self):
+    out = np.zeros(self.shape)
+    out[ :, self.column_idx] = ZAxisMath.row(self)
+    return out
+
+  def col(self):
+    out = np.zeros(self.shape)
+    out[ :, self.column_idx] = ZAxisMath.col(self)
+    return out
+
   @property
-  def column(self):
+  def column_idx(self):
     return int(self.attrib['col']) - 1
 
   @property
   def mask(self) -> Mask:
     out = np.zeros(self.shape)
-    out[ :, self.column] = np.ones(self.shape[1])
+    out[ :, self.column_idx] = np.ones(self.shape[1])
     return Mask(np.logical_not(out))
 
-class CellMath(MaskedMath):
-  @property
+class CellMath(ZAxisMath):
   def row(self):
+    out = np.zeros(self.shape)
+    out[self.row_idx][self.column_idx] = ZAxisMath.row(self)[self.column_idx]
+    return out
+
+  def col(self):
+    out = np.zeros(self.shape)
+    out[self.row_idx][self.column_idx] = ZAxisMath.col(self)[self.column_idx]
+    return out
+
+  @property
+  def row_idx(self):
     return int(self.attrib['row']) - 1
   
   @property
-  def column(self):
+  def column_idx(self):
     return int(self.attrib['col']) - 1
 
   @property
   def mask(self) -> Mask:
     out = np.zeros(self.shape)
-    out[self.row][self.column] = 1
+    out[self.row_idx][self.column_idx] = 1
     return Mask(np.logical_not(out))
 
 class ZAxis(ReferenceQuantified, QuantifiedEmbeddedAxis, Clamped):
+  # ZAxis doesn't extend parser directly, but provides pattern for axis math to use CELL
+  def _cell_namespace(self, accumulator: npt.NDArray):
+    return {
+      'CELL': self.cell_partial(accumulator)
+    }
+
+  def cell_partial(self, calculated: npt.NDArray):
+    def cell(row: int, column: int, precalc: bool):
+        return self.memory_map[row][column] if precalc else calculated[row][column]
+    return cell
+
   '''
   Special-case axis, generally referred to interchangeably with as a "Table", although the Table really contains the Axes and their related information.
   '''
@@ -97,14 +184,17 @@ class ZAxis(ReferenceQuantified, QuantifiedEmbeddedAxis, Clamped):
       klass: mask for klass, mask in group_masks.items()
       if klass is not type
     }
-    # construct final mask - CellMath needs no exclusion, its just one cell
-    if type is not CellMath:
+    # construct final mask
+    overrides = [CellMath, RowMath]
+    # these are NOT excluded - they have to have their masks subtracted from others
+    if type not in overrides:
       # other masks may be empty, in the case of only global equation
       combined_exclusion: npt.NDArray = np.logical_not(
         self._combine_masks(*other_group_masks.values())
       ) if other_group_masks else np.ma.nomask
       # ...combine other groups' exclusion with our own mask
       final_mask = np.ma.mask_or(combined_exclusion, math.mask, shrink=False)
+    # these just use their own mask, they override
     else:
       final_mask = math.mask
     # ...evaluate
@@ -113,7 +203,7 @@ class ZAxis(ReferenceQuantified, QuantifiedEmbeddedAxis, Clamped):
     # converted array may be Quantity or Array, depending on if referenced values had units or not.
     # putmask uses opposite of convention, so True = valid
     # TODO: subclass `pint.Quantity` to provide `np.putmask`?
-    to_put = converted
+    to_put = np.array(converted)
     np.putmask(accumulator, np.logical_not(final_mask), to_put)
     return accumulator
 
@@ -184,7 +274,6 @@ class ZAxis(ReferenceQuantified, QuantifiedEmbeddedAxis, Clamped):
     out = self.table_convert(copy)
     return out
   
-
 class Table(Parameter):
   '''
   Table, a.k.a array/list of values. Usually this is a 2D table like a fuel or ignition map, or occasionally, a 1D list like an axis, e.g. Major RPM.
@@ -200,27 +289,5 @@ class Table(Parameter):
   @value.setter
   def value(self, value: pint.Quantity):
     self.z.value = value
-
-  def __str__(self):
-    sep = ' '
-    width = 6
-    fmt = f"{{0:>{width}.1f}}"
-    x_axis = sep.join(map(
-      lambda x: fmt.format(x), self.x.value
-    ))
-    x_preceding = ' ' * (width + 2 + len(sep))
-    line = '-' * len(x_axis) 
-    # prepend y value for each z-axis table row
-    zs_with_y = '\n'.join(
-      sep.join([
-        # preceding y val
-        fmt.format(self.y.value[index]),
-        # divider
-       '|',
-        # z vals
-        *map(lambda z: fmt.format(z), row)
-      ]) for index, row in enumerate(self.z.value)
-    )
-    return f"{x_preceding}{x_axis}\n{x_preceding}{line}\n{zs_with_y}"
     
 __all__ = ['Table']

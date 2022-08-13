@@ -8,7 +8,7 @@ import itertools as it
 import numpy as np
 import numpy.typing as npt
 import pint
-from abc import ABC, ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 import functools
 from collections import ChainMap
 from pathlib import Path
@@ -16,6 +16,7 @@ import os
 import re
 import graphlib
 from . import Xdf as xdf
+from ..equation_parser.transformations.FunctionCallTransformer import FunctionRegistry, FunctionCallTransformer
 
 XmlBase = xml.ElementBase
 #XmlBase = objectify.ObjectifiedDataElement
@@ -384,3 +385,21 @@ class RefersCyclically(t.Generic[E, K, V], ABC, XdfRefMixin, metaclass=XmlAbstra
     out: t.Iterable = sorter.static_order()
     return out
 
+class ExtendsParser:
+  '''
+  Mixin class for `Xdf` entities that provide additional namespaces to the function parser.
+  '''
+  @property
+  def _parser(self) -> FunctionCallTransformer:
+    return FunctionCallTransformer(
+      namespaces=[self._namespace],
+      suppress_rounding=True
+    )
+
+  @property
+  @abstractmethod
+  def _namespace(self) -> FunctionRegistry:
+    '''
+    A mapping of name to function of the additional functions this class provides.
+    '''
+    pass

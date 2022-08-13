@@ -46,6 +46,9 @@ class Evaluator(TypeTransformer[NumericFunctionTreeNode, npt.ArrayLike]):
   vars with literals and combining using function composition and 
   functools.partial, or a more general combinator pattern. Currently, the AST must be walked for each calculation.
   '''
+  def __init__(self, visit_tokens: bool = True) -> None:
+    super().__init__(visit_tokens)
+
   # this 'function` dispatch is magic from `TypeVisitors`
   def function(self, args):
     func: ConversionFunc = args[0]

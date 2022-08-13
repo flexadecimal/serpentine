@@ -8,7 +8,7 @@ from lark.visitors import (
 import numpy as np
 import numpy.typing as npt
 import functools
-from collections import deque
+from collections import deque, ChainMap
 
 NumericArg = npt.ArrayLike
 EquationArg = NumericArg | lark.Token
@@ -29,58 +29,75 @@ def if_func(condition: bool, true_val: EquationArg, false_val: EquationArg) -> E
 def sum_args(*args) -> npt.ArrayLike:
   return functools.reduce(np.add, args)
 
-# these shadows of bitwise operations can raise optionally raise rounding error,
-# for super-strict mode
 class RoundingError(ValueError):
+  '''
+  By default, TunerPro rounds float values (like engine map data) to integer, 
+  which we want to be able to prohibit in a super-strict mode.
+  '''
   pass
+
+class NamespaceError(ValueError):
+  '''
+  Raised when an equation calls a function that is not in this parser instance's namespace.
+  '''
+  pass
+
+
+FunctionRegistry = ChainMap[str, ConversionFunc]
+
+  # DEFAULT DISPATCH TABLE
+default_numeric: FunctionRegistry = ChainMap({
+  # MATH FUNCTIONS
+  'ABS': np.abs,
+  'AVG': np.average,
+  'EXP': np.exp,
+  'LOG': np.log,
+  'POW': np.float_power,
+  'SQR': np.sqrt,
+  'SUM': sum_args,
+  'LOG10': np.log10,
+  'RADIANS': np.radians,
+  'DEGREES': np.degrees,
+  'IF': if_func,
+  'ROUND': round,
+  'MROUND': np.floor_divide,
+  'SIN': np.sin,
+  'COS': np.cos,
+  'TAN': np.tan,
+  'SINH': np.sinh,
+  'COSH': np.cosh,
+  'TANH': np.tanh,
+  'ASINH': np.arcsinh,
+  'ACOSH': np.arccosh,
+  'ATANH': np.arctanh,
+  'ASINH': np.arcsinh,
+  'ACOS': np.arccos,
+  'ATAN': np.arctan,
+  # new in TunerPro 5.00.9503.00, published 12/22/21 - min,max,floor,ceil
+  'MIN': np.min,
+  'MAX': np.max,
+  'FLOOR': np.floor,
+  'CEIL': np.ceil,
+  # XDF SPECIFIC
+  # ...xdf general
+  # ADDRESS, THIS, THAT
+  # ...axis
+  #'INDEX': lambda: None,
+  #'INDEXES': lambda: None,
+  #'CELL': lambda idx, precalc: None
+  # ...table
+  # ROW, COL, ROWS, COLS, CELL
+})
+
+def identity(x: NumericArg) -> NumericArg:
+  return x
 
 class FunctionCallTransformer(Transformer[lark.Token, FunctionTree]):
   '''
   Transforms an equation AST (abstract syntax tree) to one with vectorized numpy functions. This is an intermediate syntactical form - the arguments must still processed as functions by calling along the tree.
   '''
-  # DISPATCH TABLE
-  function_registry: t.Dict[str, ConversionFunc] = {
-    # MATH FUNCTIONS
-    'ABS': np.abs,
-    'AVG': np.average,
-    'EXP': np.exp,
-    'LOG': np.log,
-    'POW': np.float_power,
-    'SQR': np.sqrt,
-    'SUM': sum_args,
-    'LOG10': np.log10,
-    'RADIANS': np.radians,
-    'DEGREES': np.degrees,
-    'IF': if_func,
-    'ROUND': round,
-    'MROUND': np.floor_divide,
-    'SIN': np.sin,
-    'COS': np.cos,
-    'TAN': np.tan,
-    'SINH': np.sinh,
-    'COSH': np.cosh,
-    'TANH': np.tanh,
-    'ASINH': np.arcsinh,
-    'ACOSH': np.arccosh,
-    'ATANH': np.arctanh,
-    'ASINH': np.arcsinh,
-    'ACOS': np.arccos,
-    'ATAN': np.arctan,
-    # new in TunerPro 5.00.9503.00, published 12/22/21 - min,max,floor,ceil
-    'MIN': np.min,
-    'MAX': np.max,
-    'FLOOR': np.floor,
-    'CEIL': np.ceil,
-    # XDF SPECIFIC
-    # ...xdf general
-    # ADDRESS, THIS, THAT
-    # ...axis
-    #'INDEX': lambda: None,
-    #'INDEXES': lambda: None,
-    #'CELL': lambda idx, precalc: None
-    # ...table
-    # ROW, COL, ROWS, COLS, CELL
-  }
+  _namespace: FunctionRegistry
+
   _suppress_rounding = False
 
   def _int_or_raise(self, n: NumericArg):
@@ -100,13 +117,26 @@ class FunctionCallTransformer(Transformer[lark.Token, FunctionTree]):
       return bitwise(a, b)
     return inner
   
-  def __init__(self, suppress_rounding = False):
+  # TODO: add function registries at instantiaton to allow for
+  # XDF general, XDFAXIS funcs, XDFTABLE funcs
+  def __init__(self, namespaces: t.Iterable[FunctionRegistry] = [], suppress_rounding = False):
     self._suppress_rounding = suppress_rounding
+    # set function evaluation namespace from args
+    # TODO: throw ValueError if trying to call something not in namespace?
+    self._namespace = ChainMap(default_numeric, *namespaces)
     super().__init__(visit_tokens = True)
 
-  def statement(self, args: t.List[FunctionTree]):
-    # statement is terminal part of grammar, because we don't have multiple statements in TunerPro equations
-    return args[0]
+  def statement(self, args: t.List[FunctionTree | lark.Token]) -> FunctionTree:
+    end = args[0]
+    # if var, provide identity func
+    if type(end) is lark.Token:
+      return self.operation_call_tree(
+        identity,
+        [end]
+      )
+    else:
+      # statement is terminal part of grammar, because we don't have multiple statements in TunerPro equations
+      return end # type: ignore
 
   @staticmethod
   def operation_call_tree(func: ConversionFunc, args: t.List[FunctionTreeNode]) -> FunctionTree:
@@ -114,8 +144,11 @@ class FunctionCallTransformer(Transformer[lark.Token, FunctionTree]):
   
   @v_args(inline=True)
   def func_call(self, name: lark.Token, args_tree: FunctionTree = None):
-    function = self.function_registry[name.value.upper()]
-    children: t.List[FunctionTreeNode] = args_tree.children # type: ignore
+    key = name.value.upper()
+    if key not in self._namespace:
+      raise NamespaceError(f"'{key}' not in parser namespace.")
+    function = self._namespace[key]
+    children: t.List[FunctionTreeNode] = args_tree.children if args_tree is not None else [] # type: ignore
     return self.operation_call_tree(
       function,
       children
@@ -268,7 +301,7 @@ class FunctionCallTransformer(Transformer[lark.Token, FunctionTree]):
         numerical_args.append(arg)
     # sum up the numerical args
     out = self.operation_call_tree(
-      self.function_registry['SUM'],
+      self._namespace['SUM'],
       numerical_args
     )
     return out
