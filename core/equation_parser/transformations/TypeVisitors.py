@@ -58,7 +58,7 @@ class TypeTransformer(lark.Transformer, t.Generic[TreeT, ReturnT]):
           return func.visit_wrapper(func, tree.data, children, tree.meta)
         else:
           # original only calls with children, not entirely sure why
-          return func([tree.data, children])
+           return func([tree.data, children])
       except lark.exceptions.GrammarError as e:
         raise e
       except Exception as e:

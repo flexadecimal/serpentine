@@ -39,7 +39,6 @@ class LinkedVar(FreeVar):
   '''
   link_id = Base.xpath_synonym('./@linkid')
 
-  # TODO: this should typehint T.Union[Table.ZAxis, Constant.Constant], but circular import :(
   @property
   def linked(self) -> Mathable:
       return self.xpath(f"""

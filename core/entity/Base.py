@@ -245,7 +245,7 @@ Units: ChainMap[int, UnitDef] = xml_type_map(
 )
 
 # TODO - subclass pint.Quantity for custom stuff, like np.putmask?
-ArrayLike = t.Union[pint.Quantity, Array, np.memmap]
+ArrayLike = t.Union[pint.Quantity, Array, np.memmap, np.ma.masked_array]
 
 class Quantified(Base):
   '''

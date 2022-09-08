@@ -266,7 +266,7 @@ class Embedded(XdfRefMixin, metaclass=XmlAbstractBaseMeta):
   Math: Math = Base.xpath_synonym('./MATH')
 
   @abstractmethod
-  def from_embedded(self, x: npt.NDArray) -> npt.ArrayLike:
+  def from_embedded(self, x: npt.NDArray) -> ArrayLike:
     '''
     Embedded values subclassing this class need to provide conversion 
     to and from binary data. For `Constant` this will be a single `Math` conversion,
@@ -275,7 +275,7 @@ class Embedded(XdfRefMixin, metaclass=XmlAbstractBaseMeta):
     pass
 
   @abstractmethod
-  def to_embedded(self, x: npt.NDArray) -> npt.ArrayLike:
+  def to_embedded(self, x: npt.NDArray) -> ArrayLike:
     '''
     Inverse conversion function to `from_embedded`, usually 
     `pynverse.inversefunc(conversion_func)`.

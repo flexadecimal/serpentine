@@ -1,5 +1,5 @@
 import os
-from pathlib import Path
+from pathlib import Path, PosixPath
 import re
 import typing as t
 import itertools as it
@@ -9,6 +9,7 @@ import numpy as np
 class TuneFolder(t.NamedTuple):
   xdfs: t.List[Path]
   bins: t.List[Path]
+  path: Path
 
 cars_folder = './cars/testing'
 car_name_regex = rf"{cars_folder}/(?P<car>[\w+-_]+)"
@@ -40,11 +41,12 @@ def files_by_type(root, files) -> TuneFolder:
   # apply xdf parsing to bin file to render scalars and tables
   return TuneFolder(
     xdfs = xdf_paths,
-    bins = bin_paths
+    bins = bin_paths,
+    path = Path(root)
   )
   
-def print_exception(e, folder):
-  print(f"""Caught expected `{type(e).__qualname__}` during opening "{folder}".
+def print_exception(e, folder: TuneFolder):
+  print(f"""Caught expected `{type(e).__qualname__}` during opening "{folder.path.name}".
 {e}
 """)
 
@@ -87,7 +89,7 @@ def test_patch(folder: TuneFolder):
   try:
     unreversible_patch.remove_all()
   except xdf.UnpatchableError as e:
-    print_exception(e, "patch-parameter")
+    print_exception(e, folder)
 
 def test_function(folder: TuneFolder):
   print("\nTEST FUNCTION INTERPOLATION")
@@ -165,18 +167,31 @@ def test_cyclicality():
 
 def test_equation_parser(folder: TuneFolder):
   test_xdf, test_bin = folder.xdfs[0], folder.bins[0]
+  # this should throw CellEquationCalculationError
+  try:
+    tune = xdf.Xdf.from_path(
+      test_xdf,
+      test_bin
+    )
+    # CELL(1; FALSE) + CELL(3; FALSE)   this crashes TunerPro - can't have more than one cell with precalc=False?
+    # cat_map_y = cat_map.y.value
+    # cat_map = tune.Tables[3]
+  except xdf.CellEquationCalculationError as e:
+    print_exception(e, folder)
+
+  # ...now go ahead and ignore it
   tune = xdf.Xdf.from_path(
-    test_xdf,
-    test_bin
+      test_xdf,
+      test_bin,
+      xdf.CellEquationCalculationError
   )
-  #ignition_map = tune.Tables[0]
- #val = ignition_map.value
-  #ve = tune.Tables[1]
-  #ve_x = ve.x.value
-  #ve_y = ve.y.value
-  #ve_z = ve.z.value
   tlw = tune.Tables[2]
+  # CELL(1; FALSE) + 2                no crash
+  tlw_x = tlw.x.value
+  # CELL(1; FALSE) + CELL(3; TRUE)    no crash
   tlw_y = tlw.y.value
+  
+  # TODO: verify against export, but export must be made from tune with fixed cat_map, because TunerPro will crash
   pass
 
 

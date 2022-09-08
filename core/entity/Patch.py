@@ -68,7 +68,7 @@ class PatchEntry(Base, XdfRefMixin):
       self._xdf._binfile,
       shape = (self.size, ),
       # TODO - account for XDF header base offset?
-      offset = self.address,
+      offset = self.address + self._xdf._bin_internals['base_offset'],
       mode = 'w+'
       # by default, reads as uint8
     )

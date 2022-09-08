@@ -125,28 +125,99 @@ class UnbindCell(TypeTransformer[NumericFunctionTree, MaskedFunctionTree]):
   def function(self, args):
     # [func, *args]
     func, func_args = args
+    default = MaskedFunctionTree(func, func_args)
     if func.__name__ == 'cell':
+      index, precalc = func_args
       # we have an initial value, like [0, 0, 0...]
       if self.initial is not None:
-        index = func_args[0]
-        mask = np.full(self.initial.shape, False)
-        mask[index] = True
-        out = np.ma.masked_array(
-          data=self.initial,
-          mask=mask
-        )
-        # initial fill should not be set - mask value is frozen after first evaluation
-        #out.fill_value = out.data[index]
-        return out
+        # only precalc=False need be back-substituted, precalc=True evals directly
+        if precalc is False:
+          mask = np.full(self.initial.shape, False)
+          mask[index] = True
+          out = np.ma.masked_array(
+            data=self.initial,
+            mask=mask
+          )
+          # initial fill should not be set - mask value is frozen after first evaluation
+          #out.fill_value = out.data[index]
+          return out
+        else:
+          return default
       # we have just a var or something
       else:
         # implicit function argument
         return lark.Token('NAME', 'X')
     else:
-      return MaskedFunctionTree(func, func_args)
+      return default
 
   def __default__(self, data, children, meta):
     return MaskedFunctionTree(data, children, meta)
+
+class CellCounter(TypeTransformer[NumericFunctionTree, int]):
+  '''
+  This Transformer counts all instances of the `CELL` function having `precalc = False`, 
+  because having more than one `CELL(idx, precalc=False)` is undefined behavior (UB) and crashes TunerPro.
+  '''
+  count: int
+
+  def __init__(self) -> None:
+    self.count = 0
+    super().__init__(visit_tokens = False)
+
+  def function(self, args):
+    func, func_args = args
+    if func.__name__ == 'cell':
+      # TODO: using __closure__ is kinda dirty and not portable (Cython specific), 
+      # but its the only structured way to get the class who made the cell partial
+      closer = func.__closure__[-1].cell_contents
+      if type(closer) is XYEmbeddedAxis:
+        index, precalc = func_args
+      elif type(closer) is Table.ZAxis:
+        row, col, precalc = func_args
+      else:
+        raise NotImplementedError()
+      
+      if precalc is False:
+        self.count += 1
+      
+      return lark.visitors.Discard
+
+  def transform(self, tree):
+    # do the transformation....
+    self._transform_tree(tree)
+    # ..but return the final count
+    return self.count
+
+  def __default__(self, data, children, meta):
+    return MaskedFunctionTree(data, children, meta)
+
+class CellEquationCalculationError(ValueError):
+  '''
+  TunerPro `CELL(index: int, precalc: bool)` function does not allow for multiple
+  instances in the same `Axis` equation. 
+  It will crash with an equation like `CELL(1; FALSE) + CELL(3; FALSE)`.
+
+  Our implementation returns the initial value, array of 0s.
+
+  This is raised at tune init (i.e. file open), so the user can be instructed to fix it.
+  '''
+  def __init__(self, xdf: xdf.Xdf, bad_math: Math, *args: object) -> None:
+    self.math = bad_math
+    self.xdf = xdf
+    super().__init__(*args)
+  
+  def __str__(self) -> str:
+    root_tree: xml.ElementTree = self.xdf.getroottree()
+    axis = self.math.getparent()
+    return f'''Only one `CELL` call per conversion equation can have `precalc = False`.
+
+{root_tree.getpath(self.math)} (line {axis.sourceline})
+
+"{self.math.attrib['equation']}"
+
+{repr(self.math.equation)}
+    '''
+
 
 def unmask(x):
   return np.ma.filled(x)
@@ -169,9 +240,9 @@ class EmbeddedAxis(Axis, Embedded):
       'CELL': self.cell_partial(accumulator)
     }
 
-  def _cell_modify(self, instead: npt.ArrayLike, index: int, real_equation: NumericFunctionTree) -> NumericFunctionTree:
+  def _cell_modify(self, instead: npt.ArrayLike, index: int, real_equation: NumericFunctionTree) -> MaskedFunctionTree:
     '''
-    Cell function AST  (calls to `cell` replaced with the initial value).
+    Cell function AST (calls to `cell` replaced with the initial value).
 
     evaluate - 
    caller will have to unmask, e.g.
@@ -186,25 +257,23 @@ class EmbeddedAxis(Axis, Embedded):
     #     1                        2
     #     False
     #   2
-    unbound = UnbindCell(initial = None).transform(real_equation)
+    # unbound = UnbindCell(initial = None).transform(real_equation)
     # substitute initial-value evaluation back into unbound
     #  <function 'sum_args'> -> [4, -, 4...]
-    #     <function 'sum_args'> = thunk
+    #     <function 'sum_args'> = thunk = [2, - , 2...]
     #       initial = [0, -, 0...]
     #       2
     #     2
 
     # ...the thunk needs a hard mask; in this example, harden after first assignment of "2" on initial "0"
-    thinker = Evaluator().transform
+    # debug only
+    #thinker = Evaluator().transform
     thunk = MaskedFunctionTree(
       freeze,
       [UnbindCell(initial = instead).transform(real_equation), index]
     )
-    # unmasking must be done by parent
-    out = thunk
-    substituted = Replacer.Replacer({'X': thunk}).transform(unbound)
-    #out2 = NumericFunctionTree(unmask, [substituted])
-    return out
+    # unmasking done by parent, we are only returning the "CELL" part
+    return thunk
 
   def cell_partial(self, initial: npt.NDArray):
     def cell(index: int, precalc: bool):
@@ -236,7 +305,8 @@ class EmbeddedAxis(Axis, Embedded):
         # now do `CellEvaluator`, which will self-modify the AST
         substituted = self._cell_modify(initial, index, replaced)
         # and immediately evaluate
-        return self.thinker(substituted)
+        out = self.thinker(substituted)
+        return out
       return out
     return cell
 
@@ -359,7 +429,7 @@ class QuantifiedEmbeddedAxis(EmbeddedAxis, Quantified):
   @property
   def value(self) -> pint.Quantity:
     original = EmbeddedAxis.value.fget(self) # type: ignore
-    return pint.Quantity(original, self.unit)
+    return pint.Quantity(unmask(original), self.unit)
   
   @value.setter
   def value(self, value: pint.Quantity):
@@ -413,5 +483,5 @@ def Axis_class_from_element(axis: xml.Element):
   else:
     raise NotImplementedError('Invalid Axis embed type.')
 
-XYLinkAxis = t.Union[XYFunctionLinkAxis, XYTableLinkAxis]
-XYAxis = t.Union[XYEmbeddedAxis, XYLabelAxis, XYLinkAxis]
+XYLinkAxis = XYFunctionLinkAxis | XYTableLinkAxis
+XYAxis = XYEmbeddedAxis | XYLabelAxis | XYLinkAxis

@@ -117,8 +117,6 @@ class FunctionCallTransformer(Transformer[lark.Token, FunctionTree]):
       return bitwise(a, b)
     return inner
   
-  # TODO: add function registries at instantiaton to allow for
-  # XDF general, XDFAXIS funcs, XDFTABLE funcs
   def __init__(self, namespaces: t.Iterable[FunctionRegistry] = [], suppress_rounding = False):
     self._suppress_rounding = suppress_rounding
     # set function evaluation namespace from args

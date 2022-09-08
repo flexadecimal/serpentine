@@ -144,7 +144,7 @@ class ZAxis(ReferenceQuantified, QuantifiedEmbeddedAxis, Clamped):
 
   def cell_partial(self, calculated: npt.NDArray):
     def cell(row: int, column: int, precalc: bool):
-        return self.memory_map[row][column] if precalc else calculated[row][column]
+      return self.memory_map[row][column] if precalc else calculated[row][column]
     return cell
 
   '''

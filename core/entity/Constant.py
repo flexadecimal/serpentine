@@ -8,6 +8,9 @@ import pint
 import typing as t
 
 class ConstantMath(Math.Math):
+  def accumulate(self, accumulator: npt.NDArray) -> npt.NDArray:
+    return accumulator
+
   def _namespace(self):
     return ChainMap()
 

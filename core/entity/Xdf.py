@@ -1,3 +1,5 @@
+from collections import ChainMap
+from types import NoneType
 import typing as t
 from lxml import etree as xml, objectify
 import os
@@ -8,15 +10,14 @@ from . import (
   Parameter, Table, Constant, EmbeddedData, Var, Math, Axis, Function, Category, Patch, Flag
 )
 
-Mathable = Axis.QuantifiedEmbeddedAxis | Table.ZAxis | Constant.Constant
-
 # export these errors for callers
-EmbeddedValueError = EmbeddedData.EmbeddedValueError
-MathInterdependence = Math.MathInterdependence
-AxisInterdependence = Axis.AxisInterdependence
+Mathable = Axis.QuantifiedEmbeddedAxis | Table.ZAxis | Constant.Constant
 UnpatchableError = Patch.UnpatchableError
-# ... and allow these to be suppressed
-Ignorable = EmbeddedValueError | MathInterdependence | AxisInterdependence
+EmbeddedValueError = EmbeddedData.EmbeddedValueError
+CellEquationCalculationError = Axis.CellEquationCalculationError
+# ... and allow these to be suppressed - mypy needs explicit `TypeAlias`
+# see https://mypy.readthedocs.io/en/stable/common_issues.html#variables-vs-type-aliases
+Ignorable: t.TypeAlias = EmbeddedData.EmbeddedValueError | Math.MathInterdependence | Axis.AxisInterdependence | Axis.CellEquationCalculationError
 
 # this is import-time
 core_path = Path(__file__).parent.parent
@@ -50,7 +51,7 @@ class Xdf(Base):
     many=True
   )
 
-  # internals
+  # TODO: type this
   @property
   def _bin_internals(self) -> t.Dict[str, t.Any]:
     '''
@@ -83,29 +84,102 @@ class Xdf(Base):
       raise error
     # ...objectify - bind classes
     parser = objectify.makeparser(schema = xdf_schema)
+    # TODO: singleton XdfTyper
     parser.set_element_class_lookup(XdfTyper())
     xdf: Xdf = objectify.fromstring(xml.tostring(xdf_tree), parser)    
     # ...set python special vars
     xdf._path = Path(path)
     xdf._binfile = open(binpath, 'r+b')
-    # SANITY CHECK - check cyclical references, ignoring those specified. you may want to ignore acyclic references to open edit-only UI and prompt user to fix it.
+    # SANITY CHECKS 
+    # - check cyclical references, ignoring those specified. you may want to ignore acyclic references to open edit-only UI and prompt user to fix it.
+    # - multiple "CELL" funcs with precalc=False - this crashes TunerPro!
     try:
       # this must be fully evaluated to see if it is cyclical
       math_ok = Math.Math.acyclic(xdf)
       axes_ok = Axis.AxisLinked.acyclic(xdf)
-    except MathInterdependence as e:
+      # check for cell funcs with multiple precalc=False, to prevent UB/crashes in original TunerPro
+      all_math: t.Iterable[Math.Math] = xdf.xpath("//MATH")
+      #counter = Axis.CellCounter()
+      math_to_count = map(
+        # counter.transform
+        # new counter for each math
+        lambda m: (m, Axis.CellCounter().transform(m.equation)),
+        all_math
+      )
+      invalid = next(
+        filter(
+          lambda math_count: math_count[1] > 1,
+          math_to_count
+        ),
+        None
+      )
+      if invalid is not None:
+        bad_math = invalid[0]
+        raise Axis.CellEquationCalculationError(xdf, bad_math)
+      pass
+    except Math.MathInterdependence as e:
       # TODO: math cleanup? mark invalid with special state?
-      if MathInterdependence not in ignore:
+      if Math.MathInterdependence not in ignore:
         raise(e)
-    except AxisInterdependence as e:
-      if AxisInterdependence not in ignore:
+    except Axis.AxisInterdependence as e:
+      if Axis.AxisInterdependence not in ignore:
+        raise(e)
+    except Axis.CellEquationCalculationError as e:
+      if Axis.CellEquationCalculationError not in ignore:
         raise(e)
     return xdf
 
   @property
   def parameters_by_id(self) -> t.Dict[str, Parameter.Parameter]:
     return {param.id: param for param in self.Parameters}
+
+  def address(self, addr: int, bits: int, lsbfirst: bool, signed: bool):
+    '''
+    Returns raw value at address, offset by header base offset.
+    '''
+    return 0
+
+  def this(self):
+    '''
+    Returns raw value (i.e. "accumulator" in our parlance) of the current object, or cell if Table or Axis.
+    '''
+    return 0
+
+  def that(self, id: int, row: int, col: int, precalc: int):
+    '''
+    Returns value of another object, by decimal id (saved as hex string in XML `uniqueid` attribute)
+    - If Table or Function, index by row and col.
+    - if precalc, returns raw value, else calculated.
+    '''
+    return 0
+
+  @property
+  def _namespace(self):
+    '''
+    XDF object conversion functions available to equation editor namespace. 
+    Things like `Axis`, `ZAxis`, `Constant` can call these functions by inheriting this namespace.
+    '''
+    return {
+      'ADDRESS': self.address,
+      'THIS': self.this,
+      'THAT': self.that
+    }
+
    
+class ReadOnlyEmbeddedAxisMath(Axis.EmbeddedAxisMath):
+  '''
+  An `Axis` can be a Label Axis, and still have a <MATH> element under it.
+  In TunerPro, this Math object is not editable until the Axis is switched to an EmbeddedAxis.
+
+  LXML 'objectification' must return a class - specifically, a 
+  subclass of `type` - `NoneType` would fit here, but it is not a subclass,
+  so this class is used as a sentinel.
+  '''
+  # TODO: make all props read only?
+  def _namespace(self):
+    return ChainMap()
+
+
 class XdfTyper(xml.PythonElementClassLookup):
   '''
   XML-to-XDF class dispatcher.
@@ -158,9 +232,10 @@ class XdfTyper(xml.PythonElementClassLookup):
     return klass
 
   @staticmethod
-  def math_polymorphic_dispatch(root, **attrib) -> t.Type[Table.MaskedMath]:
+  def math_polymorphic_dispatch(root, **attrib) -> t.Type[Math.Math]:
     parent = root.getparent()
     if parent.tag == "XDFAXIS":
+      # is a Table ZAxis...
       if parent.attrib['id'] == 'z':
         if 'row' in attrib and 'col' in attrib:
           return Table.CellMath
@@ -170,7 +245,14 @@ class XdfTyper(xml.PythonElementClassLookup):
           return Table.ColumnMath
         else:
           return Table.GlobalMath
+      # is a regular X/Y Axis 
       else:
+        parent_class = Axis.Axis_class_from_element(parent)
+        # you can have <MATH> elements under Label Axes. 
+        # TunerPro doesn't allow you to edit the Math when the Axis is set as Label,
+        # so our data model should remove it/make None/otherwise exclude
+        if parent_class is not Axis.XYEmbeddedAxis:
+          return ReadOnlyEmbeddedAxisMath
         return Axis.EmbeddedAxisMath
     # constant has different Math, with no accumulator namespacing
     elif parent.tag == 'XDFCONSTANT':

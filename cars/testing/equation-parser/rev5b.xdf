@@ -1,4 +1,4 @@
-<!-- Written 08/07/2022 21:59:02 -->
+<!-- Written 09/06/2022 20:23:06 -->
 <XDFFORMAT version="1.70">
   <XDFHEADER>
     <flags>0x1</flags>
@@ -135,9 +135,7 @@
       <datatype>6</datatype>
       <unittype>4</unittype>
       <DALINK index="0" />
-      <MATH equation="X*30">
-        <VAR id="X" />
-      </MATH>
+      <MATH equation="CELL(1; FALSE) + 2" />
     </XDFAXIS>
     <XDFAXIS id="y" uniqueid="0x0">
       <EMBEDDEDDATA mmedaddress="0xCD7A" mmedelementsizebits="8" mmedcolcount="16" mmedmajorstridebits="8" mmedminorstridebits="0" />
@@ -146,7 +144,7 @@
       <datatype>0</datatype>
       <unittype>0</unittype>
       <DALINK index="0" />
-      <MATH equation="CELL(1; FALSE) + CELL(3; FALSE)" />
+      <MATH equation="CELL(1; FALSE) + CELL(3; TRUE)" />
     </XDFAXIS>
     <XDFAXIS id="z">
       <EMBEDDEDDATA mmedtypeflags="0x04" mmedaddress="0x13F77" mmedelementsizebits="8" mmedrowcount="16" mmedcolcount="16" mmedmajorstridebits="0" mmedminorstridebits="0" />
@@ -183,9 +181,7 @@
       <datatype>23</datatype>
       <unittype>85</unittype>
       <DALINK index="0" />
-      <MATH equation="X*.048">
-        <VAR id="X" />
-      </MATH>
+      <MATH equation="CELL(1; FALSE) + CELL(3; FALSE)" />
     </XDFAXIS>
     <XDFAXIS id="z">
       <EMBEDDEDDATA mmedtypeflags="0x04" mmedaddress="0xEDFC" mmedelementsizebits="8" mmedrowcount="16" mmedcolcount="16" mmedmajorstridebits="0" mmedminorstridebits="0" />

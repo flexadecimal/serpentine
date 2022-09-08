@@ -110,6 +110,7 @@ class Math(ExtendsParser, RefersCyclically[MathInterdependence, "Math", t.Iterab
   # TODO: maybe link should be removed from math?
   DataLink = Base.xpath_synonym('./preceding-sibling::DALINK')
 
+  # TODO: this should be a typed partial, e.g. `functool.partial[ConversionFunc]`
   @property
   def conversion_func(self) -> FunctionCallTransformer.ConversionFunc:
     '''
