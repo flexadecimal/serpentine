@@ -26,7 +26,9 @@ Built for Python 3.10 and later.
 - XDF parameter editing
 
 ## Getting started
-
     pipenv install
     pipenv shell
-    python3 <todo.py> <somearg1> <somearg2>
+    python xdf_parse.py
+
+## Unit tests
+    python -m unittest core.test.simpleTest
